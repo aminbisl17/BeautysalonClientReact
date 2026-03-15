@@ -2,11 +2,11 @@
 import React, { useState } from "react";
 import Navigation from './components/Navigation';
 import Home from './components/Home';
-import Login from './components/Login';
+import LoginView from "./components/Login";
 import About from './components/AboutUs';
 
 function App() {
-  const [view, setView] = useState("home");
+  const [view, setView] = useState("login");
 
   const handleNavClick = (e, newView) => {
     e.preventDefault(); // prevent full page reload
@@ -20,7 +20,7 @@ function App() {
       <div style={{ marginTop: "80px", padding: "20px" }}>
         {view === "home" && <Home />}
         {view === "about" && <About />}
-        {view === "login" && <Login />}
+        {view === "login" && <LoginView />}
       </div>
     </div>
   );
