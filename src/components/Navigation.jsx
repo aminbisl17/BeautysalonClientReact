@@ -9,7 +9,7 @@ function Navigation({ onNavClick }) {
       <ul className="nav-links">
         <li><a href="/" onClick={(e) => onNavClick(e, "home")}>Home</a></li>
         <li><a href="/about" onClick={(e) => onNavClick(e, "about")}>About Us</a></li>
-        <li><a href="/login" onClick={(e) => onNavClick(e, "login")}>Log In</a></li>
+         <li><a href="/login" onClick={(e) => onNavClick(e, "login")}>Profile</a></li>
       </ul>
     </nav>
   );

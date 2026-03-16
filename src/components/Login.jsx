@@ -1,141 +1,306 @@
-import { useState, useEffect } from "react";
-//import { useNavigate } from "react-router-dom";
-import '../css/login.css';
-import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
+import React, { useState, useEffect } from "react";
+import "../css/login.css";
 import {jwtDecode} from "jwt-decode";
 
 function LoginView() {
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(true); // track auto-login attempt // track backend errors
-   // const navigate = useNavigate();
+  const [view, setView] = useState("login"); // login, profile, register, verify
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [userData, setUserData] = useState(null);
 
-    useEffect(() => {
-        const autoLogin = async () => {
-            try {
-                const res = await fetch(
-                    "http://localhost:8000/auth/refresh-token",
-                    { method: "POST", credentials: "include" }
-                );
+  // Registration state
+  const [regData, setRegData] = useState({
+    emri: "",
+    mbiemri: "",
+    numri_telefonit: "",
+    pershkrimi: "",
+    email: "",
+    gjinia: "m",
+    username: "",
+    password: "",
+  });
 
-                if (!res.ok) {
-                    setLoading(false);  // show form
-                    return;
-                }
+  // Verification code
+  const [verificationCode, setVerificationCode] = useState("");
+  const [tempUsername, setTempUsername] = useState(""); // store username for verification
 
-                const data = await res.json();
-                sessionStorage.setItem("accessToken", data.accessToken);
+  // Auto-login
+  useEffect(() => {
+    const autoLogin = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:8000/auth/refresh-token",
+          { method: "POST", credentials: "include" }
+        );
+        if (!res.ok) return setLoading(false);
 
-               // const decoded = jwtDecode(data.accessToken);
-                 const clientId = (jwtDecode(data.accessToken)).id;
+        const data = await res.json();
+        sessionStorage.setItem("accessToken", data.accessToken);
 
-                const userRes = await fetch(
-                    "http://localhost:8000/api/clients/" + clientId,
-                    {
-                        headers: { Authorization: `Bearer ${data.accessToken}` },
-                        credentials: "include",
-                    }
-                );
+        const clientId = jwtDecode(data.accessToken).id;
 
-                if (!userRes.ok) {
-                   alert("Failed to fetch user data.");
-                    setLoading(false);
-                    return;
-                }
+        const userRes = await fetch(
+          `http://localhost:8000/api/clients/${clientId}`,
+          {
+            headers: { Authorization: `Bearer ${data.accessToken}` },
+            credentials: "include",
+          }
+        );
 
-                const userInfo = await userRes.json();
-                sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-                //navigate("/home"); 
-                console.log(userInfo);
-            } catch (err) {
-                console.error(err);
-                 ExceptionHandler.handle(err);
-                setLoading(false); // show form
-            }
-        };
+        if (!userRes.ok) return setLoading(false);
 
-        autoLogin();
-    }, []);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch(
-                "http://localhost:8000/auth/login/client",
-                {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password }),
-                    credentials: "include",
-                }
-            );
-
-            if (response.status === 401) {
-                alert("Invalid login");
-                return;
-            }
-
-            const data = await response.json();
-            sessionStorage.setItem("accessToken", data.token);
-
-          //   const clientId = (jwtDecode(data.token)).id;
-
-            const userRes = await fetch(
-                "http://localhost:8000/api/clients/" + data.ID,
-                {
-                    headers: { Authorization: `Bearer ${data.token}` },
-                    credentials: "include",
-                }
-            );
-
-            if (!userRes.ok) {
-                alert("Failed to fetch user data!");
-                return;
-            }
-
-            const userInfo = await userRes.json();
-            sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
-            console.log(userInfo);
-            //navigate("/home");
-        } catch (err) {
-            console.error(err);
-            ExceptionHandler.handle(err);
-        }
+        const userInfo = await userRes.json();
+        sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+        setUserData(userInfo);
+        setView("profile");
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
+    autoLogin();
+  }, []);
 
-    if (loading) return <p>Checking session...</p>;
+  // Manual login
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await fetch("http://localhost:8000/auth/login/client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+        credentials: "include",
+      });
+      if (res.status === 401) return setError("Invalid username or password");
 
+      const data = await res.json();
+      if (!data.ID || !data.token) return setError("Client does not exist");
+
+      sessionStorage.setItem("accessToken", data.token);
+
+      const userRes = await fetch(
+        `http://localhost:8000/api/clients/${data.ID}`,
+        {
+          headers: { Authorization: `Bearer ${data.token}` },
+          credentials: "include",
+        }
+      );
+
+      if (!userRes.ok) return setError("Failed to fetch user data!");
+
+      const userInfo = await userRes.json();
+      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+      setUserData(userInfo);
+      setView("profile");
+    } catch (err) {
+      console.error(err);
+      setError("Something went wrong.");
+    }
+  };
+
+  // Logout
+  const handleLogout = () => {
+    sessionStorage.clear();
+    setUserData(null);
+    setUsername("");
+    setPassword("");
+    setView("login");
+  };
+const handleRegister = async (e) => {
+  e.preventDefault();
+  setError("");
+  try {
+    const res = await fetch("http://localhost:8000/api/clients/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(regData),
+      credentials: "include",
+    });
+
+    const text = await res.text(); // read response as text
+
+    if (!res.ok) {
+      setError(text || "Registration failed");
+      return;
+    }
+
+    // Registration successful, backend sent "Client applied"
+    console.log(text); // "Client applied"
+
+    // Move to verification form
+    setTempUsername(regData.username);
+    setVerificationCode("");
+    setView("verify");
+
+  } catch (err) {
+    console.error(err);
+    setError("Something went wrong during registration.");
+  }
+};
+  // Verification
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await fetch("http://localhost:8000/api/clients/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        otpcode: verificationCode,
+        username: tempUsername,
+      }),
+      credentials: "include",
+    });
+
+    const text = await res.text(); // backend might return plain text
+    if (!res.ok) {
+      setError(text || "Verification failed");
+      return;
+    }
+
+    alert("Verification successful! Please login now.");
+    setView("login");           // back to login form
+    setUsername(tempUsername);  // optionally prefill username
+    setPassword("");
+    setTempUsername("");
+    setVerificationCode("");
+
+  } catch (err) {
+    console.error(err);
+    setError("Something went wrong during verification.");
+  }
+};
+
+  if (loading) return <p>Checking session...</p>;
+
+  // Profile view
+  if (view === "profile" && userData) {
     return (
-        <div className="login-container">
-            <h1>Login</h1>
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="username">Username</label>
-                    <input
-                        type="text"
-                        id="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="password">Password</label>
-                    <input
-                        type="password"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-
-                <button type="submit">Submit</button>
-            </form>
-        </div>
+      <div className="profile-container" style={{ padding: "20px" }}>
+        <h1>Profile</h1>
+        <button onClick={handleLogout}>Logout</button>
+        <div><strong>Emri:</strong> {userData.emri}</div>
+        <div><strong>Mbiemri:</strong> {userData.mbiemri}</div>
+        <div><strong>Username:</strong> {userData.username}</div>
+        <div><strong>Email:</strong> {userData.email}</div>
+        <div><strong>Gjinia:</strong> {userData.gjinia}</div>
+        <div><strong>Numri i Telefonit:</strong> {userData.numriTelefonit}</div>
+        <div><strong>Data e Regjistrimit:</strong> {new Date(userData.dataRegjistrimit).toLocaleString()}</div>
+        <div><strong>Pershkrimi:</strong> {userData.pershkrimi || "Nuk ka të dhëna"}</div>
+      </div>
     );
+  }
+
+  // Verification form
+  if (view === "verify") {
+    return (
+      <div className="login-container">
+        <h1>Enter Verification Code</h1>
+        <form onSubmit={handleVerify}>
+          {error && <p className="error-message">{error}</p>}
+          <div className="form-group">
+            <label>Verification Code</label>
+            <input
+              type="text"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit">Verify</button>
+        </form>
+      </div>
+    );
+  }
+
+  // Registration form
+  if (view === "register") {
+    return (
+      <div className="login-container">
+        <h1>Create Account</h1>
+        <form onSubmit={handleRegister}>
+          {error && <p className="error-message">{error}</p>}
+          {["emri","mbiemri","numri_telefonit","pershkrimi","email","username","password"].map((field) => (
+            <div key={field} className="form-group">
+              <label>{field}</label>
+              <input
+                type={field === "password" ? "password" : "text"}
+                value={regData[field]}
+                onChange={(e) =>
+                  setRegData({ ...regData, [field]: e.target.value })
+                }
+                required
+              />
+            </div>
+          ))}
+          <div className="form-group">
+            <label>Gjinia</label>
+            <select
+              value={regData.gjinia}
+              onChange={(e) =>
+                setRegData({ ...regData, gjinia: e.target.value })
+              }
+            >
+              <option value="m">Mashkull</option>
+              <option value="f">Femër</option>
+            </select>
+          </div>
+          <button type="submit">Register</button>
+          <p style={{ marginTop: "10px" }}>
+            Already have an account?{" "}
+            <span
+              style={{ color: "blue", cursor: "pointer" }}
+              onClick={() => setView("login")}
+            >
+              Login
+            </span>
+          </p>
+        </form>
+      </div>
+    );
+  }
+
+  // Login form
+  return (
+    <div className="login-container">
+      <h1>Login</h1>
+      <form onSubmit={handleLogin}>
+        {error && <p className="error-message">{error}</p>}
+        <div className="form-group">
+          <label>Username</label>
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Password</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+      <p style={{ marginTop: "10px" }}>
+        Don't have an account?{" "}
+        <span
+          style={{ color: "blue", cursor: "pointer" }}
+          onClick={() => setView("register")}
+        >
+          Create Account
+        </span>
+      </p>
+    </div>
+  );
 }
 
 export default LoginView;
