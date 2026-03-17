@@ -1,44 +1,54 @@
-// src/views/Home.jsx
+import "../css/home.css";
 import React, { useEffect, useState } from "react";
 import { fetchServices } from "../javascript/APIs/ServicesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 
 function Home() {
-
-
-  const [Services, setServices] = useState([]);
-  useEffect(() => {
-   loadServices();
-  }, []);
-
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
   async function loadServices() {
-    try{
-      const data = await fetchServices();
-
+    try {
+      setLoading(true);
+      const data = await fetchServices(); // your API call
       setServices(data);
-    } catch(err){
+    } catch (err) {
       ExceptionHandler(err);
+    } finally {
+      setLoading(false);
     }
   }
+
+  useEffect(() => {
+    loadServices();
+  }, []);
+
   return (
-    <div>
-      <h1>Home View</h1>
-      {Services.map((ser)=>(
-          <tr 
-      key={ser.ID}
-   //   onClick={() => onSelect?.(ser)}
-    > 
-      <td>{ser.ID}</td>
-      <td>{ser.emri_sherbimit}</td>
-      <td>{ser.is_active ? "Yes" : "No"}</td>
-      <td>{ser.kohezgjatja}</td>
-      <td>{ser.pershkrimi}</td>
-      <td>{ser.qmimi_baze}</td>
-      <td>{ser.zbritja}</td>
-      <td>{new Date(ser.created_at).toLocaleString()}</td>
-      <td>{new Date(ser.update_at).toLocaleString()}</td>
-    </tr>
-      ))}
+    <div className="home-container">
+      <h1>Our Services</h1>
+
+      {loading ? (
+        <p>Loading...</p>
+      ) : services.length === 0 ? (
+        <p>No services available</p>
+      ) : (
+        <div className="services-grid">
+          {services.map((ser) => (
+            <div className="service-card" key={ser.ID}>
+              <h2>{ser.emri_sherbimit}</h2>
+              <p>{ser.pershkrimi}</p>
+              <p>
+                Duration: {ser.kohezgjatja} | Price: {ser.qmimi_baze} |{" "}
+                Discount: {ser.zbritja}
+              </p>
+              <p>Status: {ser.is_active ? "Active" : "Inactive"}</p>
+              <p>
+                Created: {new Date(ser.created_at).toLocaleDateString()} | Updated:{" "}
+                {new Date(ser.update_at).toLocaleDateString()}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

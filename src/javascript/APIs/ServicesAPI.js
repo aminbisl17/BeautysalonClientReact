@@ -3,8 +3,6 @@ import { TokenException } from "../Exceptions/TokenException";
 
 export async function fetchServices() {
 
-  const token = sessionStorage.getItem("accessToken");
-
   try {
     const response = await fetch(
       "http://localhost:8000/api/mixed/sherbimet/all",
@@ -27,7 +25,7 @@ export async function fetchServices() {
     return await response.json();
 
   } catch (err) {
-    ExceptionHandler.handle(err);
+ //   ExceptionHandler.handle(err);
     return [];
   }
 }
