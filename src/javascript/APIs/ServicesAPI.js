@@ -21,8 +21,23 @@ export async function fetchServices() {
     if (!response.ok) {
       throw new Error("Request failed");
     }
+const data = await response.json();
 
-    return await response.json();
+const servicesWithImages = data.map((ser) => {
+  if (ser.imagePath) {
+    return {
+      ...ser,
+      imageURL: `data:image/jpeg;base64,${ser.imagePath}`,
+    };
+  } else {
+    return {
+      ...ser,
+      imageURL: null,
+    };
+  }
+});
+
+return servicesWithImages;
 
   } catch (err) {
  //   ExceptionHandler.handle(err);

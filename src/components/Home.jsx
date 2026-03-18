@@ -6,6 +6,8 @@ import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 function Home() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
+
+
   async function loadServices() {
     try {
       setLoading(true);
@@ -34,6 +36,16 @@ function Home() {
         <div className="services-grid">
           {services.map((ser) => (
             <div className="service-card" key={ser.ID}>
+               {ser.imageURL ? (
+    <img
+      src={ser.imageURL}
+      alt="Service"
+      loading="lazy"
+      style={{ width: "80px", height: "80px", borderRadius: "50%" }}
+    />
+  ) : (
+    <div style={{ fontSize: "40px" }}>🛠️</div> // fallback avatar
+  )}
               <h2>{ser.emri_sherbimit}</h2>
               <p>{ser.pershkrimi}</p>
               <p>
