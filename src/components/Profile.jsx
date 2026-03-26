@@ -1,51 +1,35 @@
 import React, { useEffect, useState } from "react";
+import "../css/profile.css";
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    // Get user details from sessionStorage
     const storedData = sessionStorage.getItem("userDetails");
-    if (storedData) {
-      setUserData(JSON.parse(storedData));
-    }
+    if (storedData) setUserData(JSON.parse(storedData));
   }, []);
 
-  if (!userData) return <p>Loading profile...</p>;
+  if (!userData) return <p className="loading">Loading profile...</p>;
 
   return (
-    <div className="profile-container" style={{ padding: "20px" }}>
-      <h1>Profile</h1>
+    <div className="profile-container">
+      <h1>My Profile</h1>
 
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Emri:</strong> {userData.emri}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Mbiemri:</strong> {userData.mbiemri}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Username:</strong> {userData.username}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Email:</strong> {userData.email}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Gjinia:</strong> {userData.gjinia}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Numri i Telefonit:</strong> {userData.numriTelefonit}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Data e Regjistrimit:</strong>{" "}
-        {new Date(userData.dataRegjistrimit).toLocaleString()}
-      </div>
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Pershkrimi:</strong>{" "}
-        {userData.pershkrimi ? userData.pershkrimi : "Nuk ka të dhëna"}
+      <div className="profile-info">
+        <label>Emri:</label> <span>{userData.emri}</span>
+        <label>Mbiemri:</label> <span>{userData.mbiemri}</span>
+        <label>Username:</label> <span>{userData.username}</span>
+        <label>Email:</label> <span>{userData.email}</span>
+        <label>Gjinia:</label> <span>{userData.gjinia}</span>
+        <label>Numri i Telefonit:</label> <span>{userData.numriTelefonit}</span>
+        <label>Data e Regjistrimit:</label>{" "}
+        <span>{new Date(userData.dataRegjistrimit).toLocaleString()}</span>
+        <label>Pershkrimi:</label>{" "}
+        <span>{userData.pershkrimi || "Nuk ka të dhëna"}</span>
       </div>
 
-      <div style={{ marginTop: "20px" }}>
-        <strong>Client History:</strong>
+      <div className="client-history">
+        <h2>Client History</h2>
         {userData.clientHistory.length === 0 ? (
           <p>Nuk ka histori</p>
         ) : (

@@ -11,7 +11,7 @@ function Home() {
   async function loadServices() {
     try {
       setLoading(true);
-      const data = await fetchServices(); // your API call
+      const data = await fetchServices();
       setServices(data);
     } catch (err) {
       ExceptionHandler(err);
@@ -24,39 +24,42 @@ function Home() {
     loadServices();
   }, []);
 
-  return (
+   return (
     <div className="home-container">
-      <h1>Our Services</h1>
+      <div className="home-header">
+        <h1>Our Services</h1>
+        <p>Discover premium beauty treatments</p>
+      </div>
 
       {loading ? (
-        <p>Loading...</p>
+        <div className="loading">Loading...</div>
       ) : services.length === 0 ? (
-        <p>No services available</p>
+        <p className="loading">No services available</p>
       ) : (
         <div className="services-grid">
           {services.map((ser) => (
             <div className="service-card" key={ser.ID}>
-               {ser.imageURL ? (
-    <img
-      src={ser.imageURL}
-      alt="Service"
-      loading="lazy"
-      style={{ width: "80px", height: "80px", borderRadius: "50%" }}
-    />
-  ) : (
-    <div style={{ fontSize: "40px" }}>🛠️</div> // fallback avatar
-  )}
+              {ser.imageURL ? (
+                <img
+                  src={ser.imageURL}
+                  alt="Service"
+                  className="service-image"
+                />
+              ) : (
+                <div className="service-fallback">💄</div>
+              )}
+
               <h2>{ser.emri_sherbimit}</h2>
               <p>{ser.pershkrimi}</p>
-              <p>
-                Duration: {ser.kohezgjatja} | Price: {ser.qmimi_baze} |{" "}
-                Discount: {ser.zbritja}
-              </p>
-              <p>Status: {ser.is_active ? "Active" : "Inactive"}</p>
-              <p>
-                Created: {new Date(ser.created_at).toLocaleDateString()} | Updated:{" "}
-                {new Date(ser.update_at).toLocaleDateString()}
-              </p>
+
+              <div className="service-info">
+                <span>⏱ {ser.kohezgjatja}</span>
+                <span className="price">€{ser.qmimi_baze}</span>
+              </div>
+
+              {ser.zbritja > 0 && (
+                <div className="discount">-{ser.zbritja}% OFF</div>
+              )}
             </div>
           ))}
         </div>

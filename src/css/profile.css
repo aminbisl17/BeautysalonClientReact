@@ -1,0 +1,92 @@
+/* ===== Container ===== */
+.profile-container {
+  max-width: 900px;
+  margin: 100px auto 40px auto;
+  padding: 0 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+/* ===== Header ===== */
+.profile-container h1 {
+  font-size: 36px;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 40px;
+  background: linear-gradient(90deg, #ffb6c1, #ffe4ec);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== Info Grid ===== */
+.profile-info {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* label | value */
+  row-gap: 15px;
+  column-gap: 20px;
+  align-items: center;
+  margin-bottom: 40px;
+}
+
+.profile-info label {
+  font-weight: 600;
+  color: #e91e63; /* pink accent */
+  font-size: 16px;
+}
+
+.profile-info span {
+  font-weight: 400;
+  font-size: 16px;
+  color: #555;
+}
+
+/* ===== Client History ===== */
+.client-history {
+  margin-top: 20px;
+}
+
+.client-history h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #e91e63;
+}
+
+.client-history ul {
+  list-style: none;
+  padding: 0;
+}
+
+.client-history li {
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  background: #fff0f5;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #333;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.client-history li:hover {
+  transform: translateX(5px);
+  background: #ffe4ec;
+}
+
+/* ===== Loading ===== */
+.loading {
+  text-align: center;
+  font-size: 18px;
+  color: #777;
+  padding: 40px 0;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 600px) {
+  .profile-info {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-info label {
+    margin-bottom: 4px;
+  }
+}

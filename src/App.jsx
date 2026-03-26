@@ -16,8 +16,7 @@ function App() {
   return (
     <div>
       <Navigation onNavClick={handleNavClick} />
-
-      <div style={{ marginTop: "80px", padding: "20px" }}>
+      <div>
         {view === "home" && <Home />}
         {view === "about" && <About />}
         {view === "login" && <LoginView />}
