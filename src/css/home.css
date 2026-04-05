@@ -1,182 +1,149 @@
-/* ===== Container ===== */
+/* =========================
+   GLOBAL HOME
+========================= */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+  background: #f5f7fb;
+  color: #111827;
+}
+
+/* Container */
 .home-container {
-  min-height: 100vh;
-  padding: 100px 20px 40px 20px; /* top padding = navbar height + extra spacing */
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-
-  /* Background: soft gradient + subtle pattern */
-  background: linear-gradient(135deg, #fff0f5 0%, #ffe4ec 50%, #ffffff 100%);
-  position: relative;
-  overflow: hidden;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px;
 }
 
-/* Optional: overlay abstract shapes behind content */
-.home-container::before {
-  content: '';
-  position: absolute;
-  top: -100px;
-  left: -50px;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(255,182,193,0.4) 0%, rgba(255,182,193,0) 70%);
-  border-radius: 50%;
-  z-index: 0;
-}
-
-.home-container::after {
-  content: '';
-  position: absolute;
-  bottom: -150px;
-  right: -100px;
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(255,192,203,0.3) 0%, rgba(255,192,203,0) 70%);
-  border-radius: 50%;
-  z-index: 0;
-}
-
-/* ===== Header ===== */
+/* =========================
+   HEADER
+========================= */
 .home-header {
   text-align: center;
-  margin-bottom: 40px;
-  position: relative; /* so text stays above background shapes */
-  z-index: 1;
+  margin-bottom: 30px;
 }
 
 .home-header h1 {
-  font-size: 36px;
-  color: #333;
-  margin-bottom: 8px;
-  font-weight: 600;
+  font-size: 34px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  letter-spacing: -0.5px;
 }
 
 .home-header p {
-  color: #777;
-  font-size: 18px;
+  color: #6b7280;
+  font-size: 15px;
 }
 
-/* ===== Services Horizontal Scroll ===== */
-.services-grid {
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  padding-bottom: 10px;
-  scroll-behavior: smooth;
-  -webkit-overflow-scrolling: touch;
-  position: relative; /* above background */
-  z-index: 1;
-}
-
-.services-grid::-webkit-scrollbar {
-  height: 8px;
-}
-
-.services-grid::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 10px;
-}
-
-/* ===== Card ===== */
-.service-card {
-  min-width: 260px;
-  max-width: 260px;
-  flex-shrink: 0;
-  background: rgba(255, 255, 255, 0.95); /* slightly translucent for soft background */
-  border-radius: 20px;
-  padding: 25px 20px;
+/* =========================
+   LOADING
+========================= */
+.loading {
   text-align: center;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  backdrop-filter: blur(5px); /* soft blur effect behind cards */
+  margin-top: 40px;
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* =========================
+   SERVICES GRID
+========================= */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+}
+
+/* =========================
+   SERVICE CARD
+========================= */
+.service-card {
+  background: white;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  border: 1px solid #eef0f3;
+  transition: all 0.25s ease;
+  position: relative;
 }
 
 .service-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transform: translateY(-6px);
+  box-shadow: 0 25px 60px rgba(0,0,0,0.12);
 }
 
-/* ===== Image ===== */
+/* Image */
 .service-image {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
+  width: 100%;
+  height: 180px;
   object-fit: cover;
-  border: 4px solid #ffe4ec;
-  margin-bottom: 15px;
+  display: block;
 }
 
+/* Fallback icon */
 .service-fallback {
-  width: 90px;
-  height: 90px;
-  background: #ffe4ec;
-  border-radius: 50%;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
-  margin: 0 auto 15px;
+  font-size: 42px;
+  background: linear-gradient(135deg, #fce7f3, #e0e7ff);
 }
 
-/* ===== Title ===== */
+/* Title */
 .service-card h2 {
-  font-size: 20px;
-  color: #333;
-  margin-bottom: 10px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 14px 14px 6px;
 }
 
-/* ===== Description ===== */
+/* Description */
 .service-card p {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 12px;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 14px 10px;
+  line-height: 1.4;
 }
 
-/* ===== Info Row ===== */
+/* Info row */
 .service-info {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
-  margin-bottom: 10px;
+  padding: 10px 14px 14px;
+  font-size: 13px;
+  color: #374151;
 }
 
 .price {
-  color: #e91e63;
-  font-weight: bold;
+  font-weight: 700;
+  color: #111827;
 }
 
-/* ===== Discount Badge ===== */
+/* =========================
+   DISCOUNT BADGE
+========================= */
 .discount {
-  display: inline-block;
-  background: #ffe4ec;
-  color: #e91e63;
-  padding: 5px 12px;
-  border-radius: 20px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #ef4444;
+  color: white;
   font-size: 12px;
-  margin-bottom: 10px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 999px;
+  box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
 }
 
-/* ===== Loading ===== */
-.loading {
-  text-align: center;
-  padding: 50px;
-  font-size: 18px;
-  color: #777;
-}
-
-/* ===== Responsive tweaks ===== */
+/* =========================
+   RESPONSIVE
+========================= */
 @media (max-width: 600px) {
-  .service-card {
-    min-width: 220px;
-    max-width: 220px;
-    padding: 20px 16px;
-  }
-
   .home-header h1 {
-    font-size: 28px;
+    font-size: 26px;
   }
 
-  .home-header p {
-    font-size: 16px;
+  .service-image {
+    height: 160px;
   }
 }

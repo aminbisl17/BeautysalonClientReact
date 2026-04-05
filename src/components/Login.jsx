@@ -177,22 +177,66 @@ const handleRegister = async (e) => {
 
   if (loading) return <p>Checking session...</p>;
 
-  // Profile view
   if (view === "profile" && userData) {
-    return (
-      <div className="profile-container" style={{ padding: "20px" }}>
-        <h1>Profile</h1>
-        <button onClick={handleLogout}>Logout</button>
-        <div><strong>Emri:</strong> {userData.emri}</div>
-        <div><strong>Mbiemri:</strong> {userData.mbiemri}</div>
-        <div><strong>Username:</strong> {userData.username}</div>
-        <div><strong>Email:</strong> {userData.email}</div>
-        <div><strong>Gjinia:</strong> {userData.gjinia}</div>
-        <div><strong>Numri i Telefonit:</strong> {userData.numriTelefonit}</div>
-        <div><strong>Data e Regjistrimit:</strong> {new Date(userData.dataRegjistrimit).toLocaleString()}</div>
-        <div><strong>Pershkrimi:</strong> {userData.pershkrimi || "Nuk ka të dhëna"}</div>
+ return (
+    <div className="profile-wrapper">
+      <div className="profile-card">
+        
+        <div className="profile-header">
+          <h1>My Profile</h1>
+          <button onClick={handleLogout} className="logout-btn">
+            Logout
+          </button>
+        </div>
+
+        <div className="profile-grid">
+          <div className="profile-item">
+            <span className="label">Emri</span>
+            <span className="value">{userData.emri}</span>
+          </div>
+
+          <div className="profile-item">
+            <span className="label">Mbiemri</span>
+            <span className="value">{userData.mbiemri}</span>
+          </div>
+
+          <div className="profile-item">
+            <span className="label">Username</span>
+            <span className="value">{userData.username}</span>
+          </div>
+
+          <div className="profile-item">
+            <span className="label">Email</span>
+            <span className="value">{userData.email}</span>
+          </div>
+
+          <div className="profile-item">
+            <span className="label">Gjinia</span>
+            <span className="value">{userData.gjinia}</span>
+          </div>
+
+          <div className="profile-item">
+            <span className="label">Numri i Telefonit</span>
+            <span className="value">{userData.numriTelefonit}</span>
+          </div>
+
+          <div className="profile-item">
+            <span className="label">Regjistruar</span>
+            <span className="value">
+              {new Date(userData.dataRegjistrimit).toLocaleString()}
+            </span>
+          </div>
+
+          <div className="profile-item full">
+            <span className="label">Përshkrimi</span>
+            <span className="value">
+              {userData.pershkrimi || "Nuk ka të dhëna"}
+            </span>
+          </div>
+        </div>
       </div>
-    );
+    </div>
+  );
   }
 
   // Verification form
