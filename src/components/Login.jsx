@@ -3,13 +3,21 @@ import "../css/login.css";
 import {jwtDecode} from "jwt-decode";
 
 function LoginView() {
-  const [view, setView] = useState("login"); // login, profile, register, verify
+  
+  const [view, setView] = useState(() => {
+  const storedUser = sessionStorage.getItem("userDetails");
+  const token = sessionStorage.getItem("accessToken");
+
+  if (storedUser && token) return "profile";
+  return "checking";
+});
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [userData, setUserData] = useState(null);
-
+   
   // Registration state
   const [regData, setRegData] = useState({
     emri: "",
@@ -26,44 +34,51 @@ function LoginView() {
   const [verificationCode, setVerificationCode] = useState("");
   const [tempUsername, setTempUsername] = useState(""); // store username for verification
 
-  // Auto-login
-  useEffect(() => {
-    const autoLogin = async () => {
-      try {
-        const res = await fetch(
-          "http://localhost:8000/auth/refresh-token",
-          { method: "POST", credentials: "include" }
-        );
-        if (!res.ok) return setLoading(false);
+useEffect(() => {
+  const autoLogin = async () => {
+    try {
+      const res = await fetch("http://localhost:8000/auth/refresh-token", {
+        method: "POST",
+        credentials: "include",
+      });
 
-        const data = await res.json();
-        sessionStorage.setItem("accessToken", data.accessToken);
-
-        const clientId = jwtDecode(data.accessToken).id;
-
-        const userRes = await fetch(
-          `http://localhost:8000/api/clients/${clientId}`,
-          {
-            headers: { Authorization: `Bearer ${data.accessToken}` },
-            credentials: "include",
-          }
-        );
-
-        if (!userRes.ok) return setLoading(false);
-
-        const userInfo = await userRes.json();
-        sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-        setUserData(userInfo);
-        setView("profile");
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        setView("login");
+        return;
       }
-    };
-    autoLogin();
-  }, []);
 
+      const data = await res.json();
+      sessionStorage.setItem("accessToken", data.accessToken);
+
+      const clientId = jwtDecode(data.accessToken).id;
+
+      const userRes = await fetch(
+        `http://localhost:8000/api/clients/${clientId}`,
+        {
+          headers: { Authorization: `Bearer ${data.accessToken}` },
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) {
+  sessionStorage.clear();
+  setView("login");
+  return;
+}
+
+      const userInfo = await userRes.json();
+      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+      setUserData(userInfo);
+      setView("profile");
+    } catch (err) {
+      console.error(err);
+      setView("login");
+    }
+  };
+
+  autoLogin();
+}, []);
   // Manual login
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -90,7 +105,11 @@ function LoginView() {
         }
       );
 
-      if (!userRes.ok) return setError("Failed to fetch user data!");
+      if (!userRes.ok) {
+  sessionStorage.clear();
+  setView("login");
+  return;
+}
 
       const userInfo = await userRes.json();
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
@@ -175,7 +194,7 @@ const handleRegister = async (e) => {
   }
 };
 
-  if (loading) return <p>Checking session...</p>;
+if (view === "checking") return <p>Checking session...</p>;
 
   if (view === "profile" && userData) {
  return (
