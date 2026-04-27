@@ -3,7 +3,7 @@ import Navigation from './components/Navigation';
 import Home from './components/Home';
 import LoginView from "./components/Login";
 import About from './components/AboutUs';
-
+import "bootstrap/dist/css/bootstrap.min.css";
 function App() {
   const [view, setView] = useState("home");
 
