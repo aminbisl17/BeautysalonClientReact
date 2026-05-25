@@ -14,8 +14,7 @@ function LoginView() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+const [numriTelefonit, setNumriTelefonit] = useState("");
   const [userData, setUserData] = useState(null);
    
   // Registration state
@@ -23,11 +22,10 @@ function LoginView() {
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
-    pershkrimi: "",
     email: "",
     gjinia: "m",
-    username: "",
-    password: "",
+ //   username: "",
+  //  password: "",
   });
 
   // Verification code
@@ -60,7 +58,7 @@ useEffect(() => {
         }
       );
 
-      if (!res.ok) {
+      if (!userRes.ok) {
   sessionStorage.clear();
   setView("login");
   return;
@@ -80,55 +78,96 @@ useEffect(() => {
   autoLogin();
 }, []);
   // Manual login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      const res = await fetch("http://localhost:8000/auth/login/client", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include",
-      });
-      if (res.status === 401) return setError("Invalid username or password");
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setError("");
 
-      const data = await res.json();
-      if (!data.ID || !data.token) return setError("Client does not exist");
+  try {
 
-      sessionStorage.setItem("accessToken", data.token);
+    const res = await fetch("http://localhost:8000/auth/login/client", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+      numri_telefonit: numriTelefonit
+      }),
+      credentials: "include",
+    });
 
-      const userRes = await fetch(
-        `http://localhost:8000/api/clients/${data.ID}`,
-        {
-          headers: { Authorization: `Bearer ${data.token}` },
-          credentials: "include",
-        }
-      );
+    const text = await res.text();
 
-      if (!userRes.ok) {
-  sessionStorage.clear();
-  setView("login");
-  return;
-}
-
-      const userInfo = await userRes.json();
-      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-      setUserData(userInfo);
-      setView("profile");
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong.");
+    if (!res.ok) {
+      setError(text || "Phone number not found");
+      return;
     }
-  };
+
+    // go to OTP screen
+    setView("verify-login");
+
+  } catch (err) {
+    console.error(err);
+    setError("Couldn't connect to server.");
+  }
+};
+
+const handleLoginVerify = async (e) => {
+  e.preventDefault();
+  setError("");
+
+  try {
+    const res = await fetch("http://localhost:8000/auth/login/client/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+
+        otp: verificationCode,
+      }),
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      setError(text || "Invalid OTP");
+      //console.log(res.status);
+      return;
+    }
+
+    const data = await res.json(); 
+    // expecting { token: "..." }
+
+    sessionStorage.setItem("accessToken", data.token);
+
+    const decoded = jwtDecode(data.token);
+    const userId = decoded.id;
+
+    const userRes = await fetch(
+      `http://localhost:8000/api/clients/${userId}`,
+      {
+        headers: { Authorization: `Bearer ${data.token}` },
+      }
+    );
+
+    const userInfo = await userRes.json();
+
+    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+    setUserData(userInfo);
+    setView("profile");
+
+  } catch (err) {
+    console.error(err);
+    setError("OTP verification failed.");
+  }
+};
 
   // Logout
   const handleLogout = () => {
     sessionStorage.clear();
     setUserData(null);
-    setUsername("");
-    setPassword("");
+   // setUsername("");
+   // setPassword("");
     setView("login");
   };
+
+
 const handleRegister = async (e) => {
   e.preventDefault();
   setError("");
@@ -148,7 +187,7 @@ const handleRegister = async (e) => {
     }
 
     // Registration successful, backend sent "Client applied"
-    console.log(text); // "Client applied"
+//    console.log(text); // "Client applied"
 
     // Move to verification form
     setTempUsername(regData.username);
@@ -170,7 +209,6 @@ const handleRegister = async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         otpcode: verificationCode,
-        username: tempUsername,
       }),
       credentials: "include",
     });
@@ -183,9 +221,6 @@ const handleRegister = async (e) => {
 
     alert("Verification successful! Please login now.");
     setView("login");           // back to login form
-    setUsername(tempUsername);  // optionally prefill username
-    setPassword("");
-    setTempUsername("");
     setVerificationCode("");
 
   } catch (err) {
@@ -220,11 +255,6 @@ if (view === "checking") return <p>Checking session...</p>;
           </div>
 
           <div className="profile-item">
-            <span className="label">Username</span>
-            <span className="value">{userData.username}</span>
-          </div>
-
-          <div className="profile-item">
             <span className="label">Email</span>
             <span className="value">{userData.email}</span>
           </div>
@@ -243,13 +273,6 @@ if (view === "checking") return <p>Checking session...</p>;
             <span className="label">Regjistruar</span>
             <span className="value">
               {new Date(userData.dataRegjistrimit).toLocaleString()}
-            </span>
-          </div>
-
-          <div className="profile-item full">
-            <span className="label">Përshkrimi</span>
-            <span className="value">
-              {userData.pershkrimi || "Nuk ka të dhëna"}
             </span>
           </div>
         </div>
@@ -287,7 +310,7 @@ if (view === "checking") return <p>Checking session...</p>;
         <h1>Create Account</h1>
         <form onSubmit={handleRegister}>
           {error && <p className="error-message">{error}</p>}
-          {["emri","mbiemri","numri_telefonit","pershkrimi","email","username","password"].map((field) => (
+          {["emri","mbiemri","numri_telefonit","email","username","password"].map((field) => (
             <div key={field} className="form-group">
               <label>{field}</label>
               <input
@@ -327,42 +350,51 @@ if (view === "checking") return <p>Checking session...</p>;
     );
   }
 
-  // Login form
+  if (view === "verify-login") {
   return (
     <div className="login-container">
-      <h1>Login</h1>
-      <form onSubmit={handleLogin}>
+      <h1>Enter OTP (Login)</h1>
+
+      <form onSubmit={handleLoginVerify}>
         {error && <p className="error-message">{error}</p>}
+
         <div className="form-group">
-          <label>Username</label>
+          <label>OTP Code</label>
           <input
             type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            value={verificationCode}
+            onChange={(e) => setVerificationCode(e.target.value)}
             required
           />
         </div>
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+
         <button type="submit">Login</button>
       </form>
-      <p style={{ marginTop: "10px" }}>
-        Don't have an account?{" "}
-        <span
-          style={{ color: "blue", cursor: "pointer" }}
-          onClick={() => setView("register")}
-        >
-          Create Account
-        </span>
-      </p>
     </div>
+  );
+}
+
+  // Login form
+  return (
+  <div className="login-container">
+  <h1>Login</h1>
+
+  <form onSubmit={handleLogin}>
+    {error && <p className="error-message">{error}</p>}
+
+    <div className="form-group">
+      <label>Numri i telefonit</label>
+   <input
+  type="text"
+  value={numriTelefonit}
+  onChange={(e) => setNumriTelefonit(e.target.value)}
+  required
+/>
+    </div>
+
+    <button type="submit">Send OTP</button>
+  </form>
+</div>
   );
 }
 

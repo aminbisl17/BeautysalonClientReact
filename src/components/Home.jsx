@@ -40,6 +40,7 @@ function Home() {
     }
   };
 
+ 
   return (
     <div>
 
@@ -113,66 +114,72 @@ function Home() {
           </div>
         )}
 
+          
         <div className="row g-4">
 
-          {filtered.map((ser) => (
-            <div className="col-md-4" key={ser.ID}>
+  {filtered.length > 0 ? (
+    filtered.map((ser) => (
+      <div className="col-md-4" key={ser.ID}>
+        <div className="card border-0 shadow-sm h-100">
 
-              <div className="card border-0 shadow-sm h-100">
-
-                {/* IMAGE */}
-                {ser.imageURL ? (
-                  <img
-                    src={ser.imageURL}
-                    className="card-img-top"
-                    style={{ height: "220px", objectFit: "cover" }}
-                    alt="service"
-                  />
-                ) : (
-                  <div className="bg-light d-flex align-items-center justify-content-center"
-                    style={{ height: "220px", fontSize: "40px" }}>
-                    💇‍♀️
-                  </div>
-                )}
-
-                <div className="card-body">
-
-                  <h5 className="fw-bold">{ser.emri_sherbimit}</h5>
-
-                  <p className="text-muted small">
-                    {ser.pershkrimi}
-                  </p>
-
-                  <div className="d-flex justify-content-between align-items-center">
-
-                    <span className="badge bg-secondary">
-                      ⏱ {ser.kohezgjatja}
-                    </span>
-
-                    <span className="fw-bold text-primary">
-                      €{ser.qmimi_baze}
-                    </span>
-
-                  </div>
-
-                  {ser.zbritja > 0 && (
-                    <span className="badge bg-danger mt-2">
-                      -{ser.zbritja}% OFF
-                    </span>
-                  )}
-
-                  <button className="btn btn-outline-primary w-100 mt-3">
-                    Book Now
-                  </button>
-
-                </div>
-
-              </div>
-
+          {/* IMAGE */}
+          {ser.imageURL ? (
+            <img
+              src={ser.imageURL}
+              className="card-img-top"
+              style={{ height: "220px", objectFit: "cover" }}
+              alt="service"
+            />
+          ) : (
+            <div
+              className="bg-light d-flex align-items-center justify-content-center"
+              style={{ height: "220px", fontSize: "40px" }}
+            >
+              💇‍♀️
             </div>
-          ))}
+          )}
+
+          <div className="card-body">
+            <h5 className="fw-bold">{ser.emri_sherbimit}</h5>
+
+            <p className="text-muted small">
+              {ser.pershkrimi}
+            </p>
+
+            <div className="d-flex justify-content-between align-items-center">
+              <span className="badge bg-secondary">
+                ⏱ {ser.kohezgjatja}
+              </span>
+
+              <span className="fw-bold text-primary">
+                €{ser.qmimi_baze}
+              </span>
+            </div>
+
+            {ser.zbritja > 0 && (
+              <span className="badge bg-danger mt-2">
+                -{ser.zbritja}% OFF
+              </span>
+            )}
+
+            <button className="btn btn-outline-primary w-100 mt-3">
+              Book Now
+            </button>
+          </div>
 
         </div>
+      </div>
+    ))
+  ) : (
+    <div className="col-12 text-center py-5">
+      <h4 className="text-muted">No services available</h4>
+      <p className="text-secondary">
+        There are currently no services to display.
+      </p>
+    </div>
+  )}
+
+</div>
 
       </div>
 
