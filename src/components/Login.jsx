@@ -30,17 +30,18 @@ const [numriTelefonit, setNumriTelefonit] = useState("");
 
   // Verification code
   const [verificationCode, setVerificationCode] = useState("");
-  const [tempUsername, setTempUsername] = useState(""); // store username for verification
 
 useEffect(() => {
   const autoLogin = async () => {
     try {
+      console.log("works")
       const res = await fetch("http://localhost:8000/auth/refresh-token", {
         method: "POST",
         credentials: "include",
       });
 
       if (!res.ok) {
+          sessionStorage.clear();
         setView("login");
         return;
       }
@@ -51,7 +52,7 @@ useEffect(() => {
       const clientId = jwtDecode(data.accessToken).id;
 
       const userRes = await fetch(
-        `http://localhost:8000/api/clients/${clientId}`,
+        "http://localhost:8000/api/clients/data",
         {
           headers: { Authorization: `Bearer ${data.accessToken}` },
           credentials: "include",
@@ -140,7 +141,7 @@ const handleLoginVerify = async (e) => {
     const userId = decoded.id;
 
     const userRes = await fetch(
-      `http://localhost:8000/api/clients/${userId}`,
+      "http://localhost:8000/api/clients/data",
       {
         headers: { Authorization: `Bearer ${data.token}` },
       }
@@ -159,12 +160,33 @@ const handleLoginVerify = async (e) => {
 };
 
   // Logout
-  const handleLogout = () => {
+  const handleLogout = async () => {
     sessionStorage.clear();
     setUserData(null);
-   // setUsername("");
-   // setPassword("");
-    setView("login");
+ 
+      try {
+    const res = await fetch("http://localhost:8000/auth/delete-refresh-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+    });
+
+    const text = await res.text(); // read response as text
+
+    if (!res.ok) {
+//      setError(text || "Registration failed");
+      return;
+    }
+
+    // Registration successful, backend sent "Client applied"
+//    console.log(text); // "Client applied"
+  //  setVerificationCode("");
+   // setView("verify");
+ setView("login");
+  } catch (err) {
+    console.error(err);
+  
+  }
   };
 
 
@@ -188,9 +210,6 @@ const handleRegister = async (e) => {
 
     // Registration successful, backend sent "Client applied"
 //    console.log(text); // "Client applied"
-
-    // Move to verification form
-    setTempUsername(regData.username);
     setVerificationCode("");
     setView("verify");
 
