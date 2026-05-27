@@ -5,7 +5,7 @@ export async function fetchServices() {
 
   try {
     const response = await fetch(
-      "http://localhost:8000/api/mixed/sherbimet/all",
+      "http://192.168.100.116:8000/api/mixed/sherbimet/all",
       {
         method: "GET"
      //   headers: {
@@ -49,7 +49,7 @@ export async function fetchServiceAtributes(ID) {
 
   try {
     const response = await fetch(
-      `http://localhost:8000/api/mixed/sherbimet/atributet/${ID}`,
+      `http://192.168.100.116:8000/api/mixed/sherbimet/atributet/${ID}`,
       {
         method: "GET",
         headers: {

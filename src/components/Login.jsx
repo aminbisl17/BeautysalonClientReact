@@ -30,17 +30,19 @@ const [numriTelefonit, setNumriTelefonit] = useState("");
 
   // Verification code
   const [verificationCode, setVerificationCode] = useState("");
+  const [showHistoria, setShowHistoria] = useState(false);
 
 useEffect(() => {
   const autoLogin = async () => {
     try {
       console.log("works")
-      const res = await fetch("http://localhost:8000/auth/refresh-token", {
+      const res = await fetch("http://192.168.100.116:8000/auth/refresh-token", {
         method: "POST",
         credentials: "include",
       });
 
       if (!res.ok) {
+            console.log("refresh");
           sessionStorage.clear();
         setView("login");
         return;
@@ -52,7 +54,7 @@ useEffect(() => {
       const clientId = jwtDecode(data.accessToken).id;
 
       const userRes = await fetch(
-        "http://localhost:8000/api/clients/data",
+        "http://192.168.100.116:8000/api/clients/data",
         {
           headers: { Authorization: `Bearer ${data.accessToken}` },
           credentials: "include",
@@ -60,6 +62,7 @@ useEffect(() => {
       );
 
       if (!userRes.ok) {
+        console.log("user");
   sessionStorage.clear();
   setView("login");
   return;
@@ -85,7 +88,7 @@ const handleLogin = async (e) => {
 
   try {
 
-    const res = await fetch("http://localhost:8000/auth/login/client", {
+    const res = await fetch("http://192.168.100.116:8000/auth/login/client", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -115,7 +118,7 @@ const handleLoginVerify = async (e) => {
   setError("");
 
   try {
-    const res = await fetch("http://localhost:8000/auth/login/client/verify", {
+    const res = await fetch("http://192.168.100.116:8000/auth/login/client/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -141,7 +144,7 @@ const handleLoginVerify = async (e) => {
     const userId = decoded.id;
 
     const userRes = await fetch(
-      "http://localhost:8000/api/clients/data",
+      "http://192.168.100.116:8000/api/clients/data",
       {
         headers: { Authorization: `Bearer ${data.token}` },
       }
@@ -165,7 +168,7 @@ const handleLoginVerify = async (e) => {
     setUserData(null);
  
       try {
-    const res = await fetch("http://localhost:8000/auth/delete-refresh-token", {
+    const res = await fetch("http://192.168.100.116:8000/auth/delete-refresh-token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -194,7 +197,7 @@ const handleRegister = async (e) => {
   e.preventDefault();
   setError("");
   try {
-    const res = await fetch("http://localhost:8000/api/clients/register", {
+    const res = await fetch("http://192.168.100.116:8000/api/clients/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(regData),
@@ -223,7 +226,7 @@ const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
     try {
-      const res = await fetch("http://localhost:8000/api/clients/verify", {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -251,53 +254,150 @@ const handleRegister = async (e) => {
 if (view === "checking") return <p>Checking session...</p>;
 
   if (view === "profile" && userData) {
- return (
-    <div className="profile-wrapper">
-      <div className="profile-card">
-        
-        <div className="profile-header">
-          <h1>My Profile</h1>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
-          </button>
-        </div>
+return (
+  <>
+    <div className="container py-5">
 
-        <div className="profile-grid">
-          <div className="profile-item">
-            <span className="label">Emri</span>
-            <span className="value">{userData.emri}</span>
+      <div className="row justify-content-center">
+        <div className="col-12 col-md-8 col-lg-6">
+
+          {/* MAIN CARD */}
+          <div className="profile-card-modern shadow-lg">
+
+            {/* HEADER */}
+            <div className="profile-header-modern">
+
+              <div className="avatar-modern">
+                {userData.emri?.charAt(0)}
+                {userData.mbiemri?.charAt(0)}
+              </div>
+
+              <div className="profile-name-block">
+                <h3>{userData.emri} {userData.mbiemri}</h3>
+              </div>
+
+            </div>
+
+            <hr />
+
+            {/* INFO GRID */}
+            <div className="info-grid">
+
+              <div className="info-item">
+                <span className="info-label">Gender</span>
+                <span className="info-value">{userData.gjinia}</span>
+              </div>
+
+              <div className="info-item">
+                <span className="info-label">Phone</span>
+                <span className="info-value">{userData.numriTelefonit}</span>
+              </div>
+
+              <div className="info-item full">
+                <span className="info-label">Email</span>
+                <span className="info-value">{userData.email}</span>
+              </div>
+
+              <div className="info-item full">
+                <span className="info-label">Registered</span>
+                <span className="info-value">
+                  {new Date(userData.dataRegjistrimit).toLocaleDateString()}
+                </span>
+              </div>
+
+            </div>
+
+            {/* ACTIONS */}
+            <div className="profile-actions">
+
+              <button
+                className="btn btn-primary w-100"
+                onClick={() => setShowHistoria(true)}
+              >
+                Historia
+              </button>
+
+              <button onClick={handleLogout} className="btn btn-danger w-100">
+                Logout
+              </button>
+
+            </div>
+
           </div>
 
-          <div className="profile-item">
-            <span className="label">Mbiemri</span>
-            <span className="value">{userData.mbiemri}</span>
-          </div>
-
-          <div className="profile-item">
-            <span className="label">Email</span>
-            <span className="value">{userData.email}</span>
-          </div>
-
-          <div className="profile-item">
-            <span className="label">Gjinia</span>
-            <span className="value">{userData.gjinia}</span>
-          </div>
-
-          <div className="profile-item">
-            <span className="label">Numri i Telefonit</span>
-            <span className="value">{userData.numriTelefonit}</span>
-          </div>
-
-          <div className="profile-item">
-            <span className="label">Regjistruar</span>
-            <span className="value">
-              {new Date(userData.dataRegjistrimit).toLocaleString()}
-            </span>
-          </div>
         </div>
       </div>
+
     </div>
-  );
+
+    {/* MODAL OUTSIDE CONTAINER BUT STILL INSIDE RETURN */}
+ {showHistoria && (
+  <div className="modal-backdrop-custom">
+    <div className="modal-box">
+
+      {/* HEADER */}
+      <div className="modal-header">
+        <h5 className="m-0">Historia</h5>
+        <button
+          className="btn-close"
+          onClick={() => setShowHistoria(false)}
+        />
+      </div>
+
+      {/* BODY WITH TABLE */}
+      <div className="modal-body">
+
+        <div className="table-responsive">
+          <table className="table table-hover align-middle">
+
+            <thead className="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Service</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              <tr>
+                <td>2026-05-20</td>
+                <td>Haircut</td>
+                <td><span className="badge bg-success">Done</span></td>
+              </tr>
+
+              <tr>
+                <td>2026-05-18</td>
+                <td>Shaving</td>
+                <td><span className="badge bg-warning text-dark">Pending</span></td>
+              </tr>
+
+              <tr>
+                <td>2026-05-15</td>
+                <td>Beard Trim</td>
+                <td><span className="badge bg-success">Done</span></td>
+              </tr>
+            </tbody>
+
+          </table>
+        </div>
+
+      </div>
+
+      {/* FOOTER */}
+      <div className="modal-footer">
+        <button
+          className="btn btn-secondary w-100"
+          onClick={() => setShowHistoria(false)}
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+)}
+  </>
+);
   }
 
   // Verification form

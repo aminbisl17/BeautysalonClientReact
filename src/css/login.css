@@ -9,6 +9,206 @@ body {
 }
 
 /* =========================
+   PROFILE BASE (ALL DEVICES)
+========================= */
+
+
+/* =========================
+   MODERN PROFILE CARD
+========================= */
+
+.profile-card-modern {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid #eef0f3;
+}
+
+/* HEADER */
+.profile-header-modern {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* AVATAR */
+.avatar-modern {
+  width: 70px;
+  height: 70px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  font-weight: 700;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+}
+
+/* NAME BLOCK */
+.profile-name-block h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.profile-name-block p {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.profile-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-actions .btn {
+  border-radius: 12px;
+  padding: 12px;
+  font-weight: 600;
+}
+
+/* INFO GRID */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.info-item {
+  background: #f9fafb;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid #eef0f3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-item.full {
+  grid-column: span 2;
+}
+
+.info-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ACTIONS */
+.profile-actions {
+  margin-top: 20px;
+}
+
+.info-value {
+  word-break: break-word;
+}
+
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-box {
+  width: 90%;
+ max-width: 600px;
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.modal-body {
+  padding: 10px 0;
+  font-size: 14px;
+  color: #111827;
+}
+
+.modal-footer {
+  margin-top: 10px;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.table {
+  margin-bottom: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.table td {
+  font-size: 14px;
+}
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 768px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-header-modern {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.login-container p {
+  text-align: center;
+  font-size: 13px;
+}
+
+.login-container span {
+  color: #6366f1;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.login-container span:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================
    COMMON CONTAINER (LOGIN/REGISTER/VERIFY)
 ========================= */
 .login-container {
@@ -95,128 +295,4 @@ button:hover {
   margin-bottom: 12px;
   font-size: 13px;
   text-align: center;
-}
-
-/* =========================
-   PROFILE (MODERN DASHBOARD)
-========================= */
-.profile-wrapper {
-  display: flex;
-  justify-content: center;
-  padding: 40px 20px;
-}
-
-.profile-card {
-  width: 100%;
-  max-width: 850px;
-  background: white;
-  border-radius: 20px;
-  padding: 26px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-  border: 1px solid #eef0f3;
-}
-
-/* Header */
-.profile-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 22px;
-}
-
-.profile-header h1 {
-  font-size: 28px;
-  font-weight: 800;
-}
-
-/* Logout */
-.logout-btn {
-  background: #ef4444;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: none;
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-  width: auto;
-}
-
-.logout-btn:hover {
-  background: #dc2626;
-  transform: scale(1.05);
-}
-
-/* Grid */
-.profile-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-/* Item cards */
-.profile-item {
-  background: #f9fafb;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid #eef0f3;
-  display: flex;
-  flex-direction: column;
-  transition: 0.2s;
-}
-
-.profile-item:hover {
-  transform: translateY(-2px);
-  background: #f3f4f6;
-}
-
-.profile-item.full {
-  grid-column: span 2;
-}
-
-/* Labels */
-.label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7280;
-  text-transform: uppercase;
-  margin-bottom: 5px;
-}
-
-/* Values */
-.value {
-  font-size: 15px;
-  font-weight: 500;
-  color: #111827;
-}
-
-/* =========================
-   LINKS (REGISTER / LOGIN SWITCH)
-========================= */
-.login-container p {
-  text-align: center;
-  font-size: 13px;
-}
-
-.login-container span {
-  color: #6366f1;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.login-container span:hover {
-  text-decoration: underline;
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 600px) {
-  .profile-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-item.full {
-    grid-column: span 1;
-  }
 }
