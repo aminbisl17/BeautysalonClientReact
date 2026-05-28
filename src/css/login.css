@@ -180,8 +180,11 @@ body {
 /* =========================
    RESPONSIVE
 ========================= */
-
 @media (max-width: 768px) {
+  html {
+  -webkit-text-size-adjust: 100%;
+}
+
   .info-grid {
     grid-template-columns: 1fr;
   }
@@ -189,6 +192,31 @@ body {
   .profile-header-modern {
     flex-direction: column;
     text-align: center;
+  }
+
+  /* IMPORTANT: prevent mobile zoom on inputs */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* prevent horizontal overflow */
+  .container,
+  .login-container {
+    width: 100%;
+    padding: 10px;
+    overflow-x: hidden;
+  }
+
+  /* better spacing on mobile */
+  .profile-card-modern {
+    padding: 15px;
+  }
+
+  /* make buttons easier to tap */
+  button {
+    min-height: 44px;
   }
 }
 
@@ -252,10 +280,9 @@ body {
   border: 1px solid #e5e7eb;
   outline: none;
   transition: 0.2s;
-  font-size: 14px;
+  font-size: 16px; /* 🔥 FIX HERE */
   background: #f9fafb;
 }
-
 .form-group input:focus,
 .form-group select:focus {
   border-color: #6366f1;

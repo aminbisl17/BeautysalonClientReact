@@ -7,28 +7,23 @@ function LoginView() {
   const [view, setView] = useState(() => {
   const storedUser = sessionStorage.getItem("userDetails");
   const token = sessionStorage.getItem("accessToken");
-
   if (storedUser && token) return "profile";
   return "checking";
 });
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 const [numriTelefonit, setNumriTelefonit] = useState("");
   const [userData, setUserData] = useState(null);
-   
-  // Registration state
+
   const [regData, setRegData] = useState({
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
     email: "",
     gjinia: "m",
- //   username: "",
-  //  password: "",
-  });
 
-  // Verification code
+  });
+const [phoneError, setPhoneError] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [showHistoria, setShowHistoria] = useState(false);
 
@@ -43,7 +38,7 @@ useEffect(() => {
 
       if (!res.ok) {
             console.log("refresh");
-          sessionStorage.clear();
+        sessionStorage.clear();
         setView("login");
         return;
       }
@@ -92,7 +87,7 @@ const handleLogin = async (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-      numri_telefonit: numriTelefonit
+      numri_telefonit: `+383${numriTelefonit}`
       }),
       credentials: "include",
     });
@@ -113,54 +108,36 @@ const handleLogin = async (e) => {
   }
 };
 
-const handleLoginVerify = async (e) => {
-  e.preventDefault();
-  setError("");
 
-  try {
-    const res = await fetch("http://192.168.100.116:8000/auth/login/client/verify", {
+  const handleVerify = async (e) => {
+    e.preventDefault();
+    setError("");
+    try {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-
-        otp: verificationCode,
+        otpcode: verificationCode,
       }),
       credentials: "include",
     });
 
+    const text = await res.text(); // backend might return plain text
     if (!res.ok) {
-      const text = await res.text();
-      setError(text || "Invalid OTP");
-      //console.log(res.status);
+      setError(text || "Verification failed");
       return;
     }
 
-    const data = await res.json(); 
-    // expecting { token: "..." }
-
-    sessionStorage.setItem("accessToken", data.token);
-
-    const decoded = jwtDecode(data.token);
-    const userId = decoded.id;
-
-    const userRes = await fetch(
-      "http://192.168.100.116:8000/api/clients/data",
-      {
-        headers: { Authorization: `Bearer ${data.token}` },
-      }
-    );
-
-    const userInfo = await userRes.json();
-
-    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-    setUserData(userInfo);
-    setView("profile");
+    alert("Verification successful! Please login now.");
+    setView("login");           // back to login form
+    setVerificationCode("");
 
   } catch (err) {
     console.error(err);
-    setError("OTP verification failed.");
+    setError("Something went wrong during verification.");
   }
 };
+
 
   // Logout
   const handleLogout = async () => {
@@ -196,23 +173,32 @@ const handleLoginVerify = async (e) => {
 const handleRegister = async (e) => {
   e.preventDefault();
   setError("");
+
+  if (regData.numri_telefonit.length !== 8) {
+  setPhoneError("Numri i telefonit duhet të ketë saktësisht 8 shifra");
+  return;
+}
+
   try {
+    const payload = {
+      ...regData,
+      numri_telefonit: `+383${regData.numri_telefonit}`
+    };
+
     const res = await fetch("http://192.168.100.116:8000/api/clients/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(regData),
+      body: JSON.stringify(payload),
       credentials: "include",
     });
 
-    const text = await res.text(); // read response as text
+    const text = await res.text();
 
     if (!res.ok) {
       setError(text || "Registration failed");
       return;
     }
 
-    // Registration successful, backend sent "Client applied"
-//    console.log(text); // "Client applied"
     setVerificationCode("");
     setView("verify");
 
@@ -222,32 +208,74 @@ const handleRegister = async (e) => {
   }
 };
   // Verification
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    setError("");
-    try {
-      const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        otpcode: verificationCode,
-      }),
-      credentials: "include",
-    });
+const handleAutoVerify = async (otp) => {
+  setError("");
 
-    const text = await res.text(); // backend might return plain text
+  try {
+    const res = await fetch(
+      "http://192.168.100.116:8000/auth/login/client/verify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otp }),
+        credentials: "include",
+      }
+    );
+
     if (!res.ok) {
-      setError(text || "Verification failed");
+      const text = await res.text();
+      setError(text || "Invalid OTP");
+      setVerificationCode("");
       return;
     }
 
-    alert("Verification successful! Please login now.");
-    setView("login");           // back to login form
-    setVerificationCode("");
+    const data = await res.json();
+    sessionStorage.setItem("accessToken", data.token);
+
+    // continue login flow here
+    const userRes = await fetch(
+      "http://192.168.100.116:8000/api/clients/data",
+      {
+        headers: { Authorization: `Bearer ${data.token}` },
+        credentials: "include",
+      }
+    );
+
+    const userInfo = await userRes.json();
+    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+    setUserData(userInfo);
+    setView("profile");
 
   } catch (err) {
     console.error(err);
-    setError("Something went wrong during verification.");
+    setError("OTP verification failed.");
+  }
+};
+
+const OTP_LENGTH = 6;
+
+const handleOtpChange = (value, index) => {
+  if (!/^\d*$/.test(value)) return;
+
+  const otpArray = verificationCode.split("");
+
+  otpArray[index] = value;
+
+  const newOtp = otpArray.join("").padEnd(OTP_LENGTH, "");
+
+  setVerificationCode(newOtp);
+
+  // move focus
+  if (value && index < OTP_LENGTH - 1) {
+    document.getElementById(`otp-${index + 1}`)?.focus();
+  }
+
+  // ✅ check FULL OTP correctly
+  const isComplete = newOtp.split("").filter(Boolean).length === OTP_LENGTH;
+
+  if (isComplete) {
+    handleAutoVerify(newOtp);
   }
 };
 
@@ -404,7 +432,8 @@ return (
   if (view === "verify") {
     return (
       <div className="login-container">
-        <h1>Enter Verification Code</h1>
+        <h1>Shkruaj kodin e verifikimit</h1>
+        <p>Një kod verifikimi është dërguar në numrin {numriTelefonit}</p>
         <form onSubmit={handleVerify}>
           {error && <p className="error-message">{error}</p>}
           <div className="form-group">
@@ -424,97 +453,245 @@ return (
 
   // Registration form
   if (view === "register") {
-    return (
-      <div className="login-container">
-        <h1>Create Account</h1>
-        <form onSubmit={handleRegister}>
-          {error && <p className="error-message">{error}</p>}
-          {["emri","mbiemri","numri_telefonit","email","username","password"].map((field) => (
-            <div key={field} className="form-group">
-              <label>{field}</label>
-              <input
-                type={field === "password" ? "password" : "text"}
-                value={regData[field]}
-                onChange={(e) =>
-                  setRegData({ ...regData, [field]: e.target.value })
-                }
-                required
-              />
-            </div>
-          ))}
-          <div className="form-group">
-            <label>Gjinia</label>
-            <select
-              value={regData.gjinia}
-              onChange={(e) =>
-                setRegData({ ...regData, gjinia: e.target.value })
-              }
-            >
-              <option value="m">Mashkull</option>
-              <option value="f">Femër</option>
-            </select>
-          </div>
-          <button type="submit">Register</button>
-          <p style={{ marginTop: "10px" }}>
-            Already have an account?{" "}
-            <span
-              style={{ color: "blue", cursor: "pointer" }}
-              onClick={() => setView("login")}
-            >
-              Login
-            </span>
-          </p>
-        </form>
+return (
+  <div className="login-container">
+    <h1>Krijo llogari</h1>
+
+    <form onSubmit={handleRegister}>
+      {error && <p className="error-message">{error}</p>}
+
+      {/* EMRI */}
+      <div className="form-group">
+        <label>Emri</label>
+        <input
+          type="text"
+          value={regData.emri}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^a-zA-ZëËçÇ\s]/g, "");
+            setRegData({ ...regData, emri: value });
+          }}
+          required
+        />
       </div>
-    );
+
+      {/* MBIEMRI */}
+      <div className="form-group">
+        <label>Mbiemri</label>
+        <input
+          type="text"
+          value={regData.mbiemri}
+          onChange={(e) => {
+            const value = e.target.value.replace(/[^a-zA-ZëËçÇ\s]/g, "");
+            setRegData({ ...regData, mbiemri: value });
+          }}
+          required
+        />
+      </div>
+
+      {/* PHONE +383 SAME LOGIC */}
+     <div className="form-group">
+  <label>Numri i telefonit</label>
+
+  <div style={{ display: "flex", alignItems: "center" }}>
+    <span
+      style={{
+        padding: "10px",
+        background: "#f1f1f1",
+        border: "1px solid #ccc",
+        borderRight: "none",
+        borderRadius: "5px 0 0 5px"
+      }}
+    >
+      +383
+    </span>
+
+    <input
+      type="text"
+      value={regData.numri_telefonit}
+      onChange={(e) => {
+        let value = e.target.value;
+
+        value = value.replace(/\D/g, "");
+
+        if (value.startsWith("0")) {
+          value = value.substring(1);
+        }
+
+        if (value.length > 8) return;
+
+        setRegData({ ...regData, numri_telefonit: value });
+
+        // LIVE VALIDATION
+        if (value.length > 0 && value.length < 8) {
+          setPhoneError("Numri duhet të ketë saktësisht 8 shifra");
+        } else {
+          setPhoneError("");
+        }
+      }}
+      placeholder="4xxxxxxx"
+      required
+      maxLength={8}
+      style={{
+        borderRadius: "0 5px 5px 0",
+        flex: 1
+      }}
+    />
+  </div>
+
+  {/* ERROR MESSAGE */}
+  {phoneError && (
+    <small style={{ color: "red", marginTop: "5px", display: "block" }}>
+      {phoneError}
+    </small>
+  )}
+</div>
+      {/* EMAIL OPTIONAL */}
+      <div className="form-group">
+        <label>Email (optional)</label>
+        <input
+          type="email"
+          value={regData.email}
+          onChange={(e) =>
+            setRegData({ ...regData, email: e.target.value })
+          }
+        />
+      </div>
+
+      {/* GJINIA */}
+      <div className="form-group">
+        <label>Gjinia</label>
+        <select
+          value={regData.gjinia}
+          onChange={(e) =>
+            setRegData({ ...regData, gjinia: e.target.value })
+          }
+        >
+          <option value="m">Mashkull</option>
+          <option value="f">Femër</option>
+        </select>
+      </div>
+
+      <button type="submit">Apliko!</button>
+
+      <p style={{ marginTop: "10px" }}>
+        Keni llogari?{" "}
+        <span
+          style={{ color: "blue", cursor: "pointer" }}
+          onClick={() => setView("login")}
+        >
+          Kyçu
+        </span>
+      </p>
+    </form>
+  </div>
+
+);
+ 
   }
 
   if (view === "verify-login") {
-  return (
-    <div className="login-container">
-      <h1>Enter OTP (Login)</h1>
-
-      <form onSubmit={handleLoginVerify}>
-        {error && <p className="error-message">{error}</p>}
-
-        <div className="form-group">
-          <label>OTP Code</label>
-          <input
-            type="text"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit">Login</button>
-      </form>
-    </div>
-  );
-}
-
-  // Login form
-  return (
+return (
   <div className="login-container">
-  <h1>Login</h1>
+    <h1>Kyçu</h1>
 
-  <form onSubmit={handleLogin}>
     {error && <p className="error-message">{error}</p>}
 
-    <div className="form-group">
-      <label>Numri i telefonit</label>
-   <input
-  type="text"
-  value={numriTelefonit}
-  onChange={(e) => setNumriTelefonit(e.target.value)}
-  required
-/>
-    </div>
+    <label>Shkruaj kodin verifikues</label>
 
-    <button type="submit">Send OTP</button>
-  </form>
-</div>
-  );
+    <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+      {Array.from({ length: OTP_LENGTH }).map((_, index) => (
+        <input
+          key={index}
+          id={`otp-${index}`}
+          type="text"
+          maxLength="1"
+          value={verificationCode[index] || ""}
+          onChange={(e) => handleOtpChange(e.target.value, index)}
+          inputMode="numeric"
+          style={{
+            width: "45px",
+            height: "55px",
+            textAlign: "center",
+            fontSize: "22px",
+            border: "none",
+            borderBottom: "2px solid #ccc",
+            outline: "none"
+          }}
+        />
+      ))}
+    </div>
+  </div>
+);
+}
+
+return (
+  <div className="login-container">
+    <h1>Kyçu</h1>
+
+    <form onSubmit={handleLogin}>
+      {error && <p className="error-message">{error}</p>}
+
+      <div className="form-group">
+        <label>Shkruaj numrin e telefonit!</label>
+
+        <div style={{ display: "flex", alignItems: "center" }}>
+          <span
+            style={{
+              padding: "10px",
+              background: "#f1f1f1",
+              border: "1px solid #ccc",
+              borderRight: "none",
+              borderRadius: "5px 0 0 5px"
+            }}
+          >
+            +383
+          </span>
+
+          <input
+            type="text"
+            value={numriTelefonit}
+            onChange={(e) => {
+              let value = e.target.value;
+
+              // Allow only numbers
+              value = value.replace(/\D/g, "");
+
+              // Remove leading 0
+              if (value.startsWith("0")) {
+                value = value.substring(1);
+              }
+
+               value = value.slice(0, 8);
+              setNumriTelefonit(value);
+            }}
+            placeholder="4xxxxxxx"
+            required
+             maxLength={8}
+            style={{
+              borderRadius: "0 5px 5px 0",
+              flex: 1
+            }}
+          />
+        </div>
+      </div>
+
+      <button type="submit">Dërgo kodin verifikues!</button>
+    </form>
+       <p style={{ marginTop: "15px", textAlign: "center" }}>
+      Nuk ke llogari?{" "}
+      <span
+        onClick={() => setView("register")}
+        style={{
+          color: "blue",
+          cursor: "pointer",
+          fontWeight: "500"
+        }}
+      >
+        Krijo llogari
+      </span>
+    </p>
+  </div>
+);
 }
 
 export default LoginView;
