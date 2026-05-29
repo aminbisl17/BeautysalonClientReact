@@ -30,14 +30,14 @@ const [phoneError, setPhoneError] = useState("");
 useEffect(() => {
   const autoLogin = async () => {
     try {
-      console.log("works")
+  
       const res = await fetch("http://192.168.100.116:8000/auth/refresh-token", {
         method: "POST",
         credentials: "include",
       });
 
       if (!res.ok) {
-            console.log("refresh");
+          
         sessionStorage.clear();
         setView("login");
         return;
@@ -57,7 +57,6 @@ useEffect(() => {
       );
 
       if (!userRes.ok) {
-        console.log("user");
   sessionStorage.clear();
   setView("login");
   return;
@@ -118,13 +117,14 @@ const handleLogin = async (e) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         otpcode: verificationCode,
+        numri_telefonit: `+383${regData.numri_telefonit}`
       }),
       credentials: "include",
     });
 
     const text = await res.text(); // backend might return plain text
     if (!res.ok) {
-      setError(text || "Verification failed");
+      setError(text.message || "Verification failed");
       return;
     }
 
@@ -158,10 +158,6 @@ const handleLogin = async (e) => {
       return;
     }
 
-    // Registration successful, backend sent "Client applied"
-//    console.log(text); // "Client applied"
-  //  setVerificationCode("");
-   // setView("verify");
  setView("login");
   } catch (err) {
     console.error(err);
@@ -217,22 +213,25 @@ const handleAutoVerify = async (otp) => {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp }),
+        body: JSON.stringify({ 
+          otp,
+         numri_telefonit : `+383${numriTelefonit}` }),
         credentials: "include",
       }
     );
 
+     
     if (!res.ok) {
       const text = await res.text();
-      setError(text || "Invalid OTP");
+      setError(text.message || "Invalid OTP");
       setVerificationCode("");
       return;
     }
 
     const data = await res.json();
+
     sessionStorage.setItem("accessToken", data.token);
 
-    // continue login flow here
     const userRes = await fetch(
       "http://192.168.100.116:8000/api/clients/data",
       {
@@ -243,7 +242,7 @@ const handleAutoVerify = async (otp) => {
 
     const userInfo = await userRes.json();
     sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
+setVerificationCode("");
     setUserData(userInfo);
     setView("profile");
 
@@ -265,20 +264,29 @@ const handleOtpChange = (value, index) => {
   const newOtp = otpArray.join("").padEnd(OTP_LENGTH, "");
 
   setVerificationCode(newOtp);
-
-  // move focus
   if (value && index < OTP_LENGTH - 1) {
     document.getElementById(`otp-${index + 1}`)?.focus();
   }
 
-  // ✅ check FULL OTP correctly
-  const isComplete = newOtp.split("").filter(Boolean).length === OTP_LENGTH;
+  const isComplete =
+    newOtp.split("").filter(Boolean).length === OTP_LENGTH;
 
   if (isComplete) {
     handleAutoVerify(newOtp);
+
   }
 };
 
+const handleKeyDown = (e, index) => {
+  // Go back when deleting
+  if (
+    e.key === "Backspace" &&
+    !verificationCode[index] &&
+    index > 0
+  ) {
+    document.getElementById(`otp-${index - 1}`)?.focus();
+  }
+};
 if (view === "checking") return <p>Checking session...</p>;
 
   if (view === "profile" && userData) {
@@ -601,23 +609,24 @@ return (
     <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
       {Array.from({ length: OTP_LENGTH }).map((_, index) => (
         <input
-          key={index}
-          id={`otp-${index}`}
-          type="text"
-          maxLength="1"
-          value={verificationCode[index] || ""}
-          onChange={(e) => handleOtpChange(e.target.value, index)}
-          inputMode="numeric"
-          style={{
-            width: "45px",
-            height: "55px",
-            textAlign: "center",
-            fontSize: "22px",
-            border: "none",
-            borderBottom: "2px solid #ccc",
-            outline: "none"
-          }}
-        />
+  key={index}
+  id={`otp-${index}`}
+  type="text"
+  maxLength="1"
+  value={verificationCode[index] || ""}
+  onChange={(e) => handleOtpChange(e.target.value, index)}
+  onKeyDown={(e) => handleKeyDown(e, index)}
+  inputMode="numeric"
+  style={{
+    width: "45px",
+    height: "55px",
+    textAlign: "center",
+    fontSize: "22px",
+    border: "none",
+    borderBottom: "2px solid #ccc",
+    outline: "none"
+  }}
+/>
       ))}
     </div>
   </div>
