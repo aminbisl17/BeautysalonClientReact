@@ -108,15 +108,15 @@ const handleLogin = async (e) => {
 };
 
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
+  const handleVerify = async (otp) => {
+ //   e.preventDefault();
     setError("");
     try {
       const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        otpcode: verificationCode,
+        otpcode: otp,
         numri_telefonit: `+383${regData.numri_telefonit}`
       }),
       credentials: "include",
@@ -139,31 +139,31 @@ const handleLogin = async (e) => {
 };
 
 
-  // Logout
-  const handleLogout = async () => {
-    sessionStorage.clear();
-    setUserData(null);
- 
-      try {
+const handleLogout = async () => {
+  const confirmLogout = window.confirm("Dëshironi të dilni?");
+  if (!confirmLogout) return;
+
+  sessionStorage.clear();
+  setUserData(null);
+
+  try {
     const res = await fetch("http://192.168.100.116:8000/auth/delete-refresh-token", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
     });
 
-    const text = await res.text(); // read response as text
+    const text = await res.text();
 
     if (!res.ok) {
-//      setError(text || "Registration failed");
       return;
     }
 
- setView("login");
+    setView("login");
   } catch (err) {
     console.error(err);
-  
   }
-  };
+};
 
 
 const handleRegister = async (e) => {
@@ -277,6 +277,30 @@ const handleOtpChange = (value, index) => {
   }
 };
 
+const handleOtpChangeRegister = (value, index) => {
+  if (!/^\d*$/.test(value)) return;
+
+  const otpArray = verificationCode.split("");
+
+  otpArray[index] = value;
+
+  const newOtp = otpArray.join("").padEnd(OTP_LENGTH, "");
+
+  setVerificationCode(newOtp);
+  if (value && index < OTP_LENGTH - 1) {
+    document.getElementById(`otp-${index + 1}`)?.focus();
+  }
+
+  const isComplete =
+    newOtp.split("").filter(Boolean).length === OTP_LENGTH;
+
+  if (isComplete) {
+    handleVerify(newOtp);
+
+  }
+};
+
+
 const handleKeyDown = (e, index) => {
   // Go back when deleting
   if (
@@ -292,79 +316,78 @@ if (view === "checking") return <p>Checking session...</p>;
   if (view === "profile" && userData) {
 return (
   <>
-    <div className="container py-5">
+<div className="profile-page">
 
-      <div className="row justify-content-center">
-        <div className="col-12 col-md-8 col-lg-6">
+  <div className="profile-container">
 
-          {/* MAIN CARD */}
-          <div className="profile-card-modern shadow-lg">
+    <div className="profile-card">
 
-            {/* HEADER */}
-            <div className="profile-header-modern">
+      {/* HEADER */}
+      <div className="profile-header">
 
-              <div className="avatar-modern">
-                {userData.emri?.charAt(0)}
-                {userData.mbiemri?.charAt(0)}
-              </div>
-
-              <div className="profile-name-block">
-                <h3>{userData.emri} {userData.mbiemri}</h3>
-              </div>
-
-            </div>
-
-            <hr />
-
-            {/* INFO GRID */}
-            <div className="info-grid">
-
-              <div className="info-item">
-                <span className="info-label">Gender</span>
-                <span className="info-value">{userData.gjinia}</span>
-              </div>
-
-              <div className="info-item">
-                <span className="info-label">Phone</span>
-                <span className="info-value">{userData.numriTelefonit}</span>
-              </div>
-
-              <div className="info-item full">
-                <span className="info-label">Email</span>
-                <span className="info-value">{userData.email}</span>
-              </div>
-
-              <div className="info-item full">
-                <span className="info-label">Registered</span>
-                <span className="info-value">
-                  {new Date(userData.dataRegjistrimit).toLocaleDateString()}
-                </span>
-              </div>
-
-            </div>
-
-            {/* ACTIONS */}
-            <div className="profile-actions">
-
-              <button
-                className="btn btn-primary w-100"
-                onClick={() => setShowHistoria(true)}
-              >
-                Historia
-              </button>
-
-              <button onClick={handleLogout} className="btn btn-danger w-100">
-                Logout
-              </button>
-
-            </div>
-
-          </div>
-
+        <div className="avatar">
+          {userData.emri?.charAt(0)}
+          {userData.mbiemri?.charAt(0)}
         </div>
+
+        <div className="profile-title">
+          <h2>{userData.emri} {userData.mbiemri}</h2>
+          <span className="subtitle">Profili i klientit</span>
+        </div>
+
+      </div>
+
+      {/* INFO SECTION */}
+      <div className="profile-info">
+
+        <div className="info-row">
+          <span className="label">Gjinia</span>
+          <span className="value">{userData.gjinia}</span>
+        </div>
+
+        <div className="info-row">
+          <span className="label">Numri i telefonit</span>
+          <span className="value">{userData.numriTelefonit}</span>
+        </div>
+
+        <div className="info-row full">
+          <span className="label">Email</span>
+          <span className="value">{userData.email}</span>
+        </div>
+
+        <div className="info-row full">
+          <span className="label">Data e regjistrimit</span>
+          <span className="value">
+            {new Date(userData.dataRegjistrimit).toLocaleDateString()}
+          </span>
+        </div>
+
+      </div>
+
+      {/* ACTIONS */}
+      <div className="profile-actions">
+
+        <button
+          className="btn-primary"
+          onClick={() => setShowHistoria(true)}
+        >
+          📖 Historia ime
+        </button>
+
+        <button
+          className="btn-danger"
+          onClick={handleLogout}
+        >
+          🚪 Dil nga llogaria
+        </button>
+
       </div>
 
     </div>
+
+  </div>
+
+</div>
 
     {/* MODAL OUTSIDE CONTAINER BUT STILL INSIDE RETURN */}
  {showHistoria && (
@@ -439,23 +462,39 @@ return (
   // Verification form
   if (view === "verify") {
     return (
-      <div className="login-container">
-        <h1>Shkruaj kodin e verifikimit</h1>
+    <div className="login-container">
+
+     <h1>Shkruaj kodin e verifikimit</h1>
         <p>Një kod verifikimi është dërguar në numrin {numriTelefonit}</p>
-        <form onSubmit={handleVerify}>
-          {error && <p className="error-message">{error}</p>}
-          <div className="form-group">
-            <label>Verification Code</label>
-            <input
-              type="text"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit">Verify</button>
-        </form>
-      </div>
+
+    {error && <p className="error-message">{error}</p>}
+
+    <label>Shkruaj kodin verifikues</label>
+
+    <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+      {Array.from({ length: OTP_LENGTH }).map((_, index) => (
+        <input
+  key={index}
+  id={`otp-${index}`}
+  type="text"
+  maxLength="1"
+  value={verificationCode[index] || ""}
+  onChange={(e) => handleOtpChangeRegister(e.target.value, index)}
+  onKeyDown={(e) => handleKeyDown(e, index)}
+  inputMode="numeric"
+  style={{
+    width: "45px",
+    height: "55px",
+    textAlign: "center",
+    fontSize: "22px",
+    border: "none",
+    borderBottom: "2px solid #ccc",
+    outline: "none"
+  }}
+/>
+      ))}
+    </div>
+  </div>
     );
   }
 

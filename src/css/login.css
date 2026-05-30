@@ -9,235 +9,7 @@ body {
 }
 
 /* =========================
-   PROFILE BASE (ALL DEVICES)
-========================= */
-
-
-/* =========================
-   MODERN PROFILE CARD
-========================= */
-
-.profile-card-modern {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 24px;
-  border: 1px solid #eef0f3;
-}
-
-/* HEADER */
-.profile-header-modern {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* AVATAR */
-.avatar-modern {
-  width: 70px;
-  height: 70px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: white;
-  font-weight: 700;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
-}
-
-/* NAME BLOCK */
-.profile-name-block h3 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.profile-name-block p {
-  margin: 0;
-  font-size: 13px;
-  color: #6b7280;
-}
-
-.profile-actions {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.profile-actions .btn {
-  border-radius: 12px;
-  padding: 12px;
-  font-weight: 600;
-}
-
-/* INFO GRID */
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.info-item {
-  background: #f9fafb;
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid #eef0f3;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.info-item.full {
-  grid-column: span 2;
-}
-
-.info-label {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-
-.info-value {
-  font-size: 14px;
-  font-weight: 600;
-  color: #111827;
-}
-
-/* ACTIONS */
-.profile-actions {
-  margin-top: 20px;
-}
-
-.info-value {
-  word-break: break-word;
-}
-
-.modal-backdrop-custom {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-}
-
-.modal-box {
-  width: 90%;
- max-width: 600px;
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.modal-body {
-  padding: 10px 0;
-  font-size: 14px;
-  color: #111827;
-}
-
-.modal-footer {
-  margin-top: 10px;
-}
-
-.btn-close {
-  background: transparent;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.table {
-  margin-bottom: 0;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.table th {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: #6b7280;
-}
-
-.table td {
-  font-size: 14px;
-}
-/* =========================
-   RESPONSIVE
-========================= */
-@media (max-width: 768px) {
-  html {
-  -webkit-text-size-adjust: 100%;
-}
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .profile-header-modern {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  /* IMPORTANT: prevent mobile zoom on inputs */
-  input,
-  select,
-  textarea {
-    font-size: 16px;
-  }
-
-  /* prevent horizontal overflow */
-  .container,
-  .login-container {
-    width: 100%;
-    padding: 10px;
-    overflow-x: hidden;
-  }
-
-  /* better spacing on mobile */
-  .profile-card-modern {
-    padding: 15px;
-  }
-
-  /* make buttons easier to tap */
-  button {
-    min-height: 44px;
-  }
-}
-
-.login-container p {
-  text-align: center;
-  font-size: 13px;
-}
-
-.login-container span {
-  color: #6366f1;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-.login-container span:hover {
-  text-decoration: underline;
-}
-
-
-/* =========================
-   COMMON CONTAINER (LOGIN/REGISTER/VERIFY)
+   COMMON CONTAINERS
 ========================= */
 .login-container {
   max-width: 420px;
@@ -279,10 +51,11 @@ body {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   outline: none;
-  transition: 0.2s;
-  font-size: 16px; /* 🔥 FIX HERE */
+  font-size: 16px;
   background: #f9fafb;
+  transition: 0.2s;
 }
+
 .form-group input:focus,
 .form-group select:focus {
   border-color: #6366f1;
@@ -291,7 +64,7 @@ body {
 }
 
 /* =========================
-   BUTTON
+   BUTTONS (GLOBAL FIXED)
 ========================= */
 button {
   width: 100%;
@@ -322,4 +95,271 @@ button:hover {
   margin-bottom: 12px;
   font-size: 13px;
   text-align: center;
+}
+
+/* =========================
+   PROFILE PAGE (MODERN)
+========================= */
+.profile-page {
+  min-height: 100vh;
+  background: #f5f7fb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.profile-container {
+  width: 100%;
+  max-width: 520px;
+}
+
+.profile-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+/* HEADER */
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #4f46e5;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.profile-title h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* INFO */
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+
+.info-row.full {
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+}
+
+/* ACTIONS */
+.profile-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.btn-primary {
+  background: #4f46e5;
+  color: white;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
+}
+
+.btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-danger:hover {
+  background: #fecaca;
+}
+
+/* =========================
+   MODAL
+========================= */
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-box {
+  width: 90%;
+  max-width: 600px;
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body {
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* =========================
+   TABLE
+========================= */
+.table {
+  margin-bottom: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.table th {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.table td {
+  font-size: 14px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 768px) {
+
+  /* PAGE SPACING */
+  .profile-page {
+    padding: 12px;
+  }
+
+  .profile-container {
+    max-width: 100%;
+  }
+
+  /* CARD */
+  .profile-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  /* HEADER */
+  .profile-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 18px;
+  }
+
+  .profile-title h2 {
+    font-size: 16px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  /* INFO GRID → STACK */
+  .profile-info {
+    gap: 10px;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 10px;
+  }
+
+  .value {
+    font-size: 14px;
+  }
+
+  /* BUTTONS */
+  .profile-actions {
+    gap: 8px;
+  }
+
+  button {
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  .btn-primary,
+  .btn-danger {
+    width: 100%;
+  }
+
+  /* INPUT FIX (mobile zoom prevention) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
