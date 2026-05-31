@@ -13,16 +13,32 @@ function LoginView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 const [numriTelefonit, setNumriTelefonit] = useState("");
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = useState( 
+    {emri: "",
+    mbiemri: "",
+    numri_telefonit: "",
+    email: "",
+    gjinia: "m",
+});
 
   const [regData, setRegData] = useState({
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
     email: "",
-    gjinia: "m",
+    gjinia: "",
 
   });
+
+  const [isEditing, setIsEditing] = useState(false);
+
+const [editData, setEditData] = useState({
+  emri: "",
+  mbiemri: "",
+  email: "",
+  gjinia: "m",
+});
+
 const [phoneError, setPhoneError] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [showHistoria, setShowHistoria] = useState(false);
@@ -66,6 +82,12 @@ useEffect(() => {
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
 
       setUserData(userInfo);
+      setEditData({
+  emri: userInfo.emri || "",
+  mbiemri: userInfo.mbiemri || "",
+  email: userInfo.email || "",
+  gjinia: userInfo.gjinia || "m",
+});
       setView("profile");
     } catch (err) {
       console.error(err);
@@ -244,6 +266,12 @@ const handleAutoVerify = async (otp) => {
     sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
 setVerificationCode("");
     setUserData(userInfo);
+    setEditData({
+  emri: userInfo.emri || "",
+  mbiemri: userInfo.mbiemri || "",
+  email: userInfo.email || "",
+  gjinia: userInfo.gjinia || "m",
+});
     setView("profile");
 
   } catch (err) {
@@ -311,6 +339,42 @@ const handleKeyDown = (e, index) => {
     document.getElementById(`otp-${index - 1}`)?.focus();
   }
 };
+
+
+const handleChange = (e) => {
+  setEditData({
+    ...editData,
+    [e.target.name]: e.target.value,
+  });
+};
+
+const handleSave = async () => {
+  const confirmSave = window.confirm("Dëshiron të ruash ndryshimet?");
+  if (!confirmSave) return;
+
+  console.log("Updated data:", editData);
+
+  // TODO: API call here
+
+  setIsEditing(false);
+};
+
+
+const handleCancel = () => {
+  const confirmCancel = window.confirm("Dëshiron të anulosh ndryshimet?");
+
+  if (!confirmCancel) return;
+
+  setEditData({
+    emri: userData.emri,
+    mbiemri: userData.mbiemri,
+    email: userData.email,
+    gjinia: userData.gjinia,
+  });
+
+  setIsEditing(false);
+};
+
 if (view === "checking") return <p>Checking session...</p>;
 
   if (view === "profile" && userData) {
@@ -338,50 +402,124 @@ return (
       </div>
 
       {/* INFO SECTION */}
-      <div className="profile-info">
+<div className="profile-info">
 
-        <div className="info-row">
-          <span className="label">Gjinia</span>
-          <span className="value">{userData.gjinia}</span>
-        </div>
+  {/* GJINIA */}
+  <div className="info-row">
+    <span className="label">Gjinia</span>
 
-        <div className="info-row">
-          <span className="label">Numri i telefonit</span>
-          <span className="value">{userData.numriTelefonit}</span>
-        </div>
+    {isEditing ? (
+      <select
+        name="gjinia"
+        value={editData.gjinia}
+        onChange={handleChange}
+      >
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </select>
+    ) : (
+      <span className="value">{userData.gjinia}</span>
+    )}
+  </div>
 
-        <div className="info-row full">
-          <span className="label">Email</span>
-          <span className="value">{userData.email}</span>
-        </div>
+  {/* NUMRI (NOT EDITABLE) */}
+  <div className="info-row">
+    <span className="label">Numri i telefonit</span>
+    <span className="value">{userData.numriTelefonit}</span>
+  </div>
 
-        <div className="info-row full">
-          <span className="label">Data e regjistrimit</span>
-          <span className="value">
-            {new Date(userData.dataRegjistrimit).toLocaleDateString()}
-          </span>
-        </div>
+  {/* EMAIL */}
+  <div className="info-row full">
+    <span className="label">Email</span>
 
-      </div>
+    {isEditing ? (
+      <input
+        type="email"
+        name="email"
+        value={editData.email}
+        onChange={handleChange}
+      />
+    ) : (
+      <span className="value">{userData.email}</span>
+    )}
+  </div>
+
+  {/* EMRI + MBIEMRI */}
+  <div className="info-row full">
+    <span className="label">Emri</span>
+
+    {isEditing ? (
+      <input
+        name="emri"
+        value={editData.emri}
+        onChange={handleChange}
+      />
+    ) : (
+      <span className="value">{userData.emri}</span>
+    )}
+  </div>
+
+  <div className="info-row full">
+    <span className="label">Mbiemri</span>
+
+    {isEditing ? (
+      <input
+        name="mbiemri"
+        value={editData.mbiemri}
+        onChange={handleChange}
+      />
+    ) : (
+      <span className="value">{userData.mbiemri}</span>
+    )}
+  </div>
+
+  {/* DATE (NOT EDITABLE) */}
+  <div className="info-row full">
+    <span className="label">Data e regjistrimit</span>
+    <span className="value">
+      {new Date(userData.dataRegjistrimit).toLocaleDateString()}
+    </span>
+  </div>
+
+</div>
 
       {/* ACTIONS */}
-      <div className="profile-actions">
+<div className="profile-actions">
 
-        <button
-          className="btn-primary"
-          onClick={() => setShowHistoria(true)}
-        >
-          📖 Historia ime
-        </button>
+  {!isEditing ? (
+    <button
+      className="btn-primary"
+      onClick={() => setIsEditing(true)}
+    >
+      Ndrysho të dhënat
+    </button>
+  ) : (
+    <>
+      <button className="btn-primary" onClick={handleSave}>
+        Ruaj ndryshimet
+      </button>
 
-        <button
-          className="btn-danger"
-          onClick={handleLogout}
-        >
-          🚪 Dil nga llogaria
-        </button>
+      <button className="btn-danger" onClick={handleCancel}>
+        Anulo
+      </button>
+    </>
+  )}
 
-      </div>
+  <button
+    className="btn-primary"
+    onClick={() => setShowHistoria(true)}
+  >
+    📖 Historia ime
+  </button>
+
+  <button
+    className="btn-danger"
+    onClick={handleLogout}
+  >
+    🚪 Dil nga llogaria
+  </button>
+
+</div>
 
     </div>
 

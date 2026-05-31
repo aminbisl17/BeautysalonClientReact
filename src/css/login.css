@@ -9,7 +9,7 @@ body {
 }
 
 /* =========================
-   COMMON CONTAINERS
+   LOGIN
 ========================= */
 .login-container {
   max-width: 420px;
@@ -64,7 +64,7 @@ body {
 }
 
 /* =========================
-   BUTTONS (GLOBAL FIXED)
+   BUTTONS
 ========================= */
 button {
   width: 100%;
@@ -98,7 +98,7 @@ button:hover {
 }
 
 /* =========================
-   PROFILE PAGE (MODERN)
+   PROFILE PAGE
 ========================= */
 .profile-page {
   min-height: 100vh;
@@ -121,7 +121,9 @@ button:hover {
   box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
-/* HEADER */
+/* =========================
+   HEADER
+========================= */
 .profile-header {
   display: flex;
   align-items: center;
@@ -152,7 +154,9 @@ button:hover {
   color: #6b7280;
 }
 
-/* INFO */
+/* =========================
+   PROFILE INFO
+========================= */
 .profile-info {
   display: flex;
   flex-direction: column;
@@ -185,7 +189,32 @@ button:hover {
   word-break: break-word;
 }
 
-/* ACTIONS */
+/* =========================
+   EDIT MODE INPUTS
+========================= */
+.profile-info input,
+.profile-info select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s;
+  margin-top: 4px;
+}
+
+.profile-info input:focus,
+.profile-info select:focus {
+  border-color: #4f46e5;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+/* =========================
+   PROFILE ACTIONS
+========================= */
 .profile-actions {
   display: flex;
   flex-direction: column;
@@ -193,20 +222,19 @@ button:hover {
   margin-top: 18px;
 }
 
+/* Buttons */
 .btn-primary {
   background: #4f46e5;
   color: white;
   padding: 12px;
   border-radius: 12px;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+  font-weight: 600;
   transition: 0.2s;
 }
 
 .btn-primary:hover {
   background: #4338ca;
+  transform: translateY(-1px);
 }
 
 .btn-danger {
@@ -214,15 +242,13 @@ button:hover {
   color: #b91c1c;
   padding: 12px;
   border-radius: 12px;
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
+  font-weight: 600;
   transition: 0.2s;
 }
 
 .btn-danger:hover {
   background: #fecaca;
+  transform: translateY(-1px);
 }
 
 /* =========================
@@ -289,19 +315,18 @@ button:hover {
 ========================= */
 @media (max-width: 768px) {
 
-  /* PAGE SPACING */
   .profile-page {
-    padding: 12px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding-top: 20px;
   }
 
   .profile-container {
     max-width: 100%;
   }
 
-  /* CARD */
   .profile-card {
     padding: 16px;
-    border-radius: 16px;
   }
 
   /* HEADER */
@@ -325,7 +350,7 @@ button:hover {
     font-size: 12px;
   }
 
-  /* INFO GRID → STACK */
+  /* INFO */
   .profile-info {
     gap: 10px;
   }
@@ -341,25 +366,24 @@ button:hover {
     font-size: 14px;
   }
 
-  /* BUTTONS */
+  /* ACTIONS */
   .profile-actions {
     gap: 8px;
   }
 
-  button {
+  .profile-actions button {
     min-height: 44px;
-    font-size: 14px;
+  }
+
+  /* INPUT FIX */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
   }
 
   .btn-primary,
   .btn-danger {
     width: 100%;
-  }
-
-  /* INPUT FIX (mobile zoom prevention) */
-  input,
-  select,
-  textarea {
-    font-size: 16px;
   }
 }
