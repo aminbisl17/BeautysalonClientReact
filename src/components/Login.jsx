@@ -352,11 +352,33 @@ const handleSave = async () => {
   const confirmSave = window.confirm("Dëshiron të ruash ndryshimet?");
   if (!confirmSave) return;
 
-  console.log("Updated data:", editData);
+  try {
+    const res = await fetch(
+      "http://192.168.100.116:8000/api/clients/update",
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+        },
+        credentials: "include",
+        body: JSON.stringify(editData),
+      }
+    );
 
-  // TODO: API call here
+    const message = await res.text();
 
-  setIsEditing(false);
+    if (res.ok) {
+      alert(message);
+      
+      setIsEditing(false);
+    } else {
+      alert(message || "Gabim gjatë ruajtjes së të dhënave.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Gabim në lidhje me serverin.");
+  }
 };
 
 
