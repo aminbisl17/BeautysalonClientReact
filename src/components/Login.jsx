@@ -26,7 +26,7 @@ const [numriTelefonit, setNumriTelefonit] = useState("");
     mbiemri: "",
     numri_telefonit: "",
     email: "",
-    gjinia: "",
+    gjinia: "f",
 
   });
 
@@ -82,6 +82,7 @@ useEffect(() => {
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
 
       setUserData(userInfo);
+          console.log(userData);
       setEditData({
   emri: userInfo.emri || "",
   mbiemri: userInfo.mbiemri || "",
@@ -203,6 +204,7 @@ const handleRegister = async (e) => {
       numri_telefonit: `+383${regData.numri_telefonit}`
     };
 
+    console.log(payload);
     const res = await fetch("http://192.168.100.116:8000/api/clients/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -353,6 +355,7 @@ const handleSave = async () => {
   if (!confirmSave) return;
 
   try {
+    console.log(editData);
     const res = await fetch(
       "http://192.168.100.116:8000/api/clients/update",
       {
@@ -370,7 +373,12 @@ const handleSave = async () => {
 
     if (res.ok) {
       alert(message);
-      
+      setUserData( {
+        emri: editData.emri,
+    mbiemri: editData.mbiemri,
+    email: editData.email,
+      gjinia: editData.gjinia === "m" ? "Mashkull" : "Femer",
+      });
       setIsEditing(false);
     } else {
       alert(message || "Gabim gjatë ruajtjes së të dhënave.");
@@ -436,8 +444,8 @@ return (
         value={editData.gjinia}
         onChange={handleChange}
       >
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
+        <option value="m">Mashkull</option>
+        <option value="f">Femer</option>
       </select>
     ) : (
       <span className="value">{userData.gjinia}</span>
@@ -773,8 +781,8 @@ return (
             setRegData({ ...regData, gjinia: e.target.value })
           }
         >
-          <option value="m">Mashkull</option>
           <option value="f">Femër</option>
+          <option value="m">Mashkull</option>
         </select>
       </div>
 
