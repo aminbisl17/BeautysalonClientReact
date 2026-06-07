@@ -19,6 +19,7 @@ const [numriTelefonit, setNumriTelefonit] = useState("");
     numri_telefonit: "",
     email: "",
     gjinia: "m",
+    emailVerified: false
 });
 
   const [regData, setRegData] = useState({
@@ -38,6 +39,12 @@ const [editData, setEditData] = useState({
   email: "",
   gjinia: "m",
 });
+
+const [verifyStep, setVerifyStep] = useState("choose");
+// choose | emailInput | codeSent
+const [showEmailVerify, setShowEmailVerify] = useState(false);
+const [verifyEmail, setVerifyEmail] = useState(userData.email);
+const [otp, setOtp] = useState("");
 
 const [phoneError, setPhoneError] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
@@ -87,7 +94,7 @@ useEffect(() => {
   emri: userInfo.emri || "",
   mbiemri: userInfo.mbiemri || "",
   email: userInfo.email || "",
-  gjinia: userInfo.gjinia || "m",
+  gjinia: userInfo.gjinia || "m"
 });
       setView("profile");
     } catch (err) {
@@ -120,7 +127,6 @@ const handleLogin = async (e) => {
       setError(text || "Phone number not found");
       return;
     }
-
     // go to OTP screen
     setView("verify-login");
 
@@ -130,6 +136,54 @@ const handleLogin = async (e) => {
   }
 };
 
+
+const sendVerificationCode = async () => {
+  try {
+    const res = await fetch("/api/send-verification-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: verifyEmail }),
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to send code");
+    }
+
+    setVerifyStep("codeSent");
+  } catch (err) {
+    console.error(err);
+    alert("Nuk u dërgua kodi. Provo përsëri.");
+  }
+};
+
+const verifyEmailCode = async () => {
+  try {
+    const res = await fetch("/api/verify-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: verifyEmail,
+        code: otp,
+      }),
+    });
+
+    if (!res.ok) {
+      alert("Kodi është gabim ose ka skaduar");
+      return;
+    }
+
+    alert("Email verified!");
+
+    // reset everything cleanly
+    setShowEmailVerify(false);
+    setVerifyStep("choose");
+    setOtp("");
+
+  } catch (err) {
+    console.error(err);
+    alert("Gabim gjatë verifikimit");
+  }
+};
 
   const handleVerify = async (otp) => {
  //   e.preventDefault();
@@ -166,28 +220,36 @@ const handleLogout = async () => {
   const confirmLogout = window.confirm("Dëshironi të dilni?");
   if (!confirmLogout) return;
 
-  sessionStorage.clear();
-  setUserData(null);
-
   try {
-    const res = await fetch("http://192.168.100.116:8000/auth/delete-refresh-token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    });
+    const res = await fetch(
+      "http://192.168.100.116:8000/auth/delete-refresh-token",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      }
+    );
 
-    const text = await res.text();
+    // optional: read message for debugging
+    await res.text();
 
-    if (!res.ok) {
-      return;
-    }
-
-    setView("login");
   } catch (err) {
-    console.error(err);
+    console.error("Logout request failed:", err);
+  } finally {
+    // ALWAYS clear local state
+    sessionStorage.clear();
+    setNumriTelefonit("");
+    setUserData({
+  emri: "",
+  mbiemri: "",
+  numri_telefonit: "",
+  email: "",
+  gjinia: "m",
+  emailVerified: false
+});
+    setView("login");
   }
 };
-
 
 const handleRegister = async (e) => {
   e.preventDefault();
@@ -516,6 +578,15 @@ return (
       {/* ACTIONS */}
 <div className="profile-actions">
 
+{!userData.emailVerified && (
+  <button
+    className="btn-primary"
+    onClick={() => setShowEmailVerify(true)}
+  >
+    ✉️ Verifiko Email
+  </button>
+)}
+
   {!isEditing ? (
     <button
       className="btn-primary"
@@ -556,6 +627,98 @@ return (
   </div>
 
 </div>
+
+{showEmailVerify && (
+  <div className="modal-backdrop-custom">
+    <div className="modal-box">
+
+      <div className="modal-header">
+        <h5>Verifikimi i Email-it</h5>
+        <button
+          className="btn-close"
+          onClick={() => {
+            setShowEmailVerify(false);
+            setVerifyStep("choose");
+            setOtp("");
+          }}
+        />
+      </div>
+
+      <div className="modal-body">
+
+        {/* STEP 1 */}
+        {verifyStep === "choose" && (
+          <div>
+            <p>Dëshiron ta përdorim këtë email për verifikim?</p>
+
+            <div className="mb-3 p-2 border rounded">
+              <strong>{userData.email}</strong>
+            </div>
+
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-success w-50"
+                onClick={sendVerificationCode}
+              >
+                Po
+              </button>
+
+              <button
+                className="btn btn-secondary w-50"
+                onClick={() => setVerifyStep("emailInput")}
+              >
+                Jo
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2 */}
+        {verifyStep === "emailInput" && (
+          <div>
+            <p>Shkruaj email të ri</p>
+
+            <input
+              type="email"
+              value={verifyEmail}
+              onChange={(e) => setVerifyEmail(e.target.value)}
+              className="form-control mb-3"
+            />
+
+            <button
+              className="btn btn-primary w-100"
+              onClick={sendVerificationCode}
+            >
+              Dërgo kodin
+            </button>
+          </div>
+        )}
+
+        {/* STEP 3 */}
+        {verifyStep === "codeSent" && (
+          <div>
+            <p>Shkruaj kodin e verifikimit</p>
+
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              className="form-control mb-3"
+            />
+
+            <button
+              className="btn btn-success w-100"
+              onClick={verifyEmailCode}
+            >
+              Verifiko
+            </button>
+          </div>
+        )}
+
+      </div>
+    </div>
+  </div>
+)}
 
     {/* MODAL OUTSIDE CONTAINER BUT STILL INSIDE RETURN */}
  {showHistoria && (
