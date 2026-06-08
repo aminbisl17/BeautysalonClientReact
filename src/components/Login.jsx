@@ -137,18 +137,32 @@ const handleLogin = async (e) => {
 };
 
 
-const sendVerificationCode = async () => {
+const sendVerificationCode = async (email) => {
+  const token = sessionStorage.getItem("accessToken");
+
+  if (!email || email.trim() === "") {
+    alert("Email is empty");
+    return;
+  }
+
   try {
-    const res = await fetch("/api/send-verification-code", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: verifyEmail }),
-    });
+    console.log("Sending OTP to:", email);
 
-    if (!res.ok) {
-      throw new Error("Failed to send code");
-    }
+    const res = await fetch(
+      "http://192.168.100.116:8000/api/clients/send/email-verification-request",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      }
+    );
 
+    if (!res.ok) throw new Error("Failed to send code");
+
+    setVerifyEmail(email); // optional sync
     setVerifyStep("codeSent");
   } catch (err) {
     console.error(err);
@@ -157,13 +171,17 @@ const sendVerificationCode = async () => {
 };
 
 const verifyEmailCode = async () => {
+  const token = sessionStorage.getItem("accessToken");
   try {
-    const res = await fetch("/api/verify-email", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const res = await fetch("http://192.168.100.116:8000/api/clients/verify/email", {
+      method: "PATCH",
+         headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       body: JSON.stringify({
         email: verifyEmail,
-        code: otp,
+        otp: otp,
       }),
     });
 
@@ -656,12 +674,13 @@ return (
             </div>
 
             <div className="d-flex gap-2">
-              <button
-                className="btn btn-success w-50"
-                onClick={sendVerificationCode}
-              >
-                Po
-              </button>
+           
+             <button
+  className="btn btn-success w-50"
+  onClick={() => sendVerificationCode(userData.email)}
+>
+  Po
+</button>
 
               <button
                 className="btn btn-secondary w-50"
