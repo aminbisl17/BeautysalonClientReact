@@ -136,6 +136,33 @@ const handleLogin = async (e) => {
   }
 };
 
+const fetchUserData = async () => {
+  try {
+   const token = sessionStorage.getItem("accessToken")
+    const userRes = await fetch(
+      "http://192.168.100.116:8000/api/clients/data",
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+      }
+    );
+
+    if (!userRes.ok) {
+      throw new Error("Failed to fetch user data");
+    }
+
+    const userInfo = await userRes.json();
+
+    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+    setUserData(userInfo);
+  } catch (err) {
+    console.error("fetchUserData error:", err);
+   
+  }
+};
 
 const sendVerificationCode = async (email) => {
   const token = sessionStorage.getItem("accessToken");
@@ -192,6 +219,10 @@ const verifyEmailCode = async () => {
 
     alert("Email verified!");
 
+    setUserData(prev => ({
+  ...prev,
+  emailVerified: true,
+}));
     // reset everything cleanly
     setShowEmailVerify(false);
     setVerifyStep("choose");
@@ -453,12 +484,13 @@ const handleSave = async () => {
 
     if (res.ok) {
       alert(message);
-      setUserData( {
+  /*    setUserData( {
         emri: editData.emri,
     mbiemri: editData.mbiemri,
     email: editData.email,
       gjinia: editData.gjinia === "m" ? "Mashkull" : "Femer",
-      });
+      }); */
+     await fetchUserData()
       setIsEditing(false);
     } else {
       alert(message || "Gabim gjatë ruajtjes së të dhënave.");
