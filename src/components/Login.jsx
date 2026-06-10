@@ -13,6 +13,7 @@ function LoginView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 const [numriTelefonit, setNumriTelefonit] = useState("");
+
   const [userData, setUserData] = useState( 
     {emri: "",
     mbiemri: "",
@@ -548,19 +549,29 @@ return (
 
   {/* GJINIA */}
   <div className="info-row">
-    <span className="label">Gjinia</span>
+  <span className="value"> 
+Gjinia
+</span>
 
     {isEditing ? (
-      <select
-        name="gjinia"
-        value={editData.gjinia}
-        onChange={handleChange}
-      >
-        <option value="m">Mashkull</option>
-        <option value="f">Femer</option>
-      </select>
+<select
+  name="gjinia"
+  value={editData.gjinia}
+  onChange={handleChange}
+>
+  <option value="m">Mashkull</option>
+  <option value="f">Femer</option>
+  <option value="a">Asnjejes</option>
+</select>
     ) : (
-      <span className="value">{userData.gjinia}</span>
+        <span className="value">
+  {{
+    m: "Mashkull",
+    f: "Femer",
+    a: "Asnjejes",
+  }[userData.gjinia] || "Asnjejes"}
+</span>
+
     )}
   </div>
 
@@ -628,7 +639,7 @@ return (
       {/* ACTIONS */}
 <div className="profile-actions">
 
-{!userData.emailVerified && (
+{userData.email && !userData.emailVerified && (
   <button
     className="btn-primary"
     onClick={() => setShowEmailVerify(true)}
