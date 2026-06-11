@@ -254,34 +254,57 @@ button:hover {
 /* =========================
    MODAL
 ========================= */
+/* =========================
+   MODAL (FIXED)
+========================= */
 .modal-backdrop-custom {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  padding: 16px; /* Prevents modal from touching screen edges on mobile */
 }
 
 .modal-box {
-  width: 90%;
-  max-width: 600px;
+  width: 100%;
+  max-width: 750px; /* Increased from 600px to comfortably fit a 5-column table */
+  max-height: 85vh; /* Prevents the modal from running off the bottom of the screen */
   background: white;
   border-radius: 16px;
-  padding: 16px;
+  padding: 24px; /* Slightly more breathing room */
   box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column; /* Allows internal body scrolling */
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee; /* Clear separation from content */
 }
 
 .modal-body {
-  padding: 10px 0;
+  padding: 16px 0;
   font-size: 14px;
+  overflow-y: auto; /* CRITICAL: Adds vertical scrollbar if client history is long */
+  overflow-x: hidden; /* Keeps things neat horizontally */
+}
+
+/* Fixes the Bootstrap table layout inside the modal */
+.modal-body .table-responsive {
+  overflow-x: auto; /* Allows the table to swipe left/right inside the modal if the screen is tiny */
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-footer {
+  padding-top: 16px;
+  border-top: 1px solid #eee; /* Clear separation from content */
+  margin-top: auto; /* Pushes footer to the bottom */
 }
 
 .btn-close {
@@ -289,6 +312,12 @@ button:hover {
   border: none;
   font-size: 20px;
   cursor: pointer;
+  line-height: 1;
+  color: #666;
+}
+
+.btn-close:hover {
+  color: #000;
 }
 
 /* =========================

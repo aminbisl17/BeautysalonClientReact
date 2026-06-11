@@ -13,14 +13,15 @@ function LoginView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 const [numriTelefonit, setNumriTelefonit] = useState("");
-
+const [expandedRow, setExpandedRow] = useState(null);
   const [userData, setUserData] = useState( 
     {emri: "",
     mbiemri: "",
     numri_telefonit: "",
     email: "",
     gjinia: "m",
-    emailVerified: false
+    emailVerified: false,
+    clientHistory: [],
 });
 
   const [regData, setRegData] = useState({
@@ -783,53 +784,144 @@ Gjinia
 )}
 
     {/* MODAL OUTSIDE CONTAINER BUT STILL INSIDE RETURN */}
- {showHistoria && (
+{showHistoria && (
   <div className="modal-backdrop-custom">
     <div className="modal-box">
 
       {/* HEADER */}
       <div className="modal-header">
-        <h5 className="m-0">Historia</h5>
+        <h5 className="m-0">Historia e Shërbimeve</h5>
         <button
           className="btn-close"
           onClick={() => setShowHistoria(false)}
         />
       </div>
 
-      {/* BODY WITH TABLE */}
+      {/* BODY */}
       <div className="modal-body">
 
         <div className="table-responsive">
           <table className="table table-hover align-middle">
 
+            {/* Table Header - Always shown */}
             <thead className="table-light">
               <tr>
-                <th>Date</th>
-                <th>Service</th>
+                <th>Data</th>
+                <th>Shërbimi</th>
+                <th>Punonjësi</th>
                 <th>Status</th>
+                <th>Detaje</th>
               </tr>
             </thead>
 
-            <tbody>
-              <tr>
-                <td>2026-05-20</td>
-                <td>Haircut</td>
-                <td><span className="badge bg-success">Done</span></td>
-              </tr>
+            {/* Table Body */}
+  <tbody>
+  {userData?.clientHistory && userData.clientHistory.length > 0 ? (
+    userData.clientHistory.map((e, index) => {
+      // Extract unique service names for the main column display
+      const uniqueServices = Array.from(
+        new Set(e.detajet?.map((det) => det.emri_sherbimit).filter(Boolean))
+      );
+      
+      const totalPagesa = e.detajet?.reduce((sum, det) => sum + (det.pagesa || 0), 0) || 0;
+      const isExpanded = expandedRow === index;
 
-              <tr>
-                <td>2026-05-18</td>
-                <td>Shaving</td>
-                <td><span className="badge bg-warning text-dark">Pending</span></td>
-              </tr>
+      return (
+        <React.Fragment key={e.idHistoriku || index}>
+          {/* MAIN APPOINTMENT ROW */}
+          <tr 
+            onClick={() => setExpandedRow(isExpanded ? null : index)} 
+            style={{ cursor: 'pointer' }}
+            className={isExpanded ? 'table-active' : ''}
+          >
+            {/* 1. Data */}
+            <td>
+              {e.data_sherbimit 
+                ? new Date(e.data_sherbimit).toLocaleDateString('sq-AL', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                : '-'}
+            </td>
+            
+            {/* 2. Shërbimi (Summary badges) */}
+            <td>
+              {uniqueServices.length > 0 ? (
+                <div className="d-flex flex-wrap gap-1">
+                  {uniqueServices.map((serviceName, i) => (
+                    <span key={i} className="badge bg-light text-dark border fw-semibold">
+                      {serviceName}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-muted">—</span>
+              )}
+            </td>
 
-              <tr>
-                <td>2026-05-15</td>
-                <td>Beard Trim</td>
-                <td><span className="badge bg-success">Done</span></td>
-              </tr>
-            </tbody>
+            {/* 3. Punonjësi */}
+            <td>{e.emri_mbiemri_punonjesit || '-'}</td>
+            
+            {/* 4. Status */}
+            <td>
+              <span className="badge bg-success">Përfunduar</span>
+            </td>
 
+            {/* 5. Interaktiviteti (Action indicator) */}
+            <td className="text-end text-primary fw-bold">
+              {isExpanded ? 'Fshih ▲' : 'Detajet ▼'}
+            </td>
+          </tr>
+
+          {/* DYNAMIC EXPANDED SUB-ROW */}
+          {isExpanded && (
+            <tr>
+              <td colSpan="5" className="bg-light p-3">
+                <div className="card shadow-sm border-0">
+                  <div className="card-body">
+                    <h6 className="fw-bold mb-3 text-secondary border-bottom pb-2">
+                      Lista e Detajuar e Shërbimeve për këtë Takim ({totalPagesa.toFixed(2)} €)
+                    </h6>
+                    
+                    {e.detajet && e.detajet.length > 0 ? (
+                      <div className="row g-2">
+                        {e.detajet.map((det, i) => (
+                          <div key={`sub-det-${i}`} className="col-12 col-md-6">
+                            <div className="p-2 border rounded bg-white h-100 d-flex justify-between align-items-center">
+                              <div>
+                                <span className="badge bg-primary me-2">{det.emri_sherbimit}</span>
+                                <span className="text-dark fw-semibold small">{det.emri_atributit}</span>
+                                <div className="text-muted small mt-1">{det.pershkrimi || 'Pa përshkrim'}</div>
+                              </div>
+                              <div className="fw-bold text-success text-nowrap ms-2">
+                                +{det.pagesa ? det.pagesa.toFixed(2) : '0.00'} €
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted">Nuk ka të dhëna specifike për këtë shërbim.</span>
+                    )}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          )}
+        </React.Fragment>
+      );
+    })
+  ) : (
+    <tr>
+      <td colSpan="5" className="text-center py-4 text-muted">
+        Nuk ka histori shërbimesh për këtë klient.
+      </td>
+    </tr>
+  )}
+</tbody>
           </table>
         </div>
 
@@ -841,7 +933,7 @@ Gjinia
           className="btn btn-secondary w-100"
           onClick={() => setShowHistoria(false)}
         >
-          Close
+          Mbyll
         </button>
       </div>
 
