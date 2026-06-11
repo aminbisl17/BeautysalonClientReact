@@ -809,8 +809,6 @@ Gjinia
                 <th>Data</th>
                 <th>Shërbimi</th>
                 <th>Punonjësi</th>
-                <th>Status</th>
-                <th>Detaje</th>
               </tr>
             </thead>
 
@@ -866,16 +864,10 @@ Gjinia
             <td>{e.emri_mbiemri_punonjesit || '-'}</td>
             
             {/* 4. Status */}
-            <td>
-              <span className="badge bg-success">Përfunduar</span>
-            </td>
+
 
             {/* 5. Interaktiviteti (Action indicator) */}
-            <td className="text-end text-primary fw-bold">
-              {isExpanded ? 'Fshih ▲' : 'Detajet ▼'}
-            </td>
-          </tr>
-
+</tr>
           {/* DYNAMIC EXPANDED SUB-ROW */}
           {isExpanded && (
             <tr>
