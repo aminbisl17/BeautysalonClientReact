@@ -52,9 +52,6 @@ export async function fetchServiceAtributes(ID) {
       `http://192.168.100.116:8000/api/mixed/sherbimet/atributet/${ID}`,
       {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
       }
     );
 

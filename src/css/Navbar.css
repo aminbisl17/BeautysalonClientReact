@@ -1,146 +1,121 @@
+/* ==========================================================================
+   MATTE SOFT ESPRESSO & ROSE LAYOUT (CLEAN ICON MOBILE TOGGLE)
+   ========================================================================== */
+nav.navbar.custom-navbar {
+  background-color: #23201f !important;
+  background: #23201f !important;
+  border-bottom: 1px solid #363230 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 14px 24px !important;
+  transition: background-color 0.3s ease;
+}
 
-/*
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 60px;
+/* Luxury Typography Branding */
+nav.navbar.custom-navbar .navbar-brand {
+  color: #f4eae7 !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px !important;
+}
 
+/* Base Menu Links */
+nav.navbar.custom-navbar .nav-link {
+  color: #baafac !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+nav.navbar.custom-navbar .nav-link:hover {
+  color: #ffffff !important;
+  background-color: #363230 !important;
+}
+
+/* Solid Profile Button */
+nav.navbar.custom-navbar .profile-nav-link {
+  background-color: #be185d !important;
+  color: #ffffff !important;
+  margin-left: 8px !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+nav.navbar.custom-navbar .profile-nav-link:hover {
+  background-color: #9d174d !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+/* HIGH-END MINIMALIST TOGGLER (No Clunky Boxes, Just Crisp Lines) */
+nav.navbar.custom-navbar .custom-toggler {
+  border: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-
-  background-color: #222;
-  padding: 0 20px; 
-  color: white;
-  z-index: 1000;
-  box-sizing: border-box; 
+  width: 24px;
+  height: 18px;
 }
 
-.logo {
-  font-size: 20px;
-  font-weight: bold;
+/* Custom CSS lines to replace the generic browser background image icon */
+nav.navbar.custom-navbar .custom-toggler span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: #f4eae7;
+  border-radius: 2px;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
 }
 
-.nav-links {
-  list-style: none;
-  display: flex;
-  gap: 15px;  
-  margin: 0;   
-  padding: 0;  
+/* Smooth Animation States converting icon to a crisp close "X" mark */
+nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
 }
 
-.nav-links li {
-  margin: 0;
-  padding: 0;
+nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(2) {
+  opacity: 0;
 }
 
-.nav-links a {
-  text-decoration: none;
-  color: white;
-  font-size: 16px;
+nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
 }
 
-.nav-links a:hover {
-  color: #00bcd4;
-}
-
-@media (max-width: 500px) {
-  .nav-links {
-    flex-direction: column;
-    background-color: #222;
-    position: absolute;
-    top: 60px;
-    right: 0;
-    width: 100%;
-    display: none;
+/* ==========================================================================
+   MOBILE & TABLET DROPDOWN LAYOUT OVERRIDES
+   ========================================================================== */
+@media (max-width: 991.98px) {
+  nav.navbar.custom-navbar {
+    padding: 16px 20px !important;
   }
 
-  .nav-links.show {
-    display: flex;
-  }
-} */
-
-.custom-navbar {
-    background-color: #222;
-}
-
-/* hover effect */
-.custom-navbar .nav-link {
-    transition: 0.2s;
-}
-
-.custom-navbar .nav-link:hover {
-    color: #0d6efd !important;
-}
-
-/* branding */
-.custom-navbar .navbar-brand {
-    letter-spacing: 0.5px;
-}
-
-/* Mobile styling */
-@media (max-width: 991px) {
-
-    .navbar-collapse {
-        margin-top: 10px;
-        background-color: #222;
-        padding: 15px;
-        border-radius: 10px;
-    }
-
-    .navbar-nav {
-        gap: 10px;
-        text-align: center;
-    }
-
-    .nav-link {
-        padding: 10px;
-        font-size: 18px;
-    }
-}
-
-/* MOBILE ONLY (phones) */
-@media (max-width: 576px) {
-
-  .custom-toggler {
-    border: none;
-    padding: 5px 7px;
-    border-radius: 10px;
-    background-color: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(6px);
-    width: 42px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  nav.navbar.custom-navbar .navbar-collapse {
+    background-color: #23201f !important;
+    margin-top: 16px !important;
+    padding: 16px !important;
+    border-radius: 12px !important;
+    border: 1px solid #363230 !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
   }
 
-  .custom-toggler:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+  nav.navbar.custom-navbar .navbar-nav {
+    gap: 6px !important;
   }
 
-  .custom-toggler .navbar-toggler-icon {
-    width: 18px;
-    height: 18px;
+  nav.navbar.custom-navbar .nav-link {
+    text-align: center !important;
+    width: 100% !important;
+    padding: 10px 0 !important;
   }
-}
 
-.custom-toggler {
-    border: none;
-    padding: 6px 8px;
-    border-radius: 10px;
-    backdrop-filter: blur(8px);
-    background-color: rgba(255, 255, 255, 0.1);
-}
-/* hover effect */
-.custom-toggler:hover {
-    background-color: rgba(255, 255, 255, 0.18);
-}
-
-/* make icon cleaner */
-.custom-toggler .navbar-toggler-icon {
-    width: 20px;
-    height: 20px;
+  nav.navbar.custom-navbar .profile-nav-link {
+    margin-left: 0 !important;
+    margin-top: 4px !important;
+    background-color: #be185d !important;
+  }
 }

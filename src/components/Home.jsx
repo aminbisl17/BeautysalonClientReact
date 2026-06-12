@@ -1,12 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { fetchServices } from "../javascript/APIs/ServicesAPI";
+import React, { useEffect, useState, useRef } from "react"; // Added useRef here
+import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
+import "../css/home.css";
 
 function Home() {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
+
+  // DIALOG & ATTRIBUTE STATES
+  const [selectedService, setSelectedService] = useState(null);
+  const [attributes, setAttributes] = useState([]);
+  const [loadingAttributes, setLoadingAttributes] = useState(false);
+
+  // Reference hook to target the horizontal slider DOM container
+  const sliderRef = useRef(null);
+
+  const discountedServices = services.filter((ser) => ser.zbritja > 0);
 
   async function loadServices() {
     try {
@@ -25,10 +36,34 @@ function Home() {
     loadServices();
   }, []);
 
-  // FILTER LOGIC
+  // AUTOMATIC AUTO-PLAY SLIDER LOGIC
+  useEffect(() => {
+    // If there are no special deals or a user is viewing a modal, skip auto-scroll
+    if (discountedServices.length === 0 || selectedService) return;
+
+    const interval = setInterval(() => {
+      const slider = sliderRef.current;
+      if (!slider) return;
+
+      // Calculate width of a single card dynamically
+      const cardWidth = slider.querySelector(".discount-slider-item")?.offsetWidth || 300;
+      const gap = 20; // Matches your gap in Home.css
+      const step = cardWidth + gap;
+
+      // If we've reached the absolute end of the slider contents, loop cleanly back to the beginning
+      if (slider.scrollLeft + slider.offsetWidth >= slider.scrollWidth - 10) {
+        slider.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        // Otherwise, move forward by exactly one item card index
+        slider.scrollBy({ left: step, behavior: "smooth" });
+      }
+    }, 3000); // Transitions automatically every 4 seconds
+
+    return () => clearInterval(interval); // Clean up track loop when component unmounts
+  }, [discountedServices, selectedService]);
+
   const filterServices = (type) => {
     setActiveFilter(type);
-
     if (type === "all") {
       setFiltered(services);
     } else {
@@ -40,149 +75,215 @@ function Home() {
     }
   };
 
- 
+  const handleServiceClick = async (service) => {
+    setSelectedService(service);
+    setLoadingAttributes(true);
+    setAttributes([]);
+    try {
+      const data = await fetchServiceAtributes(service.ID);
+      setAttributes(data.atributet || []);
+      if (data.imageURL) {
+        setSelectedService(prev => ({ ...prev, fetchedModalImage: data.imageURL }));
+      }
+    } catch (err) {
+      setAttributes([]);
+    } finally {
+      setLoadingAttributes(false);
+    }
+  };
+
+  const closeDialog = () => {
+    setSelectedService(null);
+    setAttributes([]);
+  };
+
   return (
-    <div>
-
-      {/* HERO SECTION */}
-      <div
-        className="text-white d-flex align-items-center justify-content-center"
-        style={{
-          height: "55vh",
-          background: "linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          textAlign: "center",
-        }}
-      >
-        <div>
-          <h1 className="display-4 fw-bold">Beauty Salon ✨</h1>
-          <p className="lead">
-            Hair • Nails • Skincare • Makeup
-          </p>
-
-          <button className="btn btn-primary btn-lg mt-3">
-            Book Appointment
-          </button>
+    <div className="home-wrapper">
+      <div className="hero-banner">
+        <div className="hero-content">
+          <h1>Luxury Salon ✨</h1>
+          <p>Hair • Nails • Skincare • Makeup</p>
+          <button className="hero-btn">Book Appointment</button>
         </div>
       </div>
 
-      {/* FILTER BAR */}
-      <div className="container py-4 text-center">
-
-        <div className="btn-group">
-
-          <button
-            className={`btn btn-sm ${activeFilter === "all" ? "btn-dark" : "btn-outline-dark"}`}
-            onClick={() => filterServices("all")}
-          >
-            All
-          </button>
-
-          <button
-            className={`btn btn-sm ${activeFilter === "hair" ? "btn-dark" : "btn-outline-dark"}`}
-            onClick={() => filterServices("hair")}
-          >
-            Hair
-          </button>
-
-          <button
-            className={`btn btn-sm ${activeFilter === "nail" ? "btn-dark" : "btn-outline-dark"}`}
-            onClick={() => filterServices("nail")}
-          >
-            Nails
-          </button>
-
-          <button
-            className={`btn btn-sm ${activeFilter === "skin" ? "btn-dark" : "btn-outline-dark"}`}
-            onClick={() => filterServices("skin")}
-          >
-            Skin
-          </button>
-
-        </div>
-
-      </div>
-
-      {/* SERVICES */}
-      <div className="container pb-5">
-
-        {loading && (
-          <div className="text-center">
-            <div className="spinner-border text-primary"></div>
-            <p>Loading services...</p>
-          </div>
+      <div className="home-container">
+        
+        {/* AUTOMATED AUTO-PLAY SLIDER BAR */}
+        {discountedServices.length > 0 && (
+          <section style={{ marginBottom: "30px" }}>
+            <div className="slider-header-block">
+              <h2 style={{ fontSize: "22px", fontWeight: "800", margin: 0 }}>Special Offers 🔥</h2>
+              <span className="slider-subtitle-badge">Limited Time Offers</span>
+            </div>
+            
+            {/* Bound the slider container to our ref variable hook */}
+            <div className="discount-slider hide-scrollbar" ref={sliderRef}>
+              {discountedServices.map((ser) => {
+                const livePrice = ser.qmimi_baze * (1 - ser.zbritja / 100);
+                return (
+                  <div 
+                    className="discount-slider-item" 
+                    key={`slider-${ser.ID}`}
+                    onClick={() => handleServiceClick(ser)}
+                  >
+                    <div className="service-card" style={{ borderTop: "3px solid #ef4444" }}>
+                      <div className="card-img-wrapper">
+                        {ser.imageURL ? (
+                          <img src={ser.imageURL} className="service-image" alt="Promo" />
+                        ) : (
+                          <div className="service-fallback discount-fallback-bg">💝</div>
+                        )}
+                        <span className="discount">-{ser.zbritja}% OFF</span>
+                      </div>
+                      
+                      <div className="card-content">
+                        <h2>{ser.emri_sherbimit}</h2>
+                        <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
+                        
+                        <div className="service-info slider-item-pricing-box">
+                          <span>⏱ {ser.kohezgjatja} min</span>
+                          <div>
+                            <span className="price-strike">€{ser.qmimi_baze}</span>
+                            <span className="price discount-active">€{livePrice.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         )}
 
-          
-        <div className="row g-4">
-
-  {filtered.length > 0 ? (
-    filtered.map((ser) => (
-      <div className="col-md-4" key={ser.ID}>
-        <div className="card border-0 shadow-sm h-100">
-
-          {/* IMAGE */}
-          {ser.imageURL ? (
-            <img
-              src={ser.imageURL}
-              className="card-img-top"
-              style={{ height: "220px", objectFit: "cover" }}
-              alt="service"
-            />
-          ) : (
-            <div
-              className="bg-light d-flex align-items-center justify-content-center"
-              style={{ height: "220px", fontSize: "40px" }}
-            >
-              💇‍♀️
-            </div>
-          )}
-
-          <div className="card-body">
-            <h5 className="fw-bold">{ser.emri_sherbimit}</h5>
-
-            <p className="text-muted small">
-              {ser.pershkrimi}
-            </p>
-
-            <div className="d-flex justify-content-between align-items-center">
-              <span className="badge bg-secondary">
-                ⏱ {ser.kohezgjatja}
-              </span>
-
-              <span className="fw-bold text-primary">
-                €{ser.qmimi_baze}
-              </span>
-            </div>
-
-            {ser.zbritja > 0 && (
-              <span className="badge bg-danger mt-2">
-                -{ser.zbritja}% OFF
-              </span>
-            )}
-
-            <button className="btn btn-outline-primary w-100 mt-3">
-              Book Now
-            </button>
+        {/* EXPLORE ALL TREATMENTS FILTER PILLS BAR */}
+        <div className="filter-bar-container">
+          <h4 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "12px" }}>Explore All Treatments</h4>
+          <div className="filter-pills-row hide-scrollbar">
+            {["all", "hair", "nail", "skin"].map((type) => (
+              <button
+                key={type}
+                className={`filter-pill ${activeFilter === type ? "active" : ""}`}
+                onClick={() => filterServices(type)}
+              >
+                {type === "all" ? "⚡ All Services" : type}
+              </button>
+            ))}
           </div>
-
         </div>
+
+        {/* CATALOGUE SELECTION SERVICES GRID */}
+        <main>
+          {loading && <div className="loading">Loading our premium catalog...</div>}
+
+          <div className="services-grid">
+            {filtered.length > 0 ? (
+              filtered.map((ser) => {
+                const hasDiscount = ser.zbritja > 0;
+                const livePrice = ser.qmimi_baze * (1 - ser.zbritja / 100);
+                
+                return (
+                  <div className="service-card" key={ser.ID} onClick={() => handleServiceClick(ser)}>
+                    <div className="card-img-wrapper">
+                      {ser.imageURL ? (
+                        <img src={ser.imageURL} className="service-image" alt="Service" />
+                      ) : (
+                        <div className="service-fallback">💇‍♀️</div>
+                      )}
+                      {hasDiscount && <span className="discount">-{ser.zbritja}% OFF</span>}
+                    </div>
+
+                    <div className="card-content">
+                      <h2>{ser.emri_sherbimit}</h2>
+                      <p>{ser.pershkrimi}</p>
+
+                      <div className="service-info">
+                        <span>⏱ {ser.kohezgjatja} min</span>
+                        <div>
+                          {hasDiscount && <span className="price-strike">€{ser.qmimi_baze}</span>}
+                          <span className={`price ${hasDiscount ? "discount-active" : ""}`}>
+                            €{livePrice.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                      <button className="view-details-btn">View Options</button>
+                    </div>
+                  </div>
+                );
+              })
+            ) : !loading && (
+              <div className="empty-state">
+                <h3>No services found</h3>
+                <p style={{ color: "#6b7280", fontSize: "14px" }}>Try tweaking your filter context rules.</p>
+              </div>
+            )}
+          </div>
+        </main>
+
+        {/* MODAL BOTTOM-SHEET DIALOG */}
+        {selectedService && (
+          <div className="custom-modal-overlay" onClick={closeDialog}>
+            <div className="custom-modal-sheet" onClick={(e) => e.stopPropagation()}>
+              
+              <div className="modal-sheet-header">
+                <h3>{selectedService.emri_sherbimit}</h3>
+                <button className="modal-close-btn" onClick={closeDialog}>✕</button>
+              </div>
+
+              <div className="modal-sheet-body">
+                {selectedService.fetchedModalImage && (
+                  <img src={selectedService.fetchedModalImage} className="modal-hero-img" alt="Modal Visual" />
+                )}
+                
+                <p className="modal-description">{selectedService.pershkrimi}</p>
+                
+                <div className="modal-base-metrics">
+                  <div className="metric-pill">
+                    <label>Price</label>
+                    <span>€{(selectedService.qmimi_baze * (1 - selectedService.zbritja / 100)).toFixed(2)}</span>
+                  </div>
+                  <div className="metric-pill">
+                    <label>Duration</label>
+                    <span>⏱ {selectedService.kohezgjatja}m</span>
+                  </div>
+                </div>
+
+                <h4 className="attributes-section-title">🪄 Available Configuration Layouts</h4>
+
+                {loadingAttributes ? (
+                  <div className="loading" style={{ padding: "10px" }}>Updating current options...</div>
+                ) : attributes.length > 0 ? (
+                  <div className="attributes-list">
+                    {attributes.map((attr) => (
+                      <div className="attr-item-card" key={attr.id_atributit}>
+                        <div className="attr-left">
+                          <h5>{attr.opsioni}</h5>
+                          {attr.pershkrimi && <p>{attr.pershkrimi}</p>}
+                          <span className="attr-duration-tag">⏱ {attr.kohezgjatja} min</span>
+                        </div>
+                        <div className="attr-right">
+                          <span className="attr-price">€{attr.qmimi.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ color: "#6b7280", fontSize: "13px", textAlign: "center" }}>
+                    Standard base package configurations apply.
+                  </p>
+                )}
+              </div>
+
+              <div className="modal-sheet-footer">
+                <button className="modal-btn secondary" onClick={closeDialog}>Cancel</button>
+                <button className="modal-btn primary">Book Treatment</button>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
-    ))
-  ) : (
-    <div className="col-12 text-center py-5">
-      <h4 className="text-muted">No services available</h4>
-      <p className="text-secondary">
-        There are currently no services to display.
-      </p>
-    </div>
-  )}
-
-</div>
-
-      </div>
-
     </div>
   );
 }

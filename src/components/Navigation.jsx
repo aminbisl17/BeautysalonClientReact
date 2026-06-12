@@ -3,65 +3,68 @@ import "../css/Navbar.css";
 
 function Navigation({ onNavClick }) {
   return (
-  //  <nav className="navbar navbar-expand-lg navbar-dark custom-navbar shadow-sm px-3">
-<nav className="navbar navbar-expand-lg navbar-dark shadow-sm px-3 custom-navbar sticky-top">
-      {/* LOGO */}
-      <a className="navbar-brand fw-bold" href="/">
-        BeautySalon
-      </a>
+    <nav className="navbar navbar-expand-lg sticky-top custom-navbar">
+      <div className="container-fluid px-0">
+        
+        {/* LOGO */}
+        <a className="navbar-brand fw-extrabold" href="/">
+          Beauty<span style={{ color: "#db2777" }}>Salon</span> ✨
+        </a>
 
-      {/* MOBILE BUTTON */}
-<button
-  className="navbar-toggler custom-toggler"
-  type="button"
-  data-bs-toggle="collapse"
-  data-bs-target="#navMenu"
-  aria-controls="navMenu"
-  aria-expanded="false"
-  aria-label="Toggle navigation"
->
-  <span className="navbar-toggler-icon"></span>
-</button>
+        {/* MOBILE TOGGLER BUTTON */}
+        <button
+          className="navbar-toggler custom-toggler collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navMenu"
+          aria-controls="navMenu"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          {/* Three explicit lines engineered for clean architectural rendering */}
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
 
-      {/* MENU */}
-      <div className="collapse navbar-collapse" id="navMenu">
+        {/* NAVIGATION LINKS CONTAINER */}
+        <div className="collapse navbar-collapse" id="navMenu">
+          <ul className="navbar-nav ms-auto align-items-lg-center">
+            
+            <li className="nav-item">
+              <a
+                className="nav-link"
+                href="/"
+                onClick={(e) => onNavClick(e, "home")}
+              >
+                Home
+              </a>
+            </li>
 
-        <ul className="navbar-nav ms-auto text-center">
+            <li className="nav-item">
+              <a
+                className="nav-link"
+                href="/about"
+                onClick={(e) => onNavClick(e, "about")}
+              >
+                About Us
+              </a>
+            </li>
 
-          <li className="nav-item">
-            <a
-              className="nav-link"
-              href="/"
-              onClick={(e) => onNavClick(e, "home")}
-            >
-              Home
-            </a>
-          </li>
+            <li className="nav-item">
+              <a
+                className="nav-link profile-nav-link text-center"
+                href="/login"
+                onClick={(e) => onNavClick(e, "login")}
+              >
+                Profile
+              </a>
+            </li>
 
-          <li className="nav-item">
-            <a
-              className="nav-link"
-              href="/about"
-              onClick={(e) => onNavClick(e, "about")}
-            >
-              About Us
-            </a>
-          </li>
-
-          <li className="nav-item">
-            <a
-              className="nav-link"
-              href="/login"
-              onClick={(e) => onNavClick(e, "login")}
-            >
-              Profile
-            </a>
-          </li>
-
-        </ul>
+          </ul>
+        </div>
 
       </div>
-
     </nav>
   );
 }

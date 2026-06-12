@@ -1,14 +1,13 @@
 /* =========================
-   GLOBAL HOME
+   GLOBAL HOME & LAYOUT
 ========================= */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   background: #f5f7fb;
   color: #111827;
 }
 
-/* Container */
 .home-container {
   max-width: 1100px;
   margin: 0 auto;
@@ -16,7 +15,7 @@ body {
 }
 
 /* =========================
-   HEADER
+   HEADER / HERO
 ========================= */
 .home-header {
   text-align: center;
@@ -34,55 +33,194 @@ body {
   color: #6b7280;
   font-size: 15px;
 }
-
 /* =========================
-   LOADING
+   HERO BANNER
 ========================= */
-.loading {
+.hero-banner {
+  height: 45vh;
+  background: linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9');
+  background-size: cover;
+  background-position: center;
   text-align: center;
-  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 0 20px;
+}
+
+.hero-content h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.hero-content p {
+  color: rgba(255, 255, 255, 0.9);
   font-size: 16px;
-  color: #6b7280;
+  margin-bottom: 24px;
+}
+
+.hero-btn {
+  background: white;
+  color: #111827;
+  border: none;
+  font-weight: 700;
+  padding: 12px 32px;
+  font-size: 15px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: all 0.2s ease;
+}
+
+.hero-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+}
+
+/* Responsive banner adjustments */
+@media (max-width: 600px) {
+  .hero-banner {
+    height: 35vh;
+  }
+  .hero-content h1 {
+    font-size: 30px;
+  }
+  .hero-content p {
+    font-size: 14px;
+  }
 }
 
 /* =========================
-   SERVICES GRID
+   FILTER PILLS NAVIGATION
+========================= */
+.filter-bar-container {
+  margin-bottom: 30px;
+}
+
+.filter-pills-row {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+/* Hide Native Platform Scrollbars for Filter/Slider items */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.filter-pill {
+  border-radius: 999px;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  border: 1px solid #e5e7eb;
+  background: white;
+  color: #4b5563;
+  cursor: pointer;
+}
+
+.filter-pill.active {
+  background: #111827;
+  color: white;
+  border-color: #111827;
+  box-shadow: 0 4px 12px rgba(17, 24, 39, 0.15);
+}
+
+/* =========================
+   DISCOUNT SLIDER
+========================= */
+.slider-header-block {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.slider-subtitle-badge {
+  background: #fee2e2;
+  color: #ef4444;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.discount-slider {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  gap: 20px;
+  padding-bottom: 15px;
+  margin-bottom: 40px;
+}
+
+.discount-slider-item {
+  scroll-snap-align: start;
+  flex: 0 0 85%;
+}
+
+@media (min-width: 576px) {
+  .discount-slider-item { flex: 0 0 48%; }
+}
+@media (min-width: 992px) {
+  .discount-slider-item { flex: 0 0 31.5%; }
+}
+
+/* =========================
+   SERVICES GRID & CARDS
 ========================= */
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 }
 
-/* =========================
-   SERVICE CARD
-========================= */
 .service-card {
   background: white;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
   border: 1px solid #eef0f3;
   transition: all 0.25s ease;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  cursor: pointer;
 }
 
 .service-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 25px 60px rgba(0,0,0,0.12);
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.1);
 }
 
-/* Image */
+.card-img-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .service-image {
   width: 100%;
-  height: 180px;
+  height: 200px;
   object-fit: cover;
   display: block;
 }
 
-/* Fallback icon */
 .service-fallback {
-  height: 180px;
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,60 +228,320 @@ body {
   background: linear-gradient(135deg, #fce7f3, #e0e7ff);
 }
 
-/* Title */
-.service-card h2 {
-  font-size: 18px;
-  font-weight: 700;
-  margin: 14px 14px 6px;
+.discount-fallback-bg {
+  background: linear-gradient(135deg, #ff9a9e, #fecfef);
 }
 
-/* Description */
-.service-card p {
-  font-size: 13px;
-  color: #6b7280;
-  margin: 0 14px 10px;
-  line-height: 1.4;
-}
-
-/* Info row */
-.service-info {
+/* Card Body Context */
+.card-content {
+  padding: 20px;
   display: flex;
-  justify-content: space-between;
-  padding: 10px 14px 14px;
-  font-size: 13px;
-  color: #374151;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
-.price {
+.service-card h2 {
+  font-size: 19px;
   font-weight: 700;
+  margin: 0 0 8px;
   color: #111827;
 }
 
-/* =========================
-   DISCOUNT BADGE
-========================= */
+.service-card p {
+  font-size: 13.5px;
+  color: #6b7280;
+  margin: 0 0 16px;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+/* Info Data Footers */
+.service-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.slider-item-pricing-box {
+  background: #fef2f2;
+}
+
+.price-strike {
+  text-decoration: line-through;
+  color: #9ca3af;
+  font-size: 12px;
+  margin-right: 6px;
+}
+
+.price {
+  font-weight: 800;
+  font-size: 16px;
+  color: #111827;
+}
+
+.price.discount-active {
+  color: #ef4444;
+}
+
 .discount {
   position: absolute;
   top: 12px;
   right: 12px;
   background: #ef4444;
   color: white;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 6px 10px;
+  padding: 5px 10px;
   border-radius: 999px;
-  box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.view-details-btn {
+  margin-top: 15px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: transparent;
+  color: #4b5563;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.service-card:hover .view-details-btn {
+  background: #111827;
+  color: white;
+  border-color: #111827;
 }
 
 /* =========================
-   RESPONSIVE
+   LOADING & EMPTY HANDLERS
+========================= */
+.loading {
+  text-align: center;
+  padding: 40px 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px 20px;
+  background: white;
+  border-radius: 18px;
+  border: 1px dashed #cbd5e1;
+}
+
+/* =========================
+   MODAL / BOTTOM SHEET
+========================= */
+.custom-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.custom-modal-sheet {
+  background: white;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-sheet-header {
+  padding: 20px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-sheet-header h3 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.modal-close-btn {
+  background: #f1f5f9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-sheet-body {
+  padding: 0 24px 24px;
+  overflow-y: auto;
+  max-height: 60vh;
+}
+
+.modal-hero-img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 15px;
+}
+
+.modal-description {
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.modal-base-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric-pill {
+  background: #f8fafc;
+  padding: 10px;
+  border-radius: 12px;
+  text-align: center;
+}
+.metric-pill label {
+  display: block;
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.metric-pill span {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.attributes-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #111827;
+}
+
+.attributes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.attr-item-card {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.attr-left h5 {
+  margin: 0 0 2px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.attr-left p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.attr-duration-tag {
+  font-size: 11px;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #4b5563;
+}
+
+.attr-right .attr-price {
+  font-weight: 800;
+  color: #10b981;
+  font-size: 16px;
+}
+
+.modal-sheet-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+}
+
+.modal-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+.modal-btn.secondary {
+  background: #f1f5f9;
+  color: #4b5563;
+}
+.modal-btn.primary {
+  background: #111827;
+  color: white;
+}
+
+/* =========================
+   RESPONSIVE DESIGN OVERRIDES
 ========================= */
 @media (max-width: 600px) {
+  .home-container {
+    padding: 20px 15px;
+  }
+  
   .home-header h1 {
     font-size: 26px;
   }
 
-  .service-image {
+  .service-image, .service-fallback {
     height: 160px;
+  }
+
+  /* Morph Dialog into Mobile Native Bottom-Sheet */
+  .custom-modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .custom-modal-sheet {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    max-height: 85vh;
   }
 }
