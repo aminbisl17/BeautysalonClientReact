@@ -545,3 +545,137 @@ body {
     max-height: 85vh;
   }
 }
+
+.attr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.attr-modal {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  width: 320px;
+  animation: pop 0.2s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* SERVICE MODAL (base layer) */
+.custom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* ATTRIBUTE MODAL (top layer) */
+.attr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000; /* 🔥 higher than service modal */
+}
+.attr-searchbar {
+  margin: 10px 0 15px;
+}
+
+.attr-searchbar input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  outline: none;
+  font-size: 14px;
+  transition: 0.2s;
+}
+
+.attr-searchbar input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+/* BASE CARD */
+.attr-item-card {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
+  transition: all 0.25s ease;
+  background: #fff;
+}
+
+/* HOVER EFFECT */
+.attr-item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+/* DISCOUNTED CARD STYLE */
+.attr-item-card.has-discount {
+  border: 1px solid #ef4444;
+  background: linear-gradient(135deg, #fff5f5, #ffffff);
+  box-shadow: 0 0 0 rgba(239, 68, 68, 0.0);
+  animation: discountPulseBorder 2.5s infinite;
+}
+
+.attr-item-card.has-discount::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 4px;
+  background: #ef4444;
+  border-radius: 4px;
+}
+
+/* animated border glow */
+@keyframes discountPulseBorder {
+  0% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(239, 68, 68, 0.25);
+  }
+  100% {
+    box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+/* DISCOUNT BADGE */
+.discount-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #ef4444;
+  border-radius: 999px;
+}
+
+/* small bounce animation */
+.discount-badge.pulse {
+  animation: popBounce 1.6s infinite;
+}
+
+@keyframes popBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
