@@ -37,7 +37,7 @@ function Navigation({ onNavClick }) {
                 href="/"
                 onClick={(e) => onNavClick(e, "home")}
               >
-                Home
+                Ballina
               </a>
             </li>
 
@@ -47,7 +47,7 @@ function Navigation({ onNavClick }) {
                 href="/about"
                 onClick={(e) => onNavClick(e, "about")}
               >
-                About Us
+                Rreth neshë
               </a>
             </li>
 
@@ -57,7 +57,7 @@ function Navigation({ onNavClick }) {
                 href="/login"
                 onClick={(e) => onNavClick(e, "login")}
               >
-                Profile
+                Profili
               </a>
             </li>
 

@@ -107,9 +107,9 @@ return (
   <div className="home-wrapper">
     <div className="hero-banner">
       <div className="hero-content">
-        <h1>Luxury Salon ✨</h1>
+        <h1> Luxury Salon✨</h1>
         <p>Hair • Nails • Skincare • Makeup</p>
-        <button className="hero-btn">Book Appointment</button>
+        <button className="hero-btn">Vendos termin!</button>
       </div>
     </div>
 
@@ -120,10 +120,10 @@ return (
         <section style={{ marginBottom: "30px" }}>
           <div className="slider-header-block">
             <h2 style={{ fontSize: "22px", fontWeight: "800", margin: 0 }}>
-              Special Offers 🔥
+              Ofertat speciale 🔥
             </h2>
             <span className="slider-subtitle-badge">
-              Limited Time Offers
+              Oferta me kohë të limituar
             </span>
           </div>
 
@@ -157,7 +157,10 @@ return (
                       <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
 
                       <div className="service-info slider-item-pricing-box">
-                        <span>⏱ {ser.kohezgjatja} min</span>
+                        <span>⏱ Kohëzgjatja {
+    `${String(Math.floor(ser.kohezgjatja / 60)).padStart(2, "0")}:` +
+    `${String(ser.kohezgjatja % 60).padStart(2, "0")}:00`
+  }</span>
 
                         <div>
                           {discount > 0 && (
@@ -181,17 +184,17 @@ return (
       {/* FILTER BAR */}
       <div className="filter-bar-container">
         <h4 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "12px" }}>
-          Explore All Treatments
+          Eksploro të gjitha trajtimet!
         </h4>
 
         <div className="filter-pills-row hide-scrollbar">
-          {["all", "hair", "nail", "skin"].map((type) => (
+          {["all", "Flokët", "Thonjët", "Lëkura"].map((type) => (
             <button
               key={type}
               className={`filter-pill ${activeFilter === type ? "active" : ""}`}
               onClick={() => filterServices(type)}
             >
-              {type === "all" ? "⚡ All Services" : type}
+              {type === "all" ? "⚡ Të gjitha shërbimet" : type}
             </button>
           ))}
         </div>
@@ -233,7 +236,11 @@ return (
                     <p>{ser.pershkrimi}</p>
 
                     <div className="service-info">
-                      <span>⏱ {ser.kohezgjatja} min</span>
+                      <span>⏱  {
+    `${String(Math.floor(ser.kohezgjatja / 60)).padStart(2, "0")}:` +
+    `${String(ser.kohezgjatja % 60).padStart(2, "0")}:00`
+  }
+  </span>
 
                       <div>
                         {discount > 0 && (
@@ -247,7 +254,7 @@ return (
                     </div>
 
                     <button className="view-details-btn">
-                      View Options
+                      Shiko opsionet
                     </button>
                   </div>
                 </div>
@@ -294,7 +301,7 @@ return (
 
               <div className="modal-base-metrics">
                 <div className="metric-pill">
-                  <label>Price</label>
+                  <label>Çmimi</label>
                   <span>
                     €
                     {(
@@ -305,21 +312,26 @@ return (
                 </div>
 
                 <div className="metric-pill">
-                  <label>Duration</label>
-                  <span>⏱ {selectedService.kohezgjatja}m</span>
+                  <label>Kohëzgjatja</label>
+                  <span>
+  ⏱ {
+    `${String(Math.floor(selectedService.kohezgjatja / 60)).padStart(2, "0")}:` +
+    `${String(selectedService.kohezgjatja % 60).padStart(2, "0")}:00`
+  }
+</span>
                 </div>
               </div>
 
               {/* ATTRIBUTES HEADER */}
               <h4 className="attributes-section-title">
-                🪄 Available Configuration Layouts
+                🪄 Kategoria
               </h4>
 
               {/* ATTRIBUTE SEARCH BAR */}
               <div className="attr-searchbar">
                 <input
                   type="text"
-                  placeholder="Search attributes..."
+                  placeholder="Kërko kategori..."
                   value={attributeSearch}
                   onChange={(e) => setAttributeSearch(e.target.value)}
                 />
@@ -354,7 +366,8 @@ return (
 
                             {attr.pershkrimi && <p>{attr.pershkrimi}</p>}
 
-                            <span>⏱ {attr.kohezgjatja} min</span>
+                            <span>⏱ Kohëzgjatja {`${String(Math.floor(attr.kohezgjatja / 60)).padStart(2, "0")}:` +
+    `${String(attr.kohezgjatja % 60).padStart(2, "0")}:00`} </span>
 
                             {discount > 0 && (
   <span className="discount-badge pulse">
@@ -378,7 +391,7 @@ return (
                 </div>
               ) : (
                 <p style={{ color: "#6b7280", fontSize: "13px", textAlign: "center" }}>
-                  Standard base package configurations apply.
+                  Pako standart
                 </p>
               )}
 
@@ -386,10 +399,10 @@ return (
 
             <div className="modal-sheet-footer">
               <button className="modal-btn secondary" onClick={closeDialog}>
-                Cancel
+                Anulo
               </button>
               <button className="modal-btn primary">
-                Book Treatment
+                Krijo termin!
               </button>
             </div>
 
@@ -413,7 +426,8 @@ return (
 
             <div className="attr-details">
               <p>
-                <strong>Duration:</strong> {selectedAttribute.kohezgjatja} min
+                <strong>Kohëzgjatja:</strong>    `${String(Math.floor(selectedAttribute.kohezgjatja / 60)).padStart(2, "0")}:` +
+    `${String(selectedAttribute.kohezgjatja % 60).padStart(2, "0")}:00`  min
               </p>
 
               <p>
@@ -423,13 +437,13 @@ return (
 
               {selectedAttribute.zbritja > 0 && (
                 <p className="discount">
-                  <strong>Discount:</strong> -{selectedAttribute.zbritja}%
+                  <strong>Zbritje:</strong> -{selectedAttribute.zbritja}%
                 </p>
               )}
             </div>
 
             <button onClick={() => setSelectedAttribute(null)}>
-              Close
+              kthehu
             </button>
 
           </div>
