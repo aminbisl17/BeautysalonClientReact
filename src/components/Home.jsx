@@ -3,7 +3,7 @@ import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/Service
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import "../css/home.css";
 
-function Home() {
+function Home({ setView }) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -109,7 +109,12 @@ return (
       <div className="hero-content">
         <h1> Luxury Salon✨</h1>
         <p>Hair • Nails • Skincare • Makeup</p>
-        <button className="hero-btn">Vendos termin!</button>
+    <button
+  className="hero-btn"
+  onClick={() => setView("terminet")}
+>
+  Vendos termin!
+</button>
       </div>
     </div>
 

@@ -11,50 +11,59 @@ export default function Termini() {
     detajetTermineve: [],
   });
 
+  // REALISTIC EMPLOYEES
   const employees = [
-    { id: 10, name: "Arta" },
-    { id: 11, name: "Sara" },
-    { id: 12, name: "Diona" },
+    { id: 10, name: "Arta - Hair Stylist ✂️" },
+    { id: 11, name: "Sara - Nail Artist 💅" },
+    { id: 12, name: "Diona - Makeup Artist 💄" },
   ];
 
+  // MORE REALISTIC SERVICE DATA
   const services = [
     {
       id: 4,
-      name: "Haircut",
-      kohezgjatja: "00:30:00",
-      pagesa: 5.0,
+      name: "Haircut & Styling",
+      kohezgjatja: 30,
+      pagesa: 12,
+      icon: "✂️",
     },
     {
       id: 7,
-      name: "Hair Coloring",
-      kohezgjatja: "00:45:00",
-      pagesa: 10.0,
+      name: "Hair Coloring Premium",
+      kohezgjatja: 90,
+      pagesa: 35,
+      icon: "🎨",
     },
     {
       id: 8,
-      name: "Makeup",
-      kohezgjatja: "01:00:00",
-      pagesa: 15.0,
+      name: "Bridal Makeup",
+      kohezgjatja: 60,
+      pagesa: 45,
+      icon: "💄",
+    },
+    {
+      id: 9,
+      name: "Manicure Deluxe",
+      kohezgjatja: 45,
+      pagesa: 18,
+      icon: "💅",
     },
   ];
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleServiceToggle = (service) => {
     const exists = formData.detajetTermineve.find(
-      (item) => item.sherbimetId === service.id
+      (s) => s.sherbimetId === service.id
     );
 
     if (exists) {
       setFormData({
         ...formData,
         detajetTermineve: formData.detajetTermineve.filter(
-          (item) => item.sherbimetId !== service.id
+          (s) => s.sherbimetId !== service.id
         ),
       });
     } else {
@@ -67,6 +76,7 @@ export default function Termini() {
             atributetId: null,
             kohezgjatja: service.kohezgjatja,
             pagesa: service.pagesa,
+            name: service.name,
           },
         ],
       });
@@ -78,133 +88,119 @@ export default function Termini() {
     0
   );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const payload = {
-      ...formData,
-      employeeId: Number(formData.employeeId),
-    };
-
-    console.log(payload);
-  };
-
   return (
-    <div className="container py-5">
-      <div className="row justify-content-center">
-        <div className="col-lg-9">
-          <div className="booking-card shadow-lg">
-            <div className="booking-header text-center">
-              <h2>✨ Schedule Appointment</h2>
-              <p>Choose your stylist, services and time</p>
+    <div className="termini-page">
+      <div className="termini-container">
+
+        {/* HEADER */}
+        <div className="termini-header">
+          <h1>✨ Book Your Appointment</h1>
+          <p>Select services, time & stylist in seconds</p>
+        </div>
+
+        <div className="termini-grid">
+
+          {/* LEFT FORM */}
+          <div className="termini-form">
+
+            <div className="form-card">
+              <label>👩‍🎨 Select Stylist</label>
+              <select
+                name="employeeId"
+                value={formData.employeeId}
+                onChange={handleChange}
+              >
+                <option value="">Choose stylist</option>
+                {employees.map((e) => (
+                  <option key={e.id} value={e.id}>
+                    {e.name}
+                  </option>
+                ))}
+              </select>
+
+              <label>📞 Phone Number</label>
+              <input
+                name="numri_tel"
+                placeholder="+383..."
+                value={formData.numri_tel}
+                onChange={handleChange}
+              />
+
+              <label>📅 Date & Time</label>
+              <input
+                type="datetime-local"
+                name="dataCaktimit"
+                value={formData.dataCaktimit}
+                onChange={handleChange}
+              />
+
+              <label>📝 Notes</label>
+              <textarea
+                name="pershkrimi"
+                placeholder="Any special request..."
+                value={formData.pershkrimi}
+                onChange={handleChange}
+              />
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4">
-              <div className="row g-4">
-                {/* Left Side */}
-                <div className="col-md-6">
-                  <label className="form-label">Select Employee</label>
-                  <select
-                    className="form-select"
-                    name="employeeId"
-                    value={formData.employeeId}
-                    onChange={handleChange}
-                    required
+            {/* SERVICES */}
+            <h3 className="section-title">Available Services</h3>
+
+            <div className="services-grid">
+              {services.map((s) => {
+                const selected = formData.detajetTermineve.some(
+                  (x) => x.sherbimetId === s.id
+                );
+
+                return (
+                  <div
+                    key={s.id}
+                    className={`service-card ${selected ? "active" : ""}`}
+                    onClick={() => handleServiceToggle(s)}
                   >
-                    <option value="">Choose...</option>
-                    {employees.map((employee) => (
-                      <option key={employee.id} value={employee.id}>
-                        {employee.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  <label className="form-label mt-3">Phone Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="numri_tel"
-                    placeholder="+383..."
-                    value={formData.numri_tel}
-                    onChange={handleChange}
-                    required
-                  />
-
-                  <label className="form-label mt-3">Appointment Date</label>
-                  <input
-                    type="datetime-local"
-                    className="form-control"
-                    name="dataCaktimit"
-                    value={formData.dataCaktimit}
-                    onChange={handleChange}
-                    required
-                  />
-
-                  <label className="form-label mt-3">Description</label>
-                  <textarea
-                    className="form-control"
-                    rows="4"
-                    name="pershkrimi"
-                    placeholder="Special requests..."
-                    value={formData.pershkrimi}
-                    onChange={handleChange}
-                  />
-                </div>
-
-                {/* Right Side */}
-                <div className="col-md-6">
-                  <h5 className="mb-3">Choose Services</h5>
-
-                  <div className="services-wrapper">
-                    {services.map((service) => (
-                      <div
-                        key={service.id}
-                        className={`service-box ${
-                          formData.detajetTermineve.find(
-                            (s) => s.sherbimetId === service.id
-                          )
-                            ? "selected"
-                            : ""
-                        }`}
-                        onClick={() => handleServiceToggle(service)}
-                      >
-                        <h6>{service.name}</h6>
-                        <p>⏱ {service.kohezgjatja}</p>
-                        <span>€{service.pagesa}</span>
-                      </div>
-                    ))}
+                    <div className="service-icon">{s.icon}</div>
+                    <h4>{s.name}</h4>
+                    <p>⏱ {s.kohezgjatja} min</p>
+                    <span>€{s.pagesa}</span>
                   </div>
+                );
+              })}
+            </div>
+          </div>
 
-                  <div className="summary-box mt-4">
-                    <h5>Booking Summary</h5>
-                    {formData.detajetTermineve.length === 0 ? (
-                      <p>No services selected.</p>
-                    ) : (
-                      <>
-                        {formData.detajetTermineve.map((item, index) => (
-                          <div key={index} className="summary-item">
-                            <span>Service #{item.sherbimetId}</span>
-                            <span>€{item.pagesa}</span>
-                          </div>
-                        ))}
+          {/* RIGHT SUMMARY (STICKY) */}
+          <div className="termini-summary">
 
-                        <hr />
+            <div className="summary-card sticky">
+              <h3>📋 Booking Summary</h3>
 
-                        <div className="summary-total">
-                          <strong>Total:</strong>
-                          <strong>€{totalPrice}</strong>
-                        </div>
-                      </>
-                    )}
+              {formData.detajetTermineve.length === 0 ? (
+                <p className="empty">No services selected yet</p>
+              ) : (
+                <>
+                  {formData.detajetTermineve.map((s, i) => (
+                    <div key={i} className="summary-item">
+                      <span>{s.name}</span>
+                      <span>€{s.pagesa}</span>
+                    </div>
+                  ))}
+
+                  <hr />
+
+                  <div className="total">
+                    <strong>Total</strong>
+                    <strong>€{totalPrice}</strong>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
 
-              <button className="btn booking-btn w-100 mt-4">
+              <button className="confirm-btn">
                 Confirm Appointment
               </button>
-            </form>
+            </div>
+
           </div>
+
         </div>
       </div>
     </div>
