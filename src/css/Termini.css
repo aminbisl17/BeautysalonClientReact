@@ -1,0 +1,94 @@
+body {
+  background: linear-gradient(to right, #fff7f9, #fff);
+}
+
+.booking-card {
+  background: white;
+  border-radius: 25px;
+  overflow: hidden;
+}
+
+.booking-header {
+  padding: 30px;
+  background: linear-gradient(135deg, #f8d7da, #fff0f3);
+}
+
+.booking-header h2 {
+  font-weight: 700;
+}
+
+.booking-header p {
+  color: #777;
+}
+
+.form-control,
+.form-select {
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.services-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.service-box {
+  border: 2px solid #eee;
+  border-radius: 15px;
+  padding: 15px;
+  cursor: pointer;
+  transition: 0.3s ease;
+  background: white;
+}
+
+.service-box:hover {
+  transform: translateY(-3px);
+  border-color: #f8a5c2;
+}
+
+.service-box.selected {
+  border-color: #ff4d6d;
+  background: #fff5f7;
+}
+
+.service-box h6 {
+  margin-bottom: 8px;
+}
+
+.service-box p {
+  margin: 0;
+  color: #666;
+}
+
+.service-box span {
+  font-weight: bold;
+  color: #ff4d6d;
+}
+
+.summary-box {
+  background: #fafafa;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+.summary-item,
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.booking-btn {
+  background: linear-gradient(135deg, #ff4d6d, #ff758f);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 15px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.booking-btn:hover {
+  opacity: 0.9;
+}
