@@ -406,7 +406,8 @@ return (
               <button className="modal-btn secondary" onClick={closeDialog}>
                 Anulo
               </button>
-              <button className="modal-btn primary">
+              <button className="modal-btn primary"
+              onClick={() => setView("terminet")} >
                 Krijo termin!
               </button>
             </div>
@@ -431,15 +432,14 @@ return (
 
             <div className="attr-details">
               <p>
-                <strong>Kohëzgjatja:</strong>    `${String(Math.floor(selectedAttribute.kohezgjatja / 60)).padStart(2, "0")}:` +
-    `${String(selectedAttribute.kohezgjatja % 60).padStart(2, "0")}:00`  min
+                <strong>Kohëzgjatja:</strong> {`${String(Math.floor(selectedAttribute.kohezgjatja / 60)).padStart(2, "0")}:` +
+    `${String(selectedAttribute.kohezgjatja % 60).padStart(2, "0")}:00`}  min
               </p>
 
               <p>
                 <strong>Price:</strong> €
                 {Number(selectedAttribute.qmimi || 0).toFixed(2)}
               </p>
-
               {selectedAttribute.zbritja > 0 && (
                 <p className="discount">
                   <strong>Zbritje:</strong> -{selectedAttribute.zbritja}%
