@@ -1,7 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../css/Termini.css";
+import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
+import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
+// make sure these exist in your project
+// import { fetchServices } from "...";
+// import { ExceptionHandler } from "...";
 
 export default function Termini() {
+  const [services, setServices] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [loading, setLoading] = useState(false);
+const [search, setSearch] = useState("");
   const [formData, setFormData] = useState({
     clientId: 16,
     employeeId: "",
@@ -11,59 +20,67 @@ export default function Termini() {
     detajetTermineve: [],
   });
 
-  // REALISTIC EMPLOYEES
   const employees = [
     { id: 10, name: "Arta - Hair Stylist ✂️" },
     { id: 11, name: "Sara - Nail Artist 💅" },
     { id: 12, name: "Diona - Makeup Artist 💄" },
   ];
 
-  // MORE REALISTIC SERVICE DATA
-  const services = [
-    {
-      id: 4,
-      name: "Haircut & Styling",
-      kohezgjatja: 30,
-      pagesa: 12,
-      icon: "✂️",
-    },
-    {
-      id: 7,
-      name: "Hair Coloring Premium",
-      kohezgjatja: 90,
-      pagesa: 35,
-      icon: "🎨",
-    },
-    {
-      id: 8,
-      name: "Bridal Makeup",
-      kohezgjatja: 60,
-      pagesa: 45,
-      icon: "💄",
-    },
-    {
-      id: 9,
-      name: "Manicure Deluxe",
-      kohezgjatja: 45,
-      pagesa: 18,
-      icon: "💅",
-    },
-  ];
+  async function loadServices() {
+    try {
+      setLoading(true);
+      const data = await fetchServices();
+      setServices(data);
+      setFiltered(data);
+    } catch (err) {
+      ExceptionHandler(err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadServices();
+  }, []);
+
+  const handleSearch = (e) => {
+  const value = e.target.value;
+  setSearch(value);
+
+  if (!value.trim()) {
+    setFiltered(services);
+    return;
+  }
+
+  const filteredData = services.filter((s) =>
+    s.emri_sherbimit?.toLowerCase().includes(value.toLowerCase())
+  );
+
+  setFiltered(filteredData);
+};
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const getPrice = (service) => {
+    const base = service.qmimi_baze || 0;
+    const discount = service.zbritja || 0;
+    return base - (base * discount) / 100;
+  };
+
   const handleServiceToggle = (service) => {
     const exists = formData.detajetTermineve.find(
-      (s) => s.sherbimetId === service.id
+      (s) => s.sherbimetId === service.ID
     );
+
+    const price = getPrice(service);
 
     if (exists) {
       setFormData({
         ...formData,
         detajetTermineve: formData.detajetTermineve.filter(
-          (s) => s.sherbimetId !== service.id
+          (s) => s.sherbimetId !== service.ID
         ),
       });
     } else {
@@ -72,11 +89,12 @@ export default function Termini() {
         detajetTermineve: [
           ...formData.detajetTermineve,
           {
-            sherbimetId: service.id,
+            sherbimetId: service.ID,
             atributetId: null,
             kohezgjatja: service.kohezgjatja,
-            pagesa: service.pagesa,
-            name: service.name,
+            pagesa: price,
+            name: service.emri_sherbimit,
+            imagePath: service.imageURL,
           },
         ],
       });
@@ -100,7 +118,7 @@ export default function Termini() {
 
         <div className="termini-grid">
 
-          {/* LEFT FORM */}
+          {/* LEFT */}
           <div className="termini-form">
 
             <div className="form-card">
@@ -144,31 +162,82 @@ export default function Termini() {
             </div>
 
             {/* SERVICES */}
+
             <h3 className="section-title">Available Services</h3>
 
-            <div className="services-grid">
-              {services.map((s) => {
-                const selected = formData.detajetTermineve.some(
-                  (x) => x.sherbimetId === s.id
-                );
 
-                return (
-                  <div
-                    key={s.id}
-                    className={`service-card ${selected ? "active" : ""}`}
-                    onClick={() => handleServiceToggle(s)}
-                  >
-                    <div className="service-icon">{s.icon}</div>
-                    <h4>{s.name}</h4>
-                    <p>⏱ {s.kohezgjatja} min</p>
-                    <span>€{s.pagesa}</span>
-                  </div>
-                );
-              })}
-            </div>
+<div className="search-bar mb-3">
+  <div className="input-group shadow-sm">
+    <span className="input-group-text bg-white">🔍</span>
+
+    <input
+      type="text"
+      className="form-control"
+      placeholder="Search services..."
+      value={search}
+      onChange={handleSearch}
+    />
+
+    {search && (
+      <button
+        className="btn btn-outline-secondary"
+        onClick={() => {
+          setSearch("");
+          setFiltered(services);
+        }}
+      >
+        ✕
+      </button>
+    )}
+  </div>
+</div>
+
+            {loading ? (
+              <p>Loading services...</p>
+            ) : (
+              <div className="services-grid">
+                {filtered.map((s) => {
+                  const selected = formData.detajetTermineve.some(
+                    (x) => x.sherbimetId === s.ID
+                  );
+
+                  const price = getPrice(s);
+
+                  return (
+                    <div
+                      key={s.ID}
+                      className={`service-card ${selected ? "active" : ""}`}
+                      onClick={() => handleServiceToggle(s)}
+                    >
+                      {s.imagePath && (
+                        <img
+                          src={s.imageURL}
+                          alt={s.emri_sherbimit}
+                          className="service-img"
+                        />
+                      )}
+
+                      <h4>{s.emri_sherbimit}</h4>
+
+                      {s.pershkrimi && <p>{s.pershkrimi}</p>}
+
+                      <p>⏱ {s.kohezgjatja} min</p>
+
+                      {s.zbritja > 0 && (
+                        <span className="discount">-{s.zbritja}% OFF</span>
+                      )}
+
+                      <span className="price">
+                        €{price.toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {/* RIGHT SUMMARY (STICKY) */}
+          {/* RIGHT SUMMARY */}
           <div className="termini-summary">
 
             <div className="summary-card sticky">
@@ -181,7 +250,7 @@ export default function Termini() {
                   {formData.detajetTermineve.map((s, i) => (
                     <div key={i} className="summary-item">
                       <span>{s.name}</span>
-                      <span>€{s.pagesa}</span>
+                      <span>€{s.pagesa.toFixed(2)}</span>
                     </div>
                   ))}
 
@@ -189,7 +258,7 @@ export default function Termini() {
 
                   <div className="total">
                     <strong>Total</strong>
-                    <strong>€{totalPrice}</strong>
+                    <strong>€{totalPrice.toFixed(2)}</strong>
                   </div>
                 </>
               )}

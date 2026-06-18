@@ -33,12 +33,12 @@
   gap: 20px;
 }
 
-/* FORM */
+/* FORM CARD */
 .form-card {
   background: white;
   padding: 20px;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .form-card label {
@@ -55,9 +55,17 @@
   border-radius: 10px;
   border: 1px solid #ddd;
   margin-top: 5px;
+  outline: none;
 }
 
-/* SERVICES */
+.form-card input:focus,
+.form-card select:focus,
+.form-card textarea:focus {
+  border-color: #ff4d6d;
+  box-shadow: 0 0 0 0.15rem rgba(255, 77, 109, 0.15);
+}
+
+/* SERVICES GRID */
 .services-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -65,26 +73,54 @@
   margin-top: 15px;
 }
 
+/* SERVICE CARD */
 .service-card {
   background: white;
   padding: 15px;
   border-radius: 14px;
   cursor: pointer;
-  transition: 0.25s;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.04);
+  transition: all 0.25s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.04);
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .service-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
 }
 
 .service-card.active {
-  border: 2px solid #ff4d6d;
+  border: 1px solid #ff4d6d;
   background: #fff5f7;
 }
 
+/* IMAGE */
+.service-img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 8px;
+}
+
+/* ICON */
 .service-icon {
   font-size: 22px;
+}
+
+/* PRICE + DISCOUNT */
+.price {
+  font-weight: 700;
+  color: #ff4d6d;
+}
+
+.discount {
+  font-size: 12px;
+  color: #28a745;
+  font-weight: 600;
 }
 
 /* SUMMARY */
@@ -92,7 +128,7 @@
   background: white;
   padding: 20px;
   border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
 }
 
 .sticky {
@@ -104,12 +140,14 @@
   display: flex;
   justify-content: space-between;
   margin: 8px 0;
+  font-size: 14px;
 }
 
 .total {
   display: flex;
   justify-content: space-between;
   font-size: 18px;
+  font-weight: 700;
 }
 
 /* BUTTON */
@@ -123,6 +161,51 @@
   color: white;
   font-weight: 700;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.confirm-btn:hover {
+  opacity: 0.9;
+}
+
+/* SEARCH BAR (Bootstrap enhanced) */
+.search-bar {
+  margin-bottom: 18px;
+}
+
+.search-bar .input-group {
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+}
+
+.search-bar .input-group-text {
+  background: white;
+  border: 1px solid #e6e6e6;
+  border-right: none;
+  font-size: 14px;
+}
+
+.search-bar .form-control {
+  border: 1px solid #e6e6e6;
+  padding: 12px 14px;
+  font-size: 14px;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.search-bar .form-control:focus {
+  border-color: #ff4d6d;
+  box-shadow: 0 0 0 0.15rem rgba(255, 77, 109, 0.15);
+}
+
+.search-bar .btn {
+  border: 1px solid #e6e6e6;
+  background: white;
+}
+
+.search-bar .btn:hover {
+  background: #f8f8f8;
 }
 
 /* MOBILE */
