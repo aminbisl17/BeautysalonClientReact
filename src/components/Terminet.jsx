@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import "../css/Termini.css";
-import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
+import { fetchServices } from "../javascript/APIs/ServicesAPI";
+import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
-// make sure these exist in your project
-// import { fetchServices } from "...";
-// import { ExceptionHandler } from "...";
 
 export default function Termini() {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
+  const [employees, setEmployees] = useState([]);
+
   const [loading, setLoading] = useState(false);
-const [search, setSearch] = useState("");
+  const [search, setSearch] = useState("");
+
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+
   const [formData, setFormData] = useState({
     clientId: 16,
     employeeId: "",
@@ -20,12 +24,17 @@ const [search, setSearch] = useState("");
     detajetTermineve: [],
   });
 
-  const employees = [
-    { id: 10, name: "Arta - Hair Stylist ✂️" },
-    { id: 11, name: "Sara - Nail Artist 💅" },
-    { id: 12, name: "Diona - Makeup Artist 💄" },
-  ];
+  // ---------------- EMPLOYEES ----------------
+  async function loadEmployees() {
+    try {
+      const data = await fetchEmployees();
+      setEmployees(data || []);
+    } catch (err) {
+      ExceptionHandler(err);
+    }
+  }
 
+  // ---------------- SERVICES ----------------
   async function loadServices() {
     try {
       setLoading(true);
@@ -40,35 +49,43 @@ const [search, setSearch] = useState("");
   }
 
   useEffect(() => {
+    loadEmployees();
     loadServices();
   }, []);
 
+  // ---------------- SEARCH ----------------
   const handleSearch = (e) => {
-  const value = e.target.value;
-  setSearch(value);
+    const value = e.target.value;
+    setSearch(value);
 
-  if (!value.trim()) {
-    setFiltered(services);
-    return;
-  }
+    if (!value.trim()) {
+      setFiltered(services);
+      return;
+    }
 
-  const filteredData = services.filter((s) =>
-    s.emri_sherbimit?.toLowerCase().includes(value.toLowerCase())
-  );
-
-  setFiltered(filteredData);
-};
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFiltered(
+      services.filter((s) =>
+        s.emri_sherbimit?.toLowerCase().includes(value.toLowerCase())
+      )
+    );
   };
 
+  // ---------------- FORM ----------------
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // ---------------- PRICE ----------------
   const getPrice = (service) => {
     const base = service.qmimi_baze || 0;
     const discount = service.zbritja || 0;
     return base - (base * discount) / 100;
   };
 
+  // ---------------- SERVICES TOGGLE ----------------
   const handleServiceToggle = (service) => {
     const exists = formData.detajetTermineve.find(
       (s) => s.sherbimetId === service.ID
@@ -77,17 +94,17 @@ const [search, setSearch] = useState("");
     const price = getPrice(service);
 
     if (exists) {
-      setFormData({
-        ...formData,
-        detajetTermineve: formData.detajetTermineve.filter(
+      setFormData((prev) => ({
+        ...prev,
+        detajetTermineve: prev.detajetTermineve.filter(
           (s) => s.sherbimetId !== service.ID
         ),
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         detajetTermineve: [
-          ...formData.detajetTermineve,
+          ...prev.detajetTermineve,
           {
             sherbimetId: service.ID,
             atributetId: null,
@@ -97,7 +114,7 @@ const [search, setSearch] = useState("");
             imagePath: service.imageURL,
           },
         ],
-      });
+      }));
     }
   };
 
@@ -122,20 +139,48 @@ const [search, setSearch] = useState("");
           <div className="termini-form">
 
             <div className="form-card">
-              <label>👩‍🎨 Select Stylist</label>
-              <select
-                name="employeeId"
-                value={formData.employeeId}
-                onChange={handleChange}
-              >
-                <option value="">Choose stylist</option>
-                {employees.map((e) => (
-                  <option key={e.id} value={e.id}>
-                    {e.name}
-                  </option>
-                ))}
-              </select>
 
+              {/* EMPLOYEES */}
+          <label>👩‍🎨 Select Stylist</label>
+
+<div className="dropdown-wrapper">
+  <select
+    name="employeeId"
+    value={formData.employeeId}
+    onChange={(e) =>
+      setFormData((prev) => ({
+        ...prev,
+        employeeId: Number(e.target.value),
+      }))
+    }
+  >
+    <option value="">Choose stylist</option>
+
+    {employees.map((e) => (
+      <option key={e.ID} value={e.ID}>
+        {e.emri} {e.mbiemri}
+      </option>
+    ))}
+  </select>
+
+  {/* View Profile Button */}
+  <button
+    type="button"
+    disabled={!formData.employeeId}
+    onClick={() => {
+      const emp = employees.find(
+        (x) => x.ID === formData.employeeId
+      );
+      if (emp) {
+        setSelectedEmployee(emp);
+        setShowEmployeeModal(true);
+      }
+    }}
+  >
+    View Profile
+  </button>
+</div>
+              {/* PHONE */}
               <label>📞 Phone Number</label>
               <input
                 name="numri_tel"
@@ -144,6 +189,7 @@ const [search, setSearch] = useState("");
                 onChange={handleChange}
               />
 
+              {/* DATE */}
               <label>📅 Date & Time</label>
               <input
                 type="datetime-local"
@@ -152,6 +198,7 @@ const [search, setSearch] = useState("");
                 onChange={handleChange}
               />
 
+              {/* NOTES */}
               <label>📝 Notes</label>
               <textarea
                 name="pershkrimi"
@@ -162,35 +209,33 @@ const [search, setSearch] = useState("");
             </div>
 
             {/* SERVICES */}
-
             <h3 className="section-title">Available Services</h3>
 
+            <div className="search-bar mb-3">
+              <div className="input-group shadow-sm">
+                <span className="input-group-text bg-white">🔍</span>
 
-<div className="search-bar mb-3">
-  <div className="input-group shadow-sm">
-    <span className="input-group-text bg-white">🔍</span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search services..."
+                  value={search}
+                  onChange={handleSearch}
+                />
 
-    <input
-      type="text"
-      className="form-control"
-      placeholder="Search services..."
-      value={search}
-      onChange={handleSearch}
-    />
-
-    {search && (
-      <button
-        className="btn btn-outline-secondary"
-        onClick={() => {
-          setSearch("");
-          setFiltered(services);
-        }}
-      >
-        ✕
-      </button>
-    )}
-  </div>
-</div>
+                {search && (
+                  <button
+                    className="btn btn-outline-secondary"
+                    onClick={() => {
+                      setSearch("");
+                      setFiltered(services);
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
 
             {loading ? (
               <p>Loading services...</p>
@@ -209,7 +254,7 @@ const [search, setSearch] = useState("");
                       className={`service-card ${selected ? "active" : ""}`}
                       onClick={() => handleServiceToggle(s)}
                     >
-                      {s.imagePath && (
+                      {s.imageURL && (
                         <img
                           src={s.imageURL}
                           alt={s.emri_sherbimit}
@@ -218,18 +263,14 @@ const [search, setSearch] = useState("");
                       )}
 
                       <h4>{s.emri_sherbimit}</h4>
-
                       {s.pershkrimi && <p>{s.pershkrimi}</p>}
-
                       <p>⏱ {s.kohezgjatja} min</p>
 
                       {s.zbritja > 0 && (
                         <span className="discount">-{s.zbritja}% OFF</span>
                       )}
 
-                      <span className="price">
-                        €{price.toFixed(2)}
-                      </span>
+                      <span className="price">€{price.toFixed(2)}</span>
                     </div>
                   );
                 })}
@@ -237,9 +278,8 @@ const [search, setSearch] = useState("");
             )}
           </div>
 
-          {/* RIGHT SUMMARY */}
+          {/* RIGHT */}
           <div className="termini-summary">
-
             <div className="summary-card sticky">
               <h3>📋 Booking Summary</h3>
 
@@ -267,11 +307,45 @@ const [search, setSearch] = useState("");
                 Confirm Appointment
               </button>
             </div>
-
           </div>
 
         </div>
       </div>
+
+      {/* MODAL */}
+      {showEmployeeModal && selectedEmployee && (
+        <div
+          className="modal-overlay"
+          onClick={() => setShowEmployeeModal(false)}
+        >
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h2>👤 Employee Profile</h2>
+
+            <p>
+              <strong>Name:</strong>{" "}
+              {selectedEmployee.emri} {selectedEmployee.mbiemri}
+            </p>
+            <p>
+              <strong>Email:</strong> {selectedEmployee.email}
+            </p>
+            <p>
+              <strong>Phone:</strong> {selectedEmployee.numri_telefonit}
+            </p>
+
+            <p>
+              <strong>Description:</strong>{" "}
+              {selectedEmployee.pershkrimi || "No description available"}
+            </p>
+
+            <button
+              className="close-btn"
+              onClick={() => setShowEmployeeModal(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
