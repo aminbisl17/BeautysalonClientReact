@@ -4,7 +4,7 @@ import { fetchServices } from "../javascript/APIs/ServicesAPI";
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 
-export default function Termini() {
+export default function Termini({setView}) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -16,7 +16,7 @@ export default function Termini() {
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
 
   const [formData, setFormData] = useState({
-    clientId: 16,
+    clientId: null,
     employeeId: "",
     pershkrimi: "",
     numri_tel: "",
@@ -49,6 +49,11 @@ export default function Termini() {
   }
 
   useEffect(() => {
+     const storedUser = sessionStorage.getItem("userDetails");
+
+  if (!storedUser) {
+    setView("login");
+  }
     loadEmployees();
     loadServices();
   }, []);

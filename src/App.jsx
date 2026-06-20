@@ -21,7 +21,7 @@ function App() {
         {view === "home" && <Home setView={setView} />}
         {view === "about" && <About />}
         {view === "login" && <LoginView />}
-        {view === "terminet" && <Termini />}
+        {view === "terminet" && <Termini setView={setView} />}
       </div>
     </div>
   );
