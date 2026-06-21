@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "../css/login.css";
 import {jwtDecode} from "jwt-decode";
+import OtpInput from "../components/OTPVerificationDialogue";
 
 function LoginView() {
   
@@ -394,67 +395,6 @@ setVerificationCode("");
     setError("OTP verification failed.");
   }
 };
-
-const OTP_LENGTH = 6;
-
-const handleOtpChange = (value, index) => {
-  if (!/^\d*$/.test(value)) return;
-
-  const otpArray = verificationCode.split("");
-
-  otpArray[index] = value;
-
-  const newOtp = otpArray.join("").padEnd(OTP_LENGTH, "");
-
-  setVerificationCode(newOtp);
-  if (value && index < OTP_LENGTH - 1) {
-    document.getElementById(`otp-${index + 1}`)?.focus();
-  }
-
-  const isComplete =
-    newOtp.split("").filter(Boolean).length === OTP_LENGTH;
-
-  if (isComplete) {
-    handleAutoVerify(newOtp);
-
-  }
-};
-
-const handleOtpChangeRegister = (value, index) => {
-  if (!/^\d*$/.test(value)) return;
-
-  const otpArray = verificationCode.split("");
-
-  otpArray[index] = value;
-
-  const newOtp = otpArray.join("").padEnd(OTP_LENGTH, "");
-
-  setVerificationCode(newOtp);
-  if (value && index < OTP_LENGTH - 1) {
-    document.getElementById(`otp-${index + 1}`)?.focus();
-  }
-
-  const isComplete =
-    newOtp.split("").filter(Boolean).length === OTP_LENGTH;
-
-  if (isComplete) {
-    handleVerify(newOtp);
-
-  }
-};
-
-
-const handleKeyDown = (e, index) => {
-  // Go back when deleting
-  if (
-    e.key === "Backspace" &&
-    !verificationCode[index] &&
-    index > 0
-  ) {
-    document.getElementById(`otp-${index - 1}`)?.focus();
-  }
-};
-
 
 const handleChange = (e) => {
   setEditData({
@@ -938,7 +878,9 @@ Gjinia
 
   // Verification form
   if (view === "verify") {
-    return (
+
+    {/*
+  
     <div className="login-container">
 
      <h1>Shkruaj kodin e verifikimit</h1>
@@ -971,6 +913,26 @@ Gjinia
 />
       ))}
     </div>
+  </div> */}
+
+    return ( 
+
+       <div className="login-container">
+
+     <h1>Shkruaj kodin e verifikimit</h1>
+        <p>Një kod verifikimi është dërguar në numrin {numriTelefonit}</p>
+
+    {error && <p className="error-message">{error}</p>}
+
+    <label>Shkruaj kodin verifikues</label>
+
+
+  <OtpInput
+  value={verificationCode}
+  onChange={setVerificationCode}
+  onComplete={(code) => handleVerify(code)}
+/>
+   
   </div>
     );
   }
@@ -1122,29 +1084,11 @@ return (
 
     <label>Shkruaj kodin verifikues</label>
 
-    <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-      {Array.from({ length: OTP_LENGTH }).map((_, index) => (
-        <input
-  key={index}
-  id={`otp-${index}`}
-  type="text"
-  maxLength="1"
-  value={verificationCode[index] || ""}
-  onChange={(e) => handleOtpChange(e.target.value, index)}
-  onKeyDown={(e) => handleKeyDown(e, index)}
-  inputMode="numeric"
-  style={{
-    width: "45px",
-    height: "55px",
-    textAlign: "center",
-    fontSize: "22px",
-    border: "none",
-    borderBottom: "2px solid #ccc",
-    outline: "none"
-  }}
-/>
-      ))}
-    </div>
+  <OtpInput
+    value={verificationCode}
+    onChange={setVerificationCode}
+    onComplete={(code) => handleAutoVerify(code)}
+  />
   </div>
 );
 }

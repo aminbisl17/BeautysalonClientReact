@@ -3,28 +3,55 @@ import "../css/Termini.css";
 import { fetchServices } from "../javascript/APIs/ServicesAPI";
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
+import OtpInput from "../components/OTPVerificationDialogue";
 
-export default function Termini({setView}) {
+export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [employees, setEmployees] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-
+const [showConfirm, setShowConfirm] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
 
+  const [showOtp, setShowOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [pendingBooking, setPendingBooking] = useState(null);
+  const [authMode, setAuthMode] = useState(null);
+
   const [formData, setFormData] = useState({
     clientId: null,
+    emri: "",
+    mbiemri: "",
+    numri_telefonit: "",
     employeeId: "",
     pershkrimi: "",
-    numri_tel: "",
     dataCaktimit: "",
     detajetTermineve: [],
   });
 
-  // ---------------- EMPLOYEES ----------------
+  // ================= LOAD =================
+  useEffect(() => {
+    const storedUser = sessionStorage.getItem("userDetails");
+
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+
+      setFormData((prev) => ({
+        ...prev,
+        clientId: user.id || null,
+        emri: user.emri || "",
+        mbiemri: user.mbiemri || "",
+        numri_telefonit: user.numriTelefonit || "",
+      }));
+    }
+
+    loadEmployees();
+    loadServices();
+  }, []);
+
   async function loadEmployees() {
     try {
       const data = await fetchEmployees();
@@ -34,7 +61,6 @@ export default function Termini({setView}) {
     }
   }
 
-  // ---------------- SERVICES ----------------
   async function loadServices() {
     try {
       setLoading(true);
@@ -48,25 +74,12 @@ export default function Termini({setView}) {
     }
   }
 
-  useEffect(() => {
-     const storedUser = sessionStorage.getItem("userDetails");
-
-  if (!storedUser) {
-    setView("login");
-  }
-    loadEmployees();
-    loadServices();
-  }, []);
-
-  // ---------------- SEARCH ----------------
+  // ================= SEARCH =================
   const handleSearch = (e) => {
     const value = e.target.value;
     setSearch(value);
 
-    if (!value.trim()) {
-      setFiltered(services);
-      return;
-    }
+    if (!value.trim()) return setFiltered(services);
 
     setFiltered(
       services.filter((s) =>
@@ -75,7 +88,7 @@ export default function Termini({setView}) {
     );
   };
 
-  // ---------------- FORM ----------------
+  // ================= FORM =================
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -83,14 +96,47 @@ export default function Termini({setView}) {
     }));
   };
 
-  // ---------------- PRICE ----------------
+
+  const createAppointment = async (booking) => {
+  try {
+    const token = sessionStorage.getItem("accessToken");
+
+console.log(token);
+
+const res = await fetch(
+  "http://192.168.100.116:8000/api/mixed/terminet/create",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+    body: JSON.stringify(booking),
+    credentials: "include",
+  }
+);
+    const text = await res.text();
+
+    if (!res.ok) {
+      alert(text || "Failed to create appointment");
+      return;
+    }
+
+    alert("Termini u krijua!");
+    setView("success");
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+  // ================= PRICE =================
   const getPrice = (service) => {
     const base = service.qmimi_baze || 0;
     const discount = service.zbritja || 0;
     return base - (base * discount) / 100;
   };
 
-  // ---------------- SERVICES TOGGLE ----------------
+  // ================= SERVICES =================
   const handleServiceToggle = (service) => {
     const exists = formData.detajetTermineve.find(
       (s) => s.sherbimetId === service.ID
@@ -116,7 +162,6 @@ export default function Termini({setView}) {
             kohezgjatja: service.kohezgjatja,
             pagesa: price,
             name: service.emri_sherbimit,
-            imagePath: service.imageURL,
           },
         ],
       }));
@@ -127,6 +172,173 @@ export default function Termini({setView}) {
     (sum, item) => sum + item.pagesa,
     0
   );
+const handleTerminetSubmit = async () => {
+  try {
+    const storedUser = sessionStorage.getItem("userDetails");
+    const token = sessionStorage.getItem("accessToken");
+
+    let user = storedUser ? JSON.parse(storedUser) : null;
+
+    // =========================
+    // IF USER EXISTS → SKIP OTP
+    // =========================
+    if (user?.id || formData.clientId) {
+      const booking = {
+        clientId: user.id,
+        employeeId: formData.employeeId,
+        pershkrimi: formData.pershkrimi,
+        numri_tel: `+383${formData.numri_telefonit}`,
+        dataCaktimit: formData.dataCaktimit,
+        detajetTermineve: formData.detajetTermineve,
+      };
+
+      setPendingBooking(booking);
+      setShowConfirm(true);
+      return;
+    }
+
+    // =========================
+    // NO USER → REGISTER FIRST
+    // =========================
+    const payload = {
+      emri: formData.emri,
+      mbiemri: formData.mbiemri,
+      numri_telefonit: formData.numri_telefonit,
+      gjinia: "m",
+    };
+
+    let res = await fetch(
+      "http://192.168.100.116:8000/api/clients/register",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      }
+    );
+
+    let data = await res.json();
+
+    if (!res.ok && data?.message?.includes("exists")) {
+      res = await fetch(
+        "http://192.168.100.116:8000/auth/login/client",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            numri_telefonit: `+383${formData.numri_telefonit}`,
+          }),
+          credentials: "include",
+        }
+      );
+
+      data = await res.json();
+    }
+
+    if (!res.ok) {
+      alert("Auth failed");
+      return;
+    }
+
+    const newUser = data.user || data;
+
+    sessionStorage.setItem("userDetails", JSON.stringify(newUser));
+
+    const booking = {
+      clientId: newUser.id,
+      employeeId: formData.employeeId,
+      pershkrimi: formData.pershkrimi,
+      numri_tel: `+383${formData.numri_telefonit}`,
+      dataCaktimit: formData.dataCaktimit,
+      detajetTermineve: formData.detajetTermineve,
+    };
+
+    setPendingBooking(booking);
+
+    setAuthMode("register");
+    setShowOtp(true);
+  } catch (err) {
+    console.error(err);
+    alert("Error");
+  }
+};
+  // ================= OTP VERIFY =================
+  const verifyOtp = async (otp) => {
+    try {
+      let user = JSON.parse(sessionStorage.getItem("userDetails"));
+
+      if (authMode === "register") {
+        const res = await fetch(
+          "http://192.168.100.116:8000/api/clients/verify",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              otpcode: otp,
+              numri_telefonit: `+383${formData.numri_telefonit}`,
+            }),
+            credentials: "include",
+          }
+        );
+
+        const data = await res.json();
+        if (!res.ok) return;
+
+        user = data;
+        sessionStorage.setItem("userDetails", JSON.stringify(user));
+      }
+
+      if (authMode === "login") {
+        const token = sessionStorage.getItem("accessToken");
+
+        const res = await fetch(
+          "http://192.168.100.116:8000/api/clients/data",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
+          }
+        );
+
+        user = await res.json();
+        sessionStorage.setItem("userDetails", JSON.stringify(user));
+      }
+
+      // CREATE APPOINTMENT
+      const dto = {
+        clientId: user.id,
+        employeeId: pendingBooking.employeeId,
+        pershkrimi: pendingBooking.pershkrimi,
+        numri_tel: pendingBooking.numri_tel,
+        dataCaktimit: pendingBooking.dataCaktimit,
+        detajetTermineve: pendingBooking.detajetTermineve,
+      };
+const token = sessionStorage.getItem("accessToken");
+
+console.log(token);
+
+const res = await fetch(
+  "http://192.168.100.116:8000/api/mixed/terminet/create",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+    body: JSON.stringify(dto),
+    credentials: "include",
+  }
+);
+      if (!res.ok) return;
+
+      setShowOtp(false);
+      setPendingBooking(null);
+
+      alert("Termini u krijua!");
+      setView("success");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="termini-page">
@@ -140,217 +352,115 @@ export default function Termini({setView}) {
 
         <div className="termini-grid">
 
-          {/* LEFT */}
+          {/* LEFT SIDE */}
           <div className="termini-form">
 
             <div className="form-card">
 
-              {/* EMPLOYEES */}
-          <label>👩‍🎨 Select Stylist</label>
+              <label>👤 Emri</label>
+              <input name="emri" value={formData.emri} onChange={handleChange} />
 
-<div className="dropdown-wrapper">
-  <select
-    name="employeeId"
-    value={formData.employeeId}
-    onChange={(e) =>
-      setFormData((prev) => ({
-        ...prev,
-        employeeId: Number(e.target.value),
-      }))
-    }
-  >
-    <option value="">Choose stylist</option>
+              <label>👤 Mbiemri</label>
+              <input name="mbiemri" value={formData.mbiemri} onChange={handleChange} />
 
-    {employees.map((e) => (
-      <option key={e.ID} value={e.ID}>
-        {e.emri} {e.mbiemri}
-      </option>
-    ))}
-  </select>
+              <label>📞 Numri</label>
+              <input name="numri_telefonit" value={formData.numri_telefonit} onChange={handleChange} />
 
-  {/* View Profile Button */}
-  <button
-    type="button"
-    disabled={!formData.employeeId}
-    onClick={() => {
-      const emp = employees.find(
-        (x) => x.ID === formData.employeeId
-      );
-      if (emp) {
-        setSelectedEmployee(emp);
-        setShowEmployeeModal(true);
-      }
-    }}
-  >
-    View Profile
-  </button>
-</div>
-              {/* PHONE */}
-              <label>📞 Phone Number</label>
-              <input
-                name="numri_tel"
-                placeholder="+383..."
-                value={formData.numri_tel}
-                onChange={handleChange}
-              />
+              <label>📅 Date</label>
+              <input type="datetime-local" name="dataCaktimit" value={formData.dataCaktimit} onChange={handleChange} />
 
-              {/* DATE */}
-              <label>📅 Date & Time</label>
-              <input
-                type="datetime-local"
-                name="dataCaktimit"
-                value={formData.dataCaktimit}
-                onChange={handleChange}
-              />
-
-              {/* NOTES */}
               <label>📝 Notes</label>
-              <textarea
-                name="pershkrimi"
-                placeholder="Any special request..."
-                value={formData.pershkrimi}
-                onChange={handleChange}
-              />
+              <textarea name="pershkrimi" value={formData.pershkrimi} onChange={handleChange} />
+
             </div>
 
-            {/* SERVICES */}
-            <h3 className="section-title">Available Services</h3>
-
-            <div className="search-bar mb-3">
-              <div className="input-group shadow-sm">
-                <span className="input-group-text bg-white">🔍</span>
-
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Search services..."
-                  value={search}
-                  onChange={handleSearch}
-                />
-
-                {search && (
-                  <button
-                    className="btn btn-outline-secondary"
-                    onClick={() => {
-                      setSearch("");
-                      setFiltered(services);
-                    }}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
+            <h3>Services</h3>
 
             {loading ? (
-              <p>Loading services...</p>
+              <p>Loading...</p>
             ) : (
               <div className="services-grid">
-                {filtered.map((s) => {
-                  const selected = formData.detajetTermineve.some(
-                    (x) => x.sherbimetId === s.ID
-                  );
-
-                  const price = getPrice(s);
-
-                  return (
-                    <div
-                      key={s.ID}
-                      className={`service-card ${selected ? "active" : ""}`}
-                      onClick={() => handleServiceToggle(s)}
-                    >
-                      {s.imageURL && (
-                        <img
-                          src={s.imageURL}
-                          alt={s.emri_sherbimit}
-                          className="service-img"
-                        />
-                      )}
-
-                      <h4>{s.emri_sherbimit}</h4>
-                      {s.pershkrimi && <p>{s.pershkrimi}</p>}
-                      <p>⏱ {s.kohezgjatja} min</p>
-
-                      {s.zbritja > 0 && (
-                        <span className="discount">-{s.zbritja}% OFF</span>
-                      )}
-
-                      <span className="price">€{price.toFixed(2)}</span>
-                    </div>
-                  );
-                })}
+                {filtered.map((s) => (
+                  <div
+                    key={s.ID}
+                    className="service-card"
+                    onClick={() => handleServiceToggle(s)}
+                  >
+                    <h4>{s.emri_sherbimit}</h4>
+                    <p>€{getPrice(s)}</p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {/* RIGHT */}
+          {/* RIGHT SIDE */}
           <div className="termini-summary">
-            <div className="summary-card sticky">
-              <h3>📋 Booking Summary</h3>
 
-              {formData.detajetTermineve.length === 0 ? (
-                <p className="empty">No services selected yet</p>
-              ) : (
-                <>
-                  {formData.detajetTermineve.map((s, i) => (
-                    <div key={i} className="summary-item">
-                      <span>{s.name}</span>
-                      <span>€{s.pagesa.toFixed(2)}</span>
-                    </div>
-                  ))}
+            <h3>Summary</h3>
 
-                  <hr />
+            {formData.detajetTermineve.map((s, i) => (
+              <p key={i}>{s.name} - €{s.pagesa}</p>
+            ))}
 
-                  <div className="total">
-                    <strong>Total</strong>
-                    <strong>€{totalPrice.toFixed(2)}</strong>
-                  </div>
-                </>
-              )}
+            <h4>Total: €{totalPrice}</h4>
 
-              <button className="confirm-btn">
-                Confirm Appointment
-              </button>
-            </div>
+            <button className="confirm-btn" onClick={handleTerminetSubmit}>
+              Confirm Appointment
+            </button>
+
           </div>
-
         </div>
       </div>
 
-      {/* MODAL */}
-      {showEmployeeModal && selectedEmployee && (
-        <div
-          className="modal-overlay"
-          onClick={() => setShowEmployeeModal(false)}
-        >
-          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
-            <h2>👤 Employee Profile</h2>
+{showConfirm && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <h2>Confirm Appointment</h2>
 
-            <p>
-              <strong>Name:</strong>{" "}
-              {selectedEmployee.emri} {selectedEmployee.mbiemri}
-            </p>
-            <p>
-              <strong>Email:</strong> {selectedEmployee.email}
-            </p>
-            <p>
-              <strong>Phone:</strong> {selectedEmployee.numri_telefonit}
-            </p>
+      <p>Are you sure you want to book this appointment?</p>
 
-            <p>
-              <strong>Description:</strong>{" "}
-              {selectedEmployee.pershkrimi || "No description available"}
-            </p>
+      <button
+        onClick={() => {
+          createAppointment(pendingBooking);
+          setShowConfirm(false);
+        }}
+      >
+        Yes
+      </button>
 
-            <button
-              className="close-btn"
-              onClick={() => setShowEmployeeModal(false)}
-            >
-              Close
-            </button>
+      <button onClick={() => setShowConfirm(false)}>
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+      {/* OTP MODAL */}
+      {showOtp && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Verify OTP</h2>
+
+            <OtpInput
+              value={otpCode}
+              onChange={setOtpCode}
+              onComplete={verifyOtp}
+            />
           </div>
         </div>
       )}
+
+      {/* EMPLOYEE MODAL */}
+      {showEmployeeModal && selectedEmployee && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>Employee</h2>
+            <p>{selectedEmployee.emri}</p>
+            <button onClick={() => setShowEmployeeModal(false)}>Close</button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
