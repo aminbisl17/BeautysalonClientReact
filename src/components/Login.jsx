@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../css/login.css";
 import {jwtDecode} from "jwt-decode";
 import OtpInput from "../components/OTPVerificationDialogue";
+import { fetchRefreshToken } from "../javascript/APIs/Login";
 
 function LoginView() {
   
@@ -55,29 +56,18 @@ const [phoneError, setPhoneError] = useState("");
 
 useEffect(() => {
   const autoLogin = async () => {
-    try {
-  
-      const res = await fetch("http://192.168.100.116:8000/auth/refresh-token", {
-        method: "POST",
-        credentials: "include",
-      });
+   
+    try{
 
-      if (!res.ok) {
-          
-        sessionStorage.clear();
-        setView("login");
-        return;
-      }
-
-      const data = await res.json();
-      sessionStorage.setItem("accessToken", data.accessToken);
-
-      const clientId = jwtDecode(data.accessToken).id;
+         await fetchRefreshToken();
+ 
+      const accessToken = sessionStorage.getItem("accessToken");
+      const clientId = jwtDecode(accessToken).id;
 
       const userRes = await fetch(
         "http://192.168.100.116:8000/api/clients/data",
         {
-          headers: { Authorization: `Bearer ${data.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
           credentials: "include",
         }
       );

@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from "react"; // Added useRef here
 import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import "../css/home.css";
+import { fetchRefreshToken } from "../javascript/APIs/Login";
+import { Alert } from "bootstrap";
 
 function Home({ setView }) {
   const [services, setServices] = useState([]);
@@ -33,9 +35,42 @@ const [attributeSearch, setAttributeSearch] = useState("");
   }
 
   useEffect(() => {
+    loadUserData();
     loadServices();
   }, []);
+async function loadUserData() {
+  try {
+    const res = await fetchRefreshToken();
 
+    // Fixed: removed the () from res.ok, and added a null check just in case
+    if (!res || !res.ok) {
+      alert("Your session has expired!");
+      return;
+    }
+
+    const accessToken = sessionStorage.getItem("accessToken");
+    if (!accessToken) {
+      alert("Access token missing.");
+      return;
+    }
+
+    const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: "include",
+    });
+
+    if (!userRes.ok) {
+      alert("Failed to fetch user data.");
+      return;
+    }
+
+    const userInfo = await userRes.json();
+    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+  } catch (err) {
+    ExceptionHandler.handle(err);
+  }
+}
   // AUTOMATIC AUTO-PLAY SLIDER LOGIC
   useEffect(() => {
     // If there are no special deals or a user is viewing a modal, skip auto-scroll
