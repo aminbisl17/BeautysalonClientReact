@@ -42,7 +42,6 @@ async function loadUserData() {
   try {
     const res = await fetchRefreshToken();
 
-    // Fixed: removed the () from res.ok, and added a null check just in case
     if (!res || !res.ok) {
       alert("Your session has expired!");
       return;
@@ -71,9 +70,7 @@ async function loadUserData() {
     ExceptionHandler.handle(err);
   }
 }
-  // AUTOMATIC AUTO-PLAY SLIDER LOGIC
   useEffect(() => {
-    // If there are no special deals or a user is viewing a modal, skip auto-scroll
     if (discountedServices.length === 0 || selectedService) return;
 
     const interval = setInterval(() => {
