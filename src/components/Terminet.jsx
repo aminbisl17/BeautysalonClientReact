@@ -21,6 +21,7 @@ export default function Termini({ setView }) {
   const [pendingBooking, setPendingBooking] = useState(null);
   const [authMode, setAuthMode] = useState(null);
 
+      const [data, setData] = useState(null);
   const [formData, setFormData] = useState({
     clientId: null,
     emri: "",
@@ -239,10 +240,8 @@ export default function Termini({ setView }) {
         credentials: "include",
       });
 
-      let data = await res.json();
-
       // If user exists, transition smoothly over into verification login sequence
-      if (!res.ok && data?.message?.includes("exists")) {
+      if (!res.ok && res.status == 400) {
         res = await fetch("http://192.168.100.116:8000/auth/login/client", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -252,8 +251,10 @@ export default function Termini({ setView }) {
           credentials: "include",
         });
 
-        data = await res.json();
+      setData(await res.json());
       }
+
+        // data = await res.json();
 
       if (!res.ok) {
         alert("Autentikimi dështoi!");
