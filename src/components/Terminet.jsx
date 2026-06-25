@@ -12,25 +12,46 @@ export default function Termini({ setView }) {
 
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
 
+  const [showConfirm, setShowConfirm] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
+
   const [otpCode, setOtpCode] = useState("");
   const [pendingBooking, setPendingBooking] = useState(null);
-  const [authMode, setAuthMode] = useState(null);
+  const [authMode, setAuthMode] = useState(null); // "login" | "register"
 
-      const [data, setData] = useState(null);
   const [formData, setFormData] = useState({
     clientId: null,
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
-    employeeId: "", // Tracks selected employee ID
+    employeeId: "",
     pershkrimi: "",
     dataCaktimit: "",
     detajetTermineve: [],
+  });
+
+  // ================= DATE FORMAT =================
+  const formatDate = (value) => {
+    if (!value) return null;
+    if (value.split(":").length === 3) return value;
+    if (value.split(":").length === 2) return `${value}:00`;
+    return value;
+  };
+
+  // ================= PAYLOAD BUILDER =================
+  const buildBookingPayload = (clientId) => ({
+    clientId: Number(clientId),
+    employeeId: Number(formData.employeeId),
+    pershkrimi: formData.pershkrimi,
+    numri_tel: formData.numri_telefonit,
+    dataCaktimit: formatDate(formData.dataCaktimit),
+    detajetTermineve: formData.detajetTermineve.map((s) => ({
+      sherbimetId: Number(s.sherbimetId),
+      atributetId: s.atributetId ? Number(s.atributetId) : null,
+      kohezgjatja: Number(s.kohezgjatja),
+      pagesa: Number(s.pagesa),
+    })),
   });
 
   // ================= LOAD =================
@@ -45,7 +66,8 @@ export default function Termini({ setView }) {
         clientId: user.id || null,
         emri: user.emri || "",
         mbiemri: user.mbiemri || "",
-        numri_telefonit: user.numri_telefonit || user.numriTelefonit || "",
+        numri_telefonit:
+          user.numri_telefonit || user.numriTelefonit || "",
       }));
     }
 
@@ -75,6 +97,14 @@ export default function Termini({ setView }) {
     }
   }
 
+  // ================= FORM =================
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
   // ================= SEARCH =================
   const handleSearch = (e) => {
     const value = e.target.value;
@@ -89,45 +119,6 @@ export default function Termini({ setView }) {
     );
   };
 
-  // ================= FORM =================
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
-
-  const createAppointment = async (booking) => {
-    try {
-      const token = sessionStorage.getItem("accessToken");
-
-      const res = await fetch(
-        "http://192.168.100.116:8000/api/mixed/terminet/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify(booking),
-          credentials: "include",
-        }
-      );
-      const text = await res.text();
-
-      if (!res.ok) {
-        alert(text || "Failed to create appointment");
-        return;
-      }
-
-      alert("Termini u krijua!");
-      setView("success");
-    } catch (err) {
-      console.error(err);
-      alert("Error parsing appointment response.");
-    }
-  };
-
   // ================= PRICE =================
   const getPrice = (service) => {
     const base = service.qmimi_baze || 0;
@@ -135,7 +126,7 @@ export default function Termini({ setView }) {
     return base - (base * discount) / 100;
   };
 
-  // ================= SERVICES =================
+  // ================= SERVICE TOGGLE =================
   const handleServiceToggle = (service) => {
     const exists = formData.detajetTermineve.find(
       (s) => s.sherbimetId === service.ID
@@ -172,166 +163,29 @@ export default function Termini({ setView }) {
     0
   );
 
-  // ================= SUBMIT PIPELINE =================
-  const handleTerminetSubmit = async () => {
-    try {
-      // 1. Core Front-End Input Validation
-      if (!formData.employeeId || formData.employeeId === "") {
-        alert("Ju lutem zgjedhni një punëtor!");
-        return;
-      }
-      if (!formData.dataCaktimit) {
-        alert("Ju lutem zgjedhni datën dhe kohën!");
-        return;
-      }
-      if (formData.detajetTermineve.length === 0) {
-        alert("Ju lutem zgjedhni të paktën një shërbim!");
-        return;
-      }
+const handleTerminetSubmit = async () => {
+  try {
+    if (!formData.employeeId)
+      return alert("Zgjidh punëtorin!");
+    if (!formData.dataCaktimit)
+      return alert("Zgjidh datën!");
+    if (!formData.detajetTermineve.length)
+      return alert("Zgjidh shërbime!");
 
-      const storedUser = sessionStorage.getItem("userDetails");
-      let user = storedUser ? JSON.parse(storedUser) : null;
+    const stored = sessionStorage.getItem("userDetails");
+    const user = stored ? JSON.parse(stored) : null;
 
-      // 2. Normalizer: Appends seconds string to HTML datetime format so Spring ISO parser survives
-      let formattedDate = formData.dataCaktimit;
-      if (formattedDate && formattedDate.split(":").length === 2) {
-        formattedDate += ":00";
-      }
+    const isLoggedIn = Boolean(user?.id);
 
-      // Payload building helper to maintain consistent structures
-      const buildBookingPayload = (targetClientId) => ({
-        clientId: Number(targetClientId),
-        employeeId: Number(formData.employeeId),
-        pershkrimi: formData.pershkrimi,
-        numri_tel: `+383${formData.numri_telefonit}`,
-        dataCaktimit: formattedDate,
-        detajetTermineve: formData.detajetTermineve.map(s => ({
-          sherbimetId: s.sherbimetId,
-          atributetId: s.atributetId,
-          kohezgjatja: s.kohezgjatja,
-          pagesa: s.pagesa
-        })),
-      });
-
-      // =====================================
-      // IF USER ALREADY LOGGED IN → SKIP OTP
-      // =====================================
-      if (user?.id || formData.clientId) {
-        const booking = buildBookingPayload(user?.id || formData.clientId);
-        setPendingBooking(booking);
-        setShowConfirm(true);
-        return;
-      }
-
-      // =====================================
-      // NO USER → REGISTER / LOGIN PIPELINE
-      // =====================================
-      const payload = {
-        emri: formData.emri,
-        mbiemri: formData.mbiemri,
-        numri_telefonit: formData.numri_telefonit,
-        gjinia: "m",
-      };
-
-      let res = await fetch("http://192.168.100.116:8000/api/clients/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        credentials: "include",
-      });
-
-      // If user exists, transition smoothly over into verification login sequence
-      if (!res.ok && res.status == 400) {
-        res = await fetch("http://192.168.100.116:8000/auth/login/client", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            numri_telefonit: `+383${formData.numri_telefonit}`,
-          }),
-          credentials: "include",
-        });
-
-      setData(await res.json());
-      }
-
-        // data = await res.json();
-
-      if (!res.ok) {
-        alert("Autentikimi dështoi!");
-        return;
-      }
-
-      const newUser = data.user || data;
-      sessionStorage.setItem("userDetails", JSON.stringify(newUser));
-
-      // Fixed: Passing newUser.id directly to dynamic builder safely
-      const booking = buildBookingPayload(newUser.id);
-      
-      setPendingBooking(booking);
-      setAuthMode("register");
-      setShowOtp(true);
-    } catch (err) {
-      console.error(err);
-      alert("Ndodhi një gabim gjatë procesimit.");
-    }
-  };
-
-  // ================= OTP VERIFY =================
-
-// ================= OTP VERIFY =================
-  const verifyOtp = async (otp) => {
-    try {
-      let user = JSON.parse(sessionStorage.getItem("userDetails"));
-
-      if (authMode === "register") {
-        const res = await fetch(
-          "http://192.168.100.116:8000/api/clients/verify",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              otpcode: otp,
-              numri_telefonit: `+383${formData.numri_telefonit}`,
-            }),
-            credentials: "include",
-          }
-        );
-
-        const data = await res.json();
-        if (!res.ok) {
-          alert("Kodi OTP i pasaktë!");
-          return;
-        }
-
-        user = data;
-        sessionStorage.setItem("userDetails", JSON.stringify(user));
-      }
-
-      // Format date right here to protect against state loss
-      let formattedDate = formData.dataCaktimit;
-      if (formattedDate && formattedDate.split(":").length === 2) {
-        formattedDate += ":00";
-      }
-
-      // SAFE & DIRECT MAPPING: Pull fresh variables directly from formData 
-      // instead of risking stale data inside pendingBooking state
-      const dto = {
-        clientId: Number(user?.id || user?.ID || formData.clientId),
-        employeeId: Number(formData.employeeId),
-        pershkrimi: formData.pershkrimi,
-        numri_tel: `+383${formData.numri_telefonit}`, // Hardcoded fallback match to your DTO field
-        dataCaktimit: formattedDate,
-        detajetTermineve: formData.detajetTermineve.map(s => ({
-          sherbimetId: Number(s.sherbimetId),
-          atributetId: s.atributetId ? Number(s.atributetId) : null,
-          kohezgjatja: Number(s.kohezgjatja),
-          pagesa: Number(s.pagesa)
-        })),
-      };
+    // ===============================
+    // CASE 1: USER EXISTS → DIRECT BOOKING (NO OTP)
+    // ===============================
+    if (isLoggedIn) {
+      const booking = buildBookingPayload(user.id || formData.clientId);
 
       const token = sessionStorage.getItem("accessToken");
 
-      const resAppointment = await fetch(
+      const res = await fetch(
         "http://192.168.100.116:8000/api/mixed/terminet/create",
         {
           method: "POST",
@@ -339,73 +193,201 @@ export default function Termini({ setView }) {
             "Content-Type": "application/json",
             Authorization: token ? `Bearer ${token}` : "",
           },
-          body: JSON.stringify(dto),
+          body: JSON.stringify(booking),
+        }
+      );
+
+      const data = await res.text();
+
+      if (!res.ok) {
+        alert(data || "Dështoi krijimi i terminit.");
+        return;
+      }
+
+      alert("Termini u krijua!");
+      setView("success");
+      return;
+    }
+
+    // ===============================
+    // CASE 2: NEW USER → REGISTER FIRST
+    // ===============================
+    const registerRes = await fetch(
+      "http://192.168.100.116:8000/api/clients/register",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emri: formData.emri,
+          mbiemri: formData.mbiemri,
+          numri_telefonit: formData.numri_telefonit,
+          gjinia: "m",
+        }),
+      }
+    );
+
+    // REGISTER SUCCESS → OTP REGISTER FLOW
+    if (registerRes.ok) {
+      setAuthMode("register");
+      setShowOtp(true);
+      return;
+    }
+
+    // ===============================
+    // REGISTER FAILED → LOGIN FLOW
+    // ===============================
+    const loginRes = await fetch(
+      "http://192.168.100.116:8000/auth/login/client",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          numri_telefonit: formData.numri_telefonit,
+        }),
+      }
+    );
+
+    if (!loginRes.ok) {
+      alert("As regjistrimi as login nuk funksionuan!");
+      return;
+    }
+
+    setAuthMode("login");
+    setShowOtp(true);
+
+  } catch (err) {
+    console.error(err);
+    alert("Gabim gjatë procesit.");
+  }
+};
+
+ const verifyOtp = async (otp) => {
+  try {
+    console.log(authMode);
+    const endpoint =
+      authMode === "login"
+        ? "http://192.168.100.116:8000/auth/login/client/verify"
+        : "http://192.168.100.116:8000/api/clients/verify";
+
+    const payload = {
+      otp: otp,
+      numri_telefonit: formData.numri_telefonit,
+    };
+
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      alert("OTP gabim!");
+      return;
+    }
+
+   // const user = data.user || data;
+
+   
+      const userRes = await fetch(
+        "http://192.168.100.116:8000/api/clients/data",
+        {
+          headers: { Authorization: `Bearer ${data.token}` },
           credentials: "include",
         }
       );
 
-      if (!resAppointment.ok) {
-        const errText = await resAppointment.text();
-        alert(errText || "Dështoi krijimi i terminit.");
-        return;
+       const userInfo = await userRes.json();
+    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+    // create booking after successful verification
+    const booking = buildBookingPayload(userInfo.id);
+
+    sessionStorage.setItem("accessToken", data.token);
+
+
+    const resAppointment = await fetch(
+      "http://192.168.100.116:8000/api/mixed/terminet/create",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:`Bearer ${data.token}`,
+        },
+        body: JSON.stringify(booking),
       }
+    );
 
-      setShowOtp(false);
-      setPendingBooking(null);
-
-      alert("Termini u krijua!");
-      setView("success");
-    } catch (err) {
-      console.error("Error inside verifyOtp workflow: ", err);
-      alert("Ndodhi një gabim gjatë verifikimit të OTP.");
+    if (!resAppointment.ok) {
+      const err = await resAppointment.text();
+      alert(err || "Dështoi krijimi i terminit.");
+      return;
     }
-  };
+
+    setShowOtp(false);
+    setPendingBooking(null);
+    setView("success");
+  } catch (err) {
+    console.error(err);
+    alert("Gabim në OTP verification.");
+  }
+};
+
+  // ================= UI =================
   return (
     <div className="termini-page">
       <div className="termini-container">
-        {/* HEADER */}
+
         <div className="termini-header">
-          <h1>✨ Book Your Appointment</h1>
-          <p>Select services, time & stylist in seconds</p>
+          <h1>✨ Book Appointment</h1>
+          <p>Zgjidh shërbime, punëtor dhe kohë</p>
         </div>
 
         <div className="termini-grid">
+
           {/* LEFT SIDE */}
           <div className="termini-form">
             <div className="form-card">
-              <label>👤 Emri</label>
+
+              <label>Emri</label>
               <input name="emri" value={formData.emri} onChange={handleChange} />
 
-              <label>👤 Mbiemri</label>
+              <label>Mbiemri</label>
               <input name="mbiemri" value={formData.mbiemri} onChange={handleChange} />
 
-              <label>📞 Numri</label>
+              <label>Numri</label>
               <input name="numri_telefonit" value={formData.numri_telefonit} onChange={handleChange} />
 
-              {/* EMPLOYEE SELECT DROPDOWN */}
-              <label>💇‍♂️ Zgjidh Punëtorin (Stylist)</label>
-              <select 
-                name="employeeId" 
-                value={formData.employeeId} 
-                onChange={handleChange}
-                className="employee-select"
-              >
-                <option value="">-- Zgjidh Punëtorin --</option>
-                {employees.map((emp) => (
-                  <option key={emp.ID} value={emp.ID}>
-                    {emp.emri} {emp.mbiemri}
+              <label>Punëtori</label>
+              <select name="employeeId" value={formData.employeeId} onChange={handleChange}>
+                <option value="">Zgjidh</option>
+                {employees.map((e) => (
+                  <option key={e.ID} value={e.ID}>
+                    {e.emri} {e.mbiemri}
                   </option>
                 ))}
               </select>
 
-              <label>📅 Date</label>
-              <input type="datetime-local" name="dataCaktimit" value={formData.dataCaktimit} onChange={handleChange} />
+              <label>Data</label>
+              <input
+                type="datetime-local"
+                name="dataCaktimit"
+                value={formData.dataCaktimit}
+                onChange={handleChange}
+              />
 
-              <label>📝 Notes</label>
-              <textarea name="pershkrimi" value={formData.pershkrimi} onChange={handleChange} />
+              <label>Përshkrimi</label>
+              <textarea
+                name="pershkrimi"
+                value={formData.pershkrimi}
+                onChange={handleChange}
+              />
             </div>
 
             <h3>Services</h3>
+
             {loading ? (
               <p>Loading...</p>
             ) : (
@@ -427,34 +409,22 @@ export default function Termini({ setView }) {
           {/* RIGHT SIDE */}
           <div className="termini-summary">
             <h3>Summary</h3>
+
             {formData.detajetTermineve.map((s, i) => (
-              <p key={i}>{s.name} - €{s.pagesa}</p>
+              <p key={i}>
+                {s.name} - €{s.pagesa}
+              </p>
             ))}
+
             <h4>Total: €{totalPrice}</h4>
-            <button className="confirm-btn" onClick={handleTerminetSubmit}>
+
+            <button onClick={handleTerminetSubmit}>
               Confirm Appointment
             </button>
           </div>
+
         </div>
       </div>
-
-      {showConfirm && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h2>Confirm Appointment</h2>
-            <p>Are you sure you want to book this appointment?</p>
-            <button
-              onClick={() => {
-                createAppointment(pendingBooking);
-                setShowConfirm(false);
-              }}
-            >
-              Yes
-            </button>
-            <button onClick={() => setShowConfirm(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
 
       {/* OTP MODAL */}
       {showOtp && (
