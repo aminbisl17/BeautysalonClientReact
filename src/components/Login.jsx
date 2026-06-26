@@ -342,7 +342,7 @@ const handleAutoVerify = async (otp) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          otp,
+          otpcode: otp,
          numri_telefonit : `+383${numriTelefonit}` }),
         credentials: "include",
       }

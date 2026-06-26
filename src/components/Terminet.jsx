@@ -56,6 +56,7 @@ export default function Termini({ setView }) {
 
   // ================= LOAD =================
   useEffect(() => {
+
     const storedUser = sessionStorage.getItem("userDetails");
 
     if (storedUser) {
@@ -221,6 +222,7 @@ const handleTerminetSubmit = async () => {
           emri: formData.emri,
           mbiemri: formData.mbiemri,
           numri_telefonit: formData.numri_telefonit,
+           email: "",
           gjinia: "m",
         }),
       }
@@ -270,7 +272,7 @@ const handleTerminetSubmit = async () => {
         : "http://192.168.100.116:8000/api/clients/verify";
 
     const payload = {
-      otp: otp,
+      otpcode: otp,
       numri_telefonit: formData.numri_telefonit,
     };
 
@@ -328,7 +330,7 @@ const handleTerminetSubmit = async () => {
 
     setShowOtp(false);
     setPendingBooking(null);
-    setView("success");
+  //  setView("success");
   } catch (err) {
     console.error(err);
     alert("Gabim në OTP verification.");
@@ -427,18 +429,29 @@ const handleTerminetSubmit = async () => {
       </div>
 
       {/* OTP MODAL */}
-      {showOtp && (
-        <div className="modal-overlay">
-          <div className="modal-box">
-            <h2>Verify OTP</h2>
-            <OtpInput
-              value={otpCode}
-              onChange={setOtpCode}
-              onComplete={verifyOtp}
-            />
-          </div>
-        </div>
-      )}
+ {showOtp && (
+  <div className="modal-overlay">
+    <div className="modal-box">
+      <h2>Verify OTP</h2>
+
+      <OtpInput
+        value={otpCode}
+        onChange={setOtpCode}
+        onComplete={verifyOtp}
+      />
+
+      <button
+        className="cancel-btn"
+        onClick={() => {
+          setShowOtp(false);
+          setOtpCode("");
+        }}
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
     </div>
   );
 }

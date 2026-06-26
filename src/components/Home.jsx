@@ -43,7 +43,7 @@ async function loadUserData() {
     const res = await fetchRefreshToken();
 
     if (!res || !res.ok) {
-      alert("Your session has expired!");
+   //   alert("Your session has expired!");
       return;
     }
 
