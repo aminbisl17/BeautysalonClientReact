@@ -1,121 +1,127 @@
 /* ==========================================================================
-   MATTE SOFT ESPRESSO & ROSE LAYOUT (CLEAN ICON MOBILE TOGGLE)
+   EDITORIAL HIGH-END MINIMALISM (CHARCOAL & CHAMPAGNE)
    ========================================================================== */
 nav.navbar.custom-navbar {
-  background-color: #23201f !important;
-  background: #23201f !important;
-  border-bottom: 1px solid #363230 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  padding: 14px 24px !important;
-  transition: background-color 0.3s ease;
+  background-color: #121212 !important; /* Solid, crisp luxury charcoal */
+  border-bottom: 1px solid #262626 !important; /* Razor thin accent divider */
+  padding: 20px 0 !important;
+  transition: padding 0.3s ease;
 }
 
-/* Luxury Typography Branding */
+/* Elegant Contrast Logo */
 nav.navbar.custom-navbar .navbar-brand {
-  color: #f4eae7 !important;
-  font-size: 22px !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.5px !important;
+  color: #f5f2eb !important; /* Soft premium champagne cream */
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  letter-spacing: 2px !important;
+  text-transform: uppercase;
 }
 
-/* Base Menu Links */
+nav.navbar.custom-navbar .logo-serif {
+  font-family: "Playfair Display", "Didot", "Georgia", serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0px;
+  text-transform: transform-none;
+  color: #c9b097; /* Matte warm gold accent */
+}
+
+/* Elegant Text Links with Fade Transition */
 nav.navbar.custom-navbar .nav-link {
-  color: #baafac !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  padding: 8px 18px !important;
-  border-radius: 8px !important;
-  transition: all 0.2s ease-in-out !important;
+  color: #a3a3a3 !important; /* Muted matte gray */
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase;
+  padding: 6px 20px !important;
+  transition: color 0.2s ease !important;
 }
 
 nav.navbar.custom-navbar .nav-link:hover {
-  color: #ffffff !important;
-  background-color: #363230 !important;
+  color: #f5f2eb !important; /* Snaps clean back to raw champagne white */
 }
 
-/* Solid Profile Button */
+/* Tailored Minimalist Action Button (Profile) */
 nav.navbar.custom-navbar .profile-nav-link {
-  background-color: #be185d !important;
-  color: #ffffff !important;
-  margin-left: 8px !important;
-  border-radius: 8px !important;
+  border: 1px solid #c9b097 !important; /* Crisp metallic structural outline */
+  background-color: transparent !important;
+  color: #c9b097 !important;
+  margin-left: 16px !important;
+  padding: 8px 24px !important;
+  border-radius: 0px !important; /* Square sharp architecture, no rounded curves */
+  font-weight: 600 !important;
+  letter-spacing: 1.5px !important;
+  transition: all 0.25s ease !important;
   box-shadow: none !important;
 }
 
 nav.navbar.custom-navbar .profile-nav-link:hover {
-  background-color: #9d174d !important;
-  color: #ffffff !important;
-  box-shadow: none !important;
+  background-color: #c9b097 !important; /* Clean fill inversion on hover */
+  color: #121212 !important;
 }
 
-/* HIGH-END MINIMALIST TOGGLER (No Clunky Boxes, Just Crisp Lines) */
+/* ULTRA-MINIMALIST 2-LINE TOGGLER */
 nav.navbar.custom-navbar .custom-toggler {
   border: none !important;
   background: transparent !important;
-  background-color: transparent !important;
   padding: 0 !important;
   box-shadow: none !important;
   outline: none !important;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 24px;
-  height: 18px;
+  width: 22px;
+  height: 10px; /* Slimmed down width to track line spacing nicely */
 }
 
-/* Custom CSS lines to replace the generic browser background image icon */
 nav.navbar.custom-navbar .custom-toggler span {
   display: block;
-  width: 24px;
-  height: 2px;
-  background-color: #f4eae7;
-  border-radius: 2px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  width: 22px;
+  height: 1px; /* Sharper 1px line instead of clunky 2px blocks */
+  background-color: #f5f2eb;
+  transition: transform 0.25s ease, opacity 0.2s ease;
 }
 
-/* Smooth Animation States converting icon to a crisp close "X" mark */
+/* Two-line clean symmetric rotation to make the close state 'X' */
 nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(1) {
-  transform: translateY(8px) rotate(45deg);
+  transform: translateY(4.5px) rotate(45deg);
 }
 
 nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(2) {
-  opacity: 0;
-}
-
-nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(3) {
-  transform: translateY(-8px) rotate(-45deg);
+  transform: translateY(-4.5px) rotate(-45deg);
 }
 
 /* ==========================================================================
-   MOBILE & TABLET DROPDOWN LAYOUT OVERRIDES
+   MOBILE DROPDOWN SHEET OVERRIDES
    ========================================================================== */
 @media (max-width: 991.98px) {
   nav.navbar.custom-navbar {
-    padding: 16px 20px !important;
+    padding: 16px 0 !important;
   }
 
   nav.navbar.custom-navbar .navbar-collapse {
-    background-color: #23201f !important;
+    background-color: #121212 !important; 
     margin-top: 16px !important;
-    padding: 16px !important;
-    border-radius: 12px !important;
-    border: 1px solid #363230 !important;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+    padding: 24px 12px !important;
+    border-top: 1px solid #262626 !important; /* Horizontal rule partition line */
+    border-radius: 0px !important; /* Keep design square and structural */
+    box-shadow: none !important; /* Rely on clean solid fills instead of blur shadows */
   }
 
   nav.navbar.custom-navbar .navbar-nav {
-    gap: 6px !important;
+    gap: 12px !important;
   }
 
   nav.navbar.custom-navbar .nav-link {
-    text-align: center !important;
+    text-align: left !important; /* Left alignment resembles clean magazine columns */
     width: 100% !important;
-    padding: 10px 0 !important;
+    padding: 8px 0 !important;
   }
 
   nav.navbar.custom-navbar .profile-nav-link {
     margin-left: 0 !important;
-    margin-top: 4px !important;
-    background-color: #be185d !important;
+    margin-top: 16px !important;
+    text-align: center !important;
+    width: 100% !important;
   }
 }

@@ -1,407 +1,314 @@
 import React, { useState, useEffect } from "react";
 import "../css/login.css";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import OtpInput from "../components/OTPVerificationDialogue";
 import { fetchRefreshToken } from "../javascript/APIs/Login";
 
 function LoginView() {
-  
   const [view, setView] = useState(() => {
-  const storedUser = sessionStorage.getItem("userDetails");
-  const token = sessionStorage.getItem("accessToken");
-  if (storedUser && token) return "profile";
-  return "checking";
-});
-  const [loading, setLoading] = useState(true);
+    const storedUser = sessionStorage.getItem("userDetails");
+    const token = sessionStorage.getItem("accessToken");
+    if (storedUser && token) return "profile";
+    return "checking";
+  });
+  
   const [error, setError] = useState("");
-const [numriTelefonit, setNumriTelefonit] = useState("");
-const [expandedRow, setExpandedRow] = useState(null);
-  const [userData, setUserData] = useState( 
-    {emri: "",
+  const [numriTelefonit, setNumriTelefonit] = useState("");
+  const [expandedRow, setExpandedRow] = useState(null);
+  const [userData, setUserData] = useState({
+    emri: "",
     mbiemri: "",
     numri_telefonit: "",
     email: "",
-    gjinia: "m",
     emailVerified: false,
     clientHistory: [],
-});
+  });
 
   const [regData, setRegData] = useState({
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
     email: "",
-    gjinia: "f",
-
   });
 
   const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ emri: "", mbiemri: "", email: "" });
 
-const [editData, setEditData] = useState({
-  emri: "",
-  mbiemri: "",
-  email: "",
-  gjinia: "m",
-});
+  const [verifyStep, setVerifyStep] = useState("choose"); // choose | emailInput | codeSent
+  const [showEmailVerify, setShowEmailVerify] = useState(false);
+  const [verifyEmail, setVerifyEmail] = useState("");
+  const [otp, setOtp] = useState("");
 
-const [verifyStep, setVerifyStep] = useState("choose");
-// choose | emailInput | codeSent
-const [showEmailVerify, setShowEmailVerify] = useState(false);
-const [verifyEmail, setVerifyEmail] = useState(userData.email);
-const [otp, setOtp] = useState("");
-
-const [phoneError, setPhoneError] = useState("");
+  const [phoneError, setPhoneError] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [showHistoria, setShowHistoria] = useState(false);
 
-useEffect(() => {
-  const autoLogin = async () => {
-   
-    try{
+  useEffect(() => {
+    const autoLogin = async () => {
+      try {
+        await fetchRefreshToken();
+        const accessToken = sessionStorage.getItem("accessToken");
+        if (!accessToken) {
+          setView("login");
+          return;
+        }
 
-         await fetchRefreshToken();
- 
-      const accessToken = sessionStorage.getItem("accessToken");
-      const clientId = jwtDecode(accessToken).id;
-
-      const userRes = await fetch(
-        "http://192.168.100.116:8000/api/clients/data",
-        {
+        const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
           headers: { Authorization: `Bearer ${accessToken}` },
           credentials: "include",
-        }
-      );
+        });
 
-      if (!userRes.ok) {
-  sessionStorage.clear();
-  setView("login");
-  return;
-}
+        if (!userRes.ok) {
+          sessionStorage.clear();
+          setView("login");
+          return;
+        }
+
+        const userInfo = await userRes.json();
+        sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+        setUserData(userInfo);
+        setVerifyEmail(userInfo.email || "");
+        setEditData({
+          emri: userInfo.emri || "",
+          mbiemri: userInfo.mbiemri || "",
+          email: userInfo.email || "",
+        });
+        setView("profile");
+      } catch (err) {
+        console.error(err);
+        setView("login");
+      }
+    };
+    autoLogin();
+  }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const res = await fetch("http://192.168.100.116:8000/auth/login/client", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ numri_telefonit: `+383${numriTelefonit}` }),
+        credentials: "include",
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        setError(text || "Numri i telefonit nuk u gjet");
+        return;
+      }
+      setView("verify-login");
+    } catch (err) {
+      console.error(err);
+      setError("Nuk u mundësua lidhje me serverin.");
+    }
+  };
+
+  const fetchUserData = async () => {
+    try {
+      const token = sessionStorage.getItem("accessToken");
+      const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+
+      if (!userRes.ok) throw new Error("Failed to fetch user data");
 
       const userInfo = await userRes.json();
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
       setUserData(userInfo);
-          console.log(userData);
-      setEditData({
-  emri: userInfo.emri || "",
-  mbiemri: userInfo.mbiemri || "",
-  email: userInfo.email || "",
-  gjinia: userInfo.gjinia || "m"
-});
-      setView("profile");
+    } catch (err) {
+      console.error("fetchUserData error:", err);
+    }
+  };
+
+  const sendVerificationCode = async (targetEmail) => {
+    const emailToVerify = typeof targetEmail === "string" ? targetEmail : verifyEmail;
+    const token = sessionStorage.getItem("accessToken");
+
+    if (!emailToVerify || emailToVerify.trim() === "") {
+      setError("Email është i zbrazët");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/send/email-verification-request", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: emailToVerify }),
+      });
+
+      if (!res.ok) throw new Error("Failed to send code");
+      setVerifyEmail(emailToVerify);
+      setVerifyStep("codeSent");
+      setError("");
     } catch (err) {
       console.error(err);
+      setError("Nuk u dërgua kodi. Provo përsëri.");
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    const token = sessionStorage.getItem("accessToken");
+    try {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/verify/email", {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: verifyEmail, otp: otp }),
+      });
+
+      if (!res.ok) {
+        setError("Kodi është gabim ose ka skaduar");
+        return;
+      }
+
+      setUserData((prev) => ({ ...prev, emailVerified: true }));
+      setShowEmailVerify(false);
+      setVerifyStep("choose");
+      setOtp("");
+      setError("");
+    } catch (err) {
+      console.error(err);
+      setError("Gabim gjatë verifikimit");
+    }
+  };
+
+  const handleVerify = async (code) => {
+    setError("");
+    try {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          otpcode: code,
+          numri_telefonit: `+383${regData.numri_telefonit}`,
+        }),
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const text = await res.json();
+        setError(text.message || "Verifikimi dështoi");
+        return;
+      }
+
+      setView("login");
+      setVerificationCode("");
+    } catch (err) {
+      console.error(err);
+      setError("Diçka shkoi gabim gjatë verifikimit.");
+    }
+  };
+
+  const handleLogout = async () => {
+    if (!window.confirm("Dëshironi të dilni?")) return;
+    try {
+      await fetch("http://192.168.100.116:8000/auth/delete-refresh-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout request failed:", err);
+    } finally {
+      sessionStorage.clear();
+      setNumriTelefonit("");
+      setUserData({ emri: "", mbiemri: "", numri_telefonit: "", email: "", emailVerified: false });
       setView("login");
     }
   };
 
-  autoLogin();
-}, []);
-  // Manual login
-const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError("");
 
-  try {
-
-    const res = await fetch("http://192.168.100.116:8000/auth/login/client", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-      numri_telefonit: `+383${numriTelefonit}`
-      }),
-      credentials: "include",
-    });
-
-    const text = await res.text();
-
-    if (!res.ok) {
-      setError(text || "Phone number not found");
+    if (regData.numri_telefonit.length !== 8) {
+      setPhoneError("Numri i telefonit duhet të ketë saktësisht 8 shifra");
       return;
     }
-    // go to OTP screen
-    setView("verify-login");
 
-  } catch (err) {
-    console.error(err);
-    setError("Couldn't connect to server.");
-  }
-};
-
-const fetchUserData = async () => {
-  try {
-   const token = sessionStorage.getItem("accessToken")
-    const userRes = await fetch(
-      "http://192.168.100.116:8000/api/clients/data",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      }
-    );
-
-    if (!userRes.ok) {
-      throw new Error("Failed to fetch user data");
-    }
-
-    const userInfo = await userRes.json();
-
-    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
-    setUserData(userInfo);
-  } catch (err) {
-    console.error("fetchUserData error:", err);
-   
-  }
-};
-
-const sendVerificationCode = async (email) => {
-  const token = sessionStorage.getItem("accessToken");
-
-  if (!email || email.trim() === "") {
-    alert("Email is empty");
-    return;
-  }
-
-  try {
-    console.log("Sending OTP to:", email);
-
-    const res = await fetch(
-      "http://192.168.100.116:8000/api/clients/send/email-verification-request",
-      {
+    try {
+      const payload = { ...regData, numri_telefonit: `+383${regData.numri_telefonit}` };
+      const res = await fetch("http://192.168.100.116:8000/api/clients/register", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        credentials: "include",
+      });
+
+      const text = await res.text();
+      if (!res.ok) {
+        setError(text || "Regjistrimi dështoi");
+        return;
       }
-    );
 
-    if (!res.ok) throw new Error("Failed to send code");
-
-    setVerifyEmail(email); // optional sync
-    setVerifyStep("codeSent");
-  } catch (err) {
-    console.error(err);
-    alert("Nuk u dërgua kodi. Provo përsëri.");
-  }
-};
-
-const verifyEmailCode = async () => {
-  const token = sessionStorage.getItem("accessToken");
-  try {
-    const res = await fetch("http://192.168.100.116:8000/api/clients/verify/email", {
-      method: "PATCH",
-         headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      body: JSON.stringify({
-        email: verifyEmail,
-        otp: otp,
-      }),
-    });
-
-    if (!res.ok) {
-      alert("Kodi është gabim ose ka skaduar");
-      return;
+      setVerificationCode("");
+      setView("verify");
+    } catch (err) {
+      console.error(err);
+      setError("Diçka shkoi gabim gjatë regjistrimit.");
     }
+  };
 
-    alert("Email verified!");
-
-    setUserData(prev => ({
-  ...prev,
-  emailVerified: true,
-}));
-    // reset everything cleanly
-    setShowEmailVerify(false);
-    setVerifyStep("choose");
-    setOtp("");
-
-  } catch (err) {
-    console.error(err);
-    alert("Gabim gjatë verifikimit");
-  }
-};
-
-  const handleVerify = async (otp) => {
- //   e.preventDefault();
+  const handleAutoVerify = async (code) => {
     setError("");
     try {
-      const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        otpcode: otp,
-        numri_telefonit: `+383${regData.numri_telefonit}`
-      }),
-      credentials: "include",
-    });
-
-    const text = await res.text(); // backend might return plain text
-    if (!res.ok) {
-      setError(text.message || "Verification failed");
-      return;
-    }
-
-    alert("Verification successful! Please login now.");
-    setView("login");           // back to login form
-    setVerificationCode("");
-
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong during verification.");
-  }
-};
-
-
-const handleLogout = async () => {
-  const confirmLogout = window.confirm("Dëshironi të dilni?");
-  if (!confirmLogout) return;
-
-  try {
-    const res = await fetch(
-      "http://192.168.100.116:8000/auth/delete-refresh-token",
-      {
+      const res = await fetch("http://192.168.100.116:8000/auth/login/client/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otpcode: code, numri_telefonit: `+383${numriTelefonit}` }),
         credentials: "include",
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        setError(text.message || "OTP i pasaktë");
+        setVerificationCode("");
+        return;
       }
-    );
 
-    // optional: read message for debugging
-    await res.text();
+      const data = await res.json();
+      sessionStorage.setItem("accessToken", data.token);
 
-  } catch (err) {
-    console.error("Logout request failed:", err);
-  } finally {
-    // ALWAYS clear local state
-    sessionStorage.clear();
-    setNumriTelefonit("");
-    setUserData({
-  emri: "",
-  mbiemri: "",
-  numri_telefonit: "",
-  email: "",
-  gjinia: "m",
-  emailVerified: false
-});
-    setView("login");
-  }
-};
-
-const handleRegister = async (e) => {
-  e.preventDefault();
-  setError("");
-
-  if (regData.numri_telefonit.length !== 8) {
-  setPhoneError("Numri i telefonit duhet të ketë saktësisht 8 shifra");
-  return;
-}
-
-  try {
-    const payload = {
-      ...regData,
-      numri_telefonit: `+383${regData.numri_telefonit}`
-    };
-
-    console.log(payload);
-    const res = await fetch("http://192.168.100.116:8000/api/clients/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      credentials: "include",
-    });
-
-    const text = await res.text();
-
-    if (!res.ok) {
-      setError(text || "Registration failed");
-      return;
-    }
-
-    setVerificationCode("");
-    setView("verify");
-
-  } catch (err) {
-    console.error(err);
-    setError("Something went wrong during registration.");
-  }
-};
-  // Verification
-const handleAutoVerify = async (otp) => {
-  setError("");
-
-  try {
-    const res = await fetch(
-      "http://192.168.100.116:8000/auth/login/client/verify",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          otpcode: otp,
-         numri_telefonit : `+383${numriTelefonit}` }),
-        credentials: "include",
-      }
-    );
-
-     
-    if (!res.ok) {
-      const text = await res.text();
-      setError(text.message || "Invalid OTP");
-      setVerificationCode("");
-      return;
-    }
-
-    const data = await res.json();
-
-    sessionStorage.setItem("accessToken", data.token);
-
-    const userRes = await fetch(
-      "http://192.168.100.116:8000/api/clients/data",
-      {
+      const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
         headers: { Authorization: `Bearer ${data.token}` },
         credentials: "include",
-      }
-    );
+      });
 
-    const userInfo = await userRes.json();
-    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-setVerificationCode("");
-    setUserData(userInfo);
-    setEditData({
-  emri: userInfo.emri || "",
-  mbiemri: userInfo.mbiemri || "",
-  email: userInfo.email || "",
-  gjinia: userInfo.gjinia || "m",
-});
-    setView("profile");
+      const userInfo = await userRes.json();
+      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+      setVerificationCode("");
+      setUserData(userInfo);
+      setVerifyEmail(userInfo.email || "");
+      setEditData({
+        emri: userInfo.emri || "",
+        mbiemri: userInfo.mbiemri || "",
+        email: userInfo.email || "",
+      });
+      setView("profile");
+    } catch (err) {
+      console.error(err);
+      setError("Verifikimi i OTP dështoi.");
+    }
+  };
 
-  } catch (err) {
-    console.error(err);
-    setError("OTP verification failed.");
-  }
-};
+  const handleChange = (e) => {
+    setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
 
-const handleChange = (e) => {
-  setEditData({
-    ...editData,
-    [e.target.name]: e.target.value,
-  });
-};
-
-const handleSave = async () => {
-  const confirmSave = window.confirm("Dëshiron të ruash ndryshimet?");
-  if (!confirmSave) return;
-
-  try {
-    console.log(editData);
-    const res = await fetch(
-      "http://192.168.100.116:8000/api/clients/update",
-      {
+  const handleSave = async () => {
+    if (!window.confirm("Dëshiron të ruash ndryshimet?")) return;
+    try {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -409,748 +316,319 @@ const handleSave = async () => {
         },
         credentials: "include",
         body: JSON.stringify(editData),
+      });
+
+      if (res.ok) {
+        await fetchUserData();
+        setIsEditing(false);
+      } else {
+        const msg = await res.text();
+        setError(msg || "Gabim gjatë ruajtjes së të dhënave.");
       }
-    );
-
-    const message = await res.text();
-
-    if (res.ok) {
-      alert(message);
-  /*    setUserData( {
-        emri: editData.emri,
-    mbiemri: editData.mbiemri,
-    email: editData.email,
-      gjinia: editData.gjinia === "m" ? "Mashkull" : "Femer",
-      }); */
-     await fetchUserData()
-      setIsEditing(false);
-    } else {
-      alert(message || "Gabim gjatë ruajtjes së të dhënave.");
+    } catch (err) {
+      console.error(err);
+      setError("Gabim në lidhje me serverin.");
     }
-  } catch (err) {
-    console.error(err);
-    alert("Gabim në lidhje me serverin.");
+  };
+
+  if (view === "checking") {
+    return (
+      <div className="auth-wrapper checking-view">
+        <div className="spinner"></div>
+        <p>Po verifikohet sesioni...</p>
+      </div>
+    );
   }
-};
-
-
-const handleCancel = () => {
-  const confirmCancel = window.confirm("Dëshiron të anulosh ndryshimet?");
-
-  if (!confirmCancel) return;
-
-  setEditData({
-    emri: userData.emri,
-    mbiemri: userData.mbiemri,
-    email: userData.email,
-    gjinia: userData.gjinia,
-  });
-
-  setIsEditing(false);
-};
-
-if (view === "checking") return <p>Checking session...</p>;
 
   if (view === "profile" && userData) {
-return (
-  <>
-<div className="profile-page">
-
-  <div className="profile-container">
-
-    <div className="profile-card">
-
-      {/* HEADER */}
-      <div className="profile-header">
-
-        <div className="avatar">
-          {userData.emri?.charAt(0)}
-          {userData.mbiemri?.charAt(0)}
-        </div>
-
-        <div className="profile-title">
-          <h2>{userData.emri} {userData.mbiemri}</h2>
-          <span className="subtitle">Profili i klientit</span>
-        </div>
-
-      </div>
-
-      {/* INFO SECTION */}
-<div className="profile-info">
-
-  {/* GJINIA */}
-  <div className="info-row">
-  <span className="value"> 
-Gjinia
-</span>
-
-    {isEditing ? (
-<select
-  name="gjinia"
-  value={editData.gjinia}
-  onChange={handleChange}
->
-  <option value="m">Mashkull</option>
-  <option value="f">Femer</option>
-  <option value="a">Asnjejes</option>
-</select>
-    ) : (
-        <span className="value">
-  {{
-    m: "Mashkull",
-    f: "Femer",
-    a: "Asnjejes",
-  }[userData.gjinia] || "Asnjejes"}
-</span>
-
-    )}
-  </div>
-
-  {/* NUMRI (NOT EDITABLE) */}
-  <div className="info-row">
-    <span className="label">Numri i telefonit</span>
-    <span className="value">{userData.numriTelefonit}</span>
-  </div>
-
-  {/* EMAIL */}
-  <div className="info-row full">
-    <span className="label">Email</span>
-
-    {isEditing ? (
-      <input
-        type="email"
-        name="email"
-        value={editData.email}
-        onChange={handleChange}
-      />
-    ) : (
-      <span className="value">{userData.email}</span>
-    )}
-  </div>
-
-  {/* EMRI + MBIEMRI */}
-  <div className="info-row full">
-    <span className="label">Emri</span>
-
-    {isEditing ? (
-      <input
-        name="emri"
-        value={editData.emri}
-        onChange={handleChange}
-      />
-    ) : (
-      <span className="value">{userData.emri}</span>
-    )}
-  </div>
-
-  <div className="info-row full">
-    <span className="label">Mbiemri</span>
-
-    {isEditing ? (
-      <input
-        name="mbiemri"
-        value={editData.mbiemri}
-        onChange={handleChange}
-      />
-    ) : (
-      <span className="value">{userData.mbiemri}</span>
-    )}
-  </div>
-
-  {/* DATE (NOT EDITABLE) */}
-  <div className="info-row full">
-    <span className="label">Data e regjistrimit</span>
-    <span className="value">
-      {new Date(userData.dataRegjistrimit).toLocaleDateString()}
-    </span>
-  </div>
-
-</div>
-
-      {/* ACTIONS */}
-<div className="profile-actions">
-
-{userData.email && !userData.emailVerified && (
-  <button
-    className="btn-primary"
-    onClick={() => setShowEmailVerify(true)}
-  >
-    ✉️ Verifiko Email
-  </button>
-)}
-
-  {!isEditing ? (
-    <button
-      className="btn-primary"
-      onClick={() => setIsEditing(true)}
-    >
-      Ndrysho të dhënat
-    </button>
-  ) : (
-    <>
-      <button className="btn-primary" onClick={handleSave}>
-        Ruaj ndryshimet
-      </button>
-
-      <button className="btn-danger" onClick={handleCancel}>
-        Anulo
-      </button>
-    </>
-  )}
-
-  <button
-    className="btn-primary"
-    onClick={() => setShowHistoria(true)}
-  >
-    📖 Historia ime
-  </button>
-
-  <button
-    className="btn-danger"
-    onClick={handleLogout}
-  >
-    🚪 Dil nga llogaria
-  </button>
-
-</div>
-
-    </div>
-
-  </div>
-
-</div>
-
-{showEmailVerify && (
-  <div className="modal-backdrop-custom">
-    <div className="modal-box">
-
-      <div className="modal-header">
-        <h5>Verifikimi i Email-it</h5>
-        <button
-          className="btn-close"
-          onClick={() => {
-            setShowEmailVerify(false);
-            setVerifyStep("choose");
-            setOtp("");
-          }}
-        />
-      </div>
-
-      <div className="modal-body">
-
-        {/* STEP 1 */}
-        {verifyStep === "choose" && (
-          <div>
-            <p>Dëshiron ta përdorim këtë email për verifikim?</p>
-
-            <div className="mb-3 p-2 border rounded">
-              <strong>{userData.email}</strong>
+    return (
+      <div className="profile-page animate-fade-in">
+        <div className="profile-container">
+          <div className="profile-card">
+            <div className="profile-card-header">
+              <div className="avatar-badge">
+                {userData.emri?.charAt(0)}
+                {userData.mbiemri?.charAt(0)}
+              </div>
+              <div className="profile-meta-title">
+                <h2>{userData.emri} {userData.mbiemri}</h2>
+                <span className="subtitle-tag">Profili i klientit</span>
+              </div>
             </div>
 
-            <div className="d-flex gap-2">
-           
-             <button
-  className="btn btn-success w-50"
-  onClick={() => sendVerificationCode(userData.email)}
->
-  Po
-</button>
+            <div className="profile-fields-grid">
+              <div className="field-box">
+                <label>Numri i telefonit</label>
+                <div className="disabled-value-box">{userData.numri_telefonit || userData.numriTelefonit}</div>
+              </div>
 
-              <button
-                className="btn btn-secondary w-50"
-                onClick={() => setVerifyStep("emailInput")}
-              >
-                Jo
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2 */}
-        {verifyStep === "emailInput" && (
-          <div>
-            <p>Shkruaj email të ri</p>
-
-            <input
-              type="email"
-              value={verifyEmail}
-              onChange={(e) => setVerifyEmail(e.target.value)}
-              className="form-control mb-3"
-            />
-
-            <button
-              className="btn btn-primary w-100"
-              onClick={sendVerificationCode}
-            >
-              Dërgo kodin
-            </button>
-          </div>
-        )}
-
-        {/* STEP 3 */}
-        {verifyStep === "codeSent" && (
-          <div>
-            <p>Shkruaj kodin e verifikimit</p>
-
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="form-control mb-3"
-            />
-
-            <button
-              className="btn btn-success w-100"
-              onClick={verifyEmailCode}
-            >
-              Verifiko
-            </button>
-          </div>
-        )}
-
-      </div>
-    </div>
-  </div>
-)}
-
-    {/* MODAL OUTSIDE CONTAINER BUT STILL INSIDE RETURN */}
-{showHistoria && (
-  <div className="modal-backdrop-custom">
-    <div className="modal-box">
-
-      {/* HEADER */}
-      <div className="modal-header">
-        <h5 className="m-0">Historia e Shërbimeve</h5>
-        <button
-          className="btn-close"
-          onClick={() => setShowHistoria(false)}
-        />
-      </div>
-
-      {/* BODY */}
-      <div className="modal-body">
-
-        <div className="table-responsive">
-          <table className="table table-hover align-middle">
-
-            {/* Table Header - Always shown */}
-            <thead className="table-light">
-              <tr>
-                <th>Data</th>
-                <th>Shërbimi</th>
-                <th>Punonjësi</th>
-              </tr>
-            </thead>
-
-            {/* Table Body */}
-  <tbody>
-  {userData?.clientHistory && userData.clientHistory.length > 0 ? (
-    userData.clientHistory.map((e, index) => {
-      // Extract unique service names for the main column display
-      const uniqueServices = Array.from(
-        new Set(e.detajet?.map((det) => det.emri_sherbimit).filter(Boolean))
-      );
-      
-      const totalPagesa = e.detajet?.reduce((sum, det) => sum + (det.pagesa || 0), 0) || 0;
-      const isExpanded = expandedRow === index;
-
-      return (
-        <React.Fragment key={e.idHistoriku || index}>
-          {/* MAIN APPOINTMENT ROW */}
-          <tr 
-            onClick={() => setExpandedRow(isExpanded ? null : index)} 
-            style={{ cursor: 'pointer' }}
-            className={isExpanded ? 'table-active' : ''}
-          >
-            {/* 1. Data */}
-            <td>
-              {e.data_sherbimit 
-                ? new Date(e.data_sherbimit).toLocaleDateString('sq-AL', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })
-                : '-'}
-            </td>
-            
-            {/* 2. Shërbimi (Summary badges) */}
-            <td>
-              {uniqueServices.length > 0 ? (
-                <div className="d-flex flex-wrap gap-1">
-                  {uniqueServices.map((serviceName, i) => (
-                    <span key={i} className="badge bg-light text-dark border fw-semibold">
-                      {serviceName}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <span className="text-muted">—</span>
-              )}
-            </td>
-
-            {/* 3. Punonjësi */}
-            <td>{e.emri_mbiemri_punonjesit || '-'}</td>
-            
-            {/* 4. Status */}
-
-
-            {/* 5. Interaktiviteti (Action indicator) */}
-</tr>
-          {/* DYNAMIC EXPANDED SUB-ROW */}
-          {isExpanded && (
-            <tr>
-              <td colSpan="5" className="bg-light p-3">
-                <div className="card shadow-sm border-0">
-                  <div className="card-body">
-                    <h6 className="fw-bold mb-3 text-secondary border-bottom pb-2">
-                      Lista e Detajuar e Shërbimeve për këtë Takim ({totalPagesa.toFixed(2)} €)
-                    </h6>
-                    
-                    {e.detajet && e.detajet.length > 0 ? (
-                      <div className="row g-2">
-                        {e.detajet.map((det, i) => (
-                          <div key={`sub-det-${i}`} className="col-12 col-md-6">
-                            <div className="p-2 border rounded bg-white h-100 d-flex justify-between align-items-center">
-                              <div>
-                                <span className="badge bg-primary me-2">{det.emri_sherbimit}</span>
-                                <span className="text-dark fw-semibold small">{det.emri_atributit}</span>
-                                <div className="text-muted small mt-1">{det.pershkrimi || 'Pa përshkrim'}</div>
-                              </div>
-                              <div className="fw-bold text-success text-nowrap ms-2">
-                                +{det.pagesa ? det.pagesa.toFixed(2) : '0.00'} €
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span className="text-muted">Nuk ka të dhëna specifike për këtë shërbim.</span>
+              <div className="field-box">
+                <label>Email</label>
+                {isEditing ? (
+                  <input type="email" name="email" value={editData.email} onChange={handleChange} className="auth-input" />
+                ) : (
+                  <div className="disabled-value-box d-flex justify-between align-items-center">
+                    <span>{userData.email || "—"}</span>
+                    {userData.email && (
+                      <span className={`status-badge-inline ${userData.emailVerified ? "verified" : "unverified"}`}>
+                        {userData.emailVerified ? "I Verifikuar" : "I Paverifikuar"}
+                      </span>
                     )}
                   </div>
+                )}
+              </div>
+
+              <div className="field-box">
+                <label>Emri</label>
+                {isEditing ? (
+                  <input type="text" name="emri" value={editData.emri} onChange={handleChange} className="auth-input" />
+                ) : (
+                  <div className="disabled-value-box">{userData.emri}</div>
+                )}
+              </div>
+
+              <div className="field-box">
+                <label>Mbiemri</label>
+                {isEditing ? (
+                  <input type="text" name="mbiemri" value={editData.mbiemri} onChange={handleChange} className="auth-input" />
+                ) : (
+                  <div className="disabled-value-box">{userData.mbiemri}</div>
+                )}
+              </div>
+
+              <div className="field-box full-width-row">
+                <label>Data e regjistrimit</label>
+                <div className="disabled-value-box">
+                  {userData.dataRegjistrimit ? new Date(userData.dataRegjistrimit).toLocaleDateString("sq-AL") : "—"}
                 </div>
-              </td>
-            </tr>
-          )}
-        </React.Fragment>
-      );
-    })
-  ) : (
-    <tr>
-      <td colSpan="5" className="text-center py-4 text-muted">
-        Nuk ka histori shërbimesh për këtë klient.
-      </td>
-    </tr>
-  )}
-</tbody>
-          </table>
+              </div>
+            </div>
+
+            {error && <p className="error-banner">{error}</p>}
+
+            <div className="profile-action-matrix">
+              {userData.email && !userData.emailVerified && !isEditing && (
+                <button className="auth-btn action-verify" onClick={() => { setError(""); setShowEmailVerify(true); }}>
+                  ✉️ Verifiko Email-in
+                </button>
+              )}
+
+              {!isEditing ? (
+                <button className="auth-btn action-edit" onClick={() => setIsEditing(true)}>
+                  Ndrysho të dhënat
+                </button>
+              ) : (
+                <>
+                  <button className="auth-btn action-save" onClick={handleSave}>Ruaj ndryshimet</button>
+                  <button className="auth-btn action-cancel" onClick={() => { setIsEditing(false); setError(""); }}>Anulo</button>
+                </>
+              )}
+
+              <button className="auth-btn action-history" onClick={() => setShowHistoria(true)}>📖 Historia ime</button>
+              <button className="auth-btn action-logout" onClick={handleLogout}>Dil nga llogaria</button>
+            </div>
+          </div>
         </div>
 
+        {/* EMAIL VERIFICATION MODAL */}
+        {showEmailVerify && (
+          <div className="custom-modal-backdrop">
+            <div className="custom-modal-surface">
+              <div className="modal-surface-header">
+                <h3>Verifikimi i Email-it</h3>
+                <button className="modal-close-trigger" onClick={() => { setShowEmailVerify(false); setVerifyStep("choose"); setOtp(""); setError(""); }}>&times;</button>
+              </div>
+              <div className="modal-surface-body">
+                {error && <p className="error-banner">{error}</p>}
+                
+                {verifyStep === "choose" && (
+                  <div className="step-container">
+                    <p>Dëshironi ta verifikoni këtë adresë email-i?</p>
+                    <div className="highlighted-email-box">{userData.email}</div>
+                    <div className="modal-flex-buttons">
+                      <button className="auth-btn action-save" onClick={() => sendVerificationCode(userData.email)}>Po, dërgo kodin</button>
+                      <button className="auth-btn action-cancel" onClick={() => setVerifyStep("emailInput")}>Jo, ndrysho email-in</button>
+                    </div>
+                  </div>
+                )}
+
+                {verifyStep === "emailInput" && (
+                  <div className="step-container">
+                    <label className="input-field-label">Shkruaj adresën e re</label>
+                    <input type="email" value={verifyEmail} onChange={(e) => setVerifyEmail(e.target.value)} className="auth-input mb-4" placeholder="emri@shembull.com" />
+                    <button className="auth-btn action-edit" onClick={sendVerificationCode}>Dërgo kodin verifikues</button>
+                  </div>
+                )}
+
+                {verifyStep === "codeSent" && (
+                  <div className="step-container">
+                    <p>Kodi gjashtëshifror u dërgua te <strong>{verifyEmail}</strong></p>
+                    <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} className="auth-input numeric-otp-field mb-4" placeholder="000000" maxLength={6} />
+                    <button className="auth-btn action-save" onClick={verifyEmailCode}>Verifiko Adresën</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SERVICES HISTORY MODAL */}
+        {showHistoria && (
+          <div className="custom-modal-backdrop">
+            <div className="custom-modal-surface history-wide-surface">
+              <div className="modal-surface-header">
+                <h3>Historia e Shërbimeve</h3>
+                <button className="modal-close-trigger" onClick={() => { setShowHistoria(false); setExpandedRow(null); }}>&times;</button>
+              </div>
+              <div className="modal-surface-body custom-scrollbar">
+                {userData.clientHistory && userData.clientHistory.length > 0 ? (
+                  <div className="history-cards-container">
+                    {userData.clientHistory.map((entry, index) => {
+                      const isExpanded = expandedRow === index;
+                      const uniqueServices = Array.from(new Set(entry.detajet?.map((d) => d.emri_sherbimit).filter(Boolean)));
+                      const totalCost = entry.detajet?.reduce((sum, d) => sum + (d.pagesa || 0), 0) || 0;
+
+                      return (
+                        <div key={entry.idHistoriku || index} className={`history-item-row-card ${isExpanded ? "expanded" : ""}`}>
+                          <div className="history-item-summary-trigger" onClick={() => setExpandedRow(isExpanded ? null : index)}>
+                            <div className="history-meta-left">
+                              <span className="history-timestamp">
+                                {entry.data_sherbimit ? new Date(entry.data_sherbimit).toLocaleDateString("sq-AL", { year: "numeric", month: "short", day: "numeric" }) : "—"}
+                              </span>
+                              <div className="history-badges-flex">
+                                {uniqueServices.map((name, i) => (
+                                  <span key={i} className="service-rendered-tag">{name}</span>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="history-meta-right">
+                              <span className="history-assigned-provider">{entry.emri_mbiemri_punonjesit || "—"}</span>
+                              <span className="history-total-price">{totalCost.toFixed(2)} €</span>
+                            </div>
+                          </div>
+
+                          {isExpanded && (
+                            <div className="history-item-details-drawer animate-slide-down">
+                              <div className="details-drawer-inner">
+                                <h4>Specifikimi i detajuar i takimit</h4>
+                                {entry.detajet && entry.detajet.length > 0 ? (
+                                  <div className="details-subgrid">
+                                    {entry.detajet.map((sub, i) => (
+                                      <div key={i} className="detail-item-sub-card">
+                                        <div className="sub-card-left">
+                                          <div className="sub-card-title-line">
+                                            <span className="category-marker">{sub.emri_sherbimit}</span>
+                                            <h5>{sub.emri_atributit}</h5>
+                                          </div>
+                                          <p>{sub.pershkrimi || "Nuk ka përshkrim shtesë."}</p>
+                                        </div>
+                                        <div className="sub-card-right">+{sub.pagesa ? sub.pagesa.toFixed(2) : "0.00"} €</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <p className="no-data-text">Nuk ka të dhëna specifike për këtë shërbim.</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="empty-history-state">Nuk u gjet asnjë histori shërbimesh për këtë llogari.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* FOOTER */}
-      <div className="modal-footer">
-        <button
-          className="btn btn-secondary w-100"
-          onClick={() => setShowHistoria(false)}
-        >
-          Mbyll
-        </button>
-      </div>
-
-    </div>
-  </div>
-)}
-  </>
-);
-  }
-
-  // Verification form
-  if (view === "verify") {
-
-    {/*
-  
-    <div className="login-container">
-
-     <h1>Shkruaj kodin e verifikimit</h1>
-        <p>Një kod verifikimi është dërguar në numrin {numriTelefonit}</p>
-
-    {error && <p className="error-message">{error}</p>}
-
-    <label>Shkruaj kodin verifikues</label>
-
-    <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-      {Array.from({ length: OTP_LENGTH }).map((_, index) => (
-        <input
-  key={index}
-  id={`otp-${index}`}
-  type="text"
-  maxLength="1"
-  value={verificationCode[index] || ""}
-  onChange={(e) => handleOtpChangeRegister(e.target.value, index)}
-  onKeyDown={(e) => handleKeyDown(e, index)}
-  inputMode="numeric"
-  style={{
-    width: "45px",
-    height: "55px",
-    textAlign: "center",
-    fontSize: "22px",
-    border: "none",
-    borderBottom: "2px solid #ccc",
-    outline: "none"
-  }}
-/>
-      ))}
-    </div>
-  </div> */}
-
-    return ( 
-
-       <div className="login-container">
-
-     <h1>Shkruaj kodin e verifikimit</h1>
-        <p>Një kod verifikimi është dërguar në numrin {numriTelefonit}</p>
-
-    {error && <p className="error-message">{error}</p>}
-
-    <label>Shkruaj kodin verifikues</label>
-
-
-  <OtpInput
-  value={verificationCode}
-  onChange={setVerificationCode}
-  onComplete={(code) => handleVerify(code)}
-/>
-   
-  </div>
     );
   }
 
-  // Registration form
-  if (view === "register") {
-return (
-  <div className="login-container">
-    <h1>Krijo llogari</h1>
+  // Auth Layout wrapper for Login, Register and OTP validation
+  return (
+    <div className="auth-wrapper page-center animate-fade-in">
+      <div className="auth-card">
+        {view === "login" && (
+          <>
+            <h2>Kyçu në Llogari</h2>
+            <form onSubmit={handleLogin}>
+              {error && <p className="error-banner">{error}</p>}
+              <div className="auth-field-wrapper">
+                <label>Numri i telefonit</label>
+                <div className="prefix-input-combo">
+                  <span className="combo-prefix">+383</span>
+                  <input type="text" value={numriTelefonit} onChange={(e) => {
+                    let val = e.target.value.replace(/\D/g, "");
+                    if (val.startsWith("0")) val = val.substring(1);
+                    setNumriTelefonit(val.slice(0, 8));
+                  }} placeholder="4xxxxxxx" required maxLength={8} className="auth-combo-input" />
+                </div>
+              </div>
+              <button type="submit" className="auth-btn btn-submit-primary">Dërgo kodin verifikues</button>
+            </form>
+            <p className="auth-switch-view-footer">Nuk ke llogari? <span onClick={() => { setView("register"); setError(""); setPhoneError(""); }}>Krijo llogari</span></p>
+          </>
+        )}
 
-    <form onSubmit={handleRegister}>
-      {error && <p className="error-message">{error}</p>}
+        {view === "register" && (
+          <>
+            <h2>Krijo Llogari të Re</h2>
+            <form onSubmit={handleRegister}>
+              {error && <p className="error-banner">{error}</p>}
+              
+              <div className="auth-field-wrapper">
+                <label>Emri</label>
+                <input type="text" value={regData.emri} onChange={(e) => setRegData({ ...regData, emri: e.target.value.replace(/[^a-zA-ZëËçÇ\s]/g, "") })} required className="auth-input" />
+              </div>
 
-      {/* EMRI */}
-      <div className="form-group">
-        <label>Emri</label>
-        <input
-          type="text"
-          value={regData.emri}
-          onChange={(e) => {
-            const value = e.target.value.replace(/[^a-zA-ZëËçÇ\s]/g, "");
-            setRegData({ ...regData, emri: value });
-          }}
-          required
-        />
+              <div className="auth-field-wrapper">
+                <label>Mbiemri</label>
+                <input type="text" value={regData.mbiemri} onChange={(e) => setRegData({ ...regData, mbiemri: e.target.value.replace(/[^a-zA-ZëËçÇ\s]/g, "") })} required className="auth-input" />
+              </div>
+
+              <div className="auth-field-wrapper">
+                <label>Numri i telefonit</label>
+                <div className="prefix-input-combo">
+                  <span className="combo-prefix">+383</span>
+                  <input type="text" value={regData.numri_telefonit} onChange={(e) => {
+                    let val = e.target.value.replace(/\D/g, "");
+                    if (val.startsWith("0")) val = val.substring(1);
+                    if (val.length > 8) return;
+                    setRegData({ ...regData, numri_telefonit: val });
+                    setPhoneError(val.length > 0 && val.length < 8 ? "Numri duhet të ketë saktësisht 8 shifra" : "");
+                  }} placeholder="4xxxxxxx" required maxLength={8} className="auth-combo-input" />
+                </div>
+                {phoneError && <small className="field-inline-error">{phoneError}</small>}
+              </div>
+
+              <div className="auth-field-wrapper">
+                <label>Email (Opsionale)</label>
+                <input type="email" value={regData.email} onChange={(e) => setRegData({ ...regData, email: e.target.value })} className="auth-input" />
+              </div>
+
+              <button type="submit" className="auth-btn btn-submit-primary">Krijo llogari</button>
+            </form>
+            <p className="auth-switch-view-footer">Keni llogari? <span onClick={() => { setView("login"); setError(""); }}>Kyçu</span></p>
+          </>
+        )}
+
+        {(view === "verify" || view === "verify-login") && (
+          <>
+            <h2>Verifikimi i Sigurisë</h2>
+            <p className="auth-view-description">Shkruani kodin e dërguar në numrin tuaj të telefonit.</p>
+            {error && <p className="error-banner">{error}</p>}
+            <div className="otp-injection-slot">
+              <OtpInput value={verificationCode} onChange={setVerificationCode} onComplete={(code) => view === "verify" ? handleVerify(code) : handleAutoVerify(code)} />
+            </div>
+            <button className="auth-btn action-cancel mt-4" onClick={() => { setView("login"); setVerificationCode(""); setError(""); }}>Anulo</button>
+          </>
+        )}
       </div>
-
-      {/* MBIEMRI */}
-      <div className="form-group">
-        <label>Mbiemri</label>
-        <input
-          type="text"
-          value={regData.mbiemri}
-          onChange={(e) => {
-            const value = e.target.value.replace(/[^a-zA-ZëËçÇ\s]/g, "");
-            setRegData({ ...regData, mbiemri: value });
-          }}
-          required
-        />
-      </div>
-
-      {/* PHONE +383 SAME LOGIC */}
-     <div className="form-group">
-  <label>Numri i telefonit</label>
-
-  <div style={{ display: "flex", alignItems: "center" }}>
-    <span
-      style={{
-        padding: "10px",
-        background: "#f1f1f1",
-        border: "1px solid #ccc",
-        borderRight: "none",
-        borderRadius: "5px 0 0 5px"
-      }}
-    >
-      +383
-    </span>
-
-    <input
-      type="text"
-      value={regData.numri_telefonit}
-      onChange={(e) => {
-        let value = e.target.value;
-
-        value = value.replace(/\D/g, "");
-
-        if (value.startsWith("0")) {
-          value = value.substring(1);
-        }
-
-        if (value.length > 8) return;
-
-        setRegData({ ...regData, numri_telefonit: value });
-
-        // LIVE VALIDATION
-        if (value.length > 0 && value.length < 8) {
-          setPhoneError("Numri duhet të ketë saktësisht 8 shifra");
-        } else {
-          setPhoneError("");
-        }
-      }}
-      placeholder="4xxxxxxx"
-      required
-      maxLength={8}
-      style={{
-        borderRadius: "0 5px 5px 0",
-        flex: 1
-      }}
-    />
-  </div>
-
-  {/* ERROR MESSAGE */}
-  {phoneError && (
-    <small style={{ color: "red", marginTop: "5px", display: "block" }}>
-      {phoneError}
-    </small>
-  )}
-</div>
-      {/* EMAIL OPTIONAL */}
-      <div className="form-group">
-        <label>Email (optional)</label>
-        <input
-          type="email"
-          value={regData.email}
-          onChange={(e) =>
-            setRegData({ ...regData, email: e.target.value })
-          }
-        />
-      </div>
-
-      {/* GJINIA */}
-      <div className="form-group">
-        <label>Gjinia</label>
-        <select
-          value={regData.gjinia}
-          onChange={(e) =>
-            setRegData({ ...regData, gjinia: e.target.value })
-          }
-        >
-          <option value="f">Femër</option>
-          <option value="m">Mashkull</option>
-        </select>
-      </div>
-
-      <button type="submit">Apliko!</button>
-
-      <p style={{ marginTop: "10px" }}>
-        Keni llogari?{" "}
-        <span
-          style={{ color: "blue", cursor: "pointer" }}
-          onClick={() => setView("login")}
-        >
-          Kyçu
-        </span>
-      </p>
-    </form>
-  </div>
-
-);
- 
-  }
-
-  if (view === "verify-login") {
-return (
-  <div className="login-container">
-    <h1>Kyçu</h1>
-
-    {error && <p className="error-message">{error}</p>}
-
-    <label>Shkruaj kodin verifikues</label>
-
-  <OtpInput
-    value={verificationCode}
-    onChange={setVerificationCode}
-    onComplete={(code) => handleAutoVerify(code)}
-  />
-  </div>
-);
-}
-
-return (
-  <div className="login-container">
-    <h1>Kyçu</h1>
-
-    <form onSubmit={handleLogin}>
-      {error && <p className="error-message">{error}</p>}
-
-      <div className="form-group">
-        <label>Shkruaj numrin e telefonit!</label>
-
-        <div style={{ display: "flex", alignItems: "center" }}>
-          <span
-            style={{
-              padding: "10px",
-              background: "#f1f1f1",
-              border: "1px solid #ccc",
-              borderRight: "none",
-              borderRadius: "5px 0 0 5px"
-            }}
-          >
-            +383
-          </span>
-
-          <input
-            type="text"
-            value={numriTelefonit}
-            onChange={(e) => {
-              let value = e.target.value;
-
-              // Allow only numbers
-              value = value.replace(/\D/g, "");
-
-              // Remove leading 0
-              if (value.startsWith("0")) {
-                value = value.substring(1);
-              }
-
-               value = value.slice(0, 8);
-              setNumriTelefonit(value);
-            }}
-            placeholder="4xxxxxxx"
-            required
-             maxLength={8}
-            style={{
-              borderRadius: "0 5px 5px 0",
-              flex: 1
-            }}
-          />
-        </div>
-      </div>
-
-      <button type="submit">Dërgo kodin verifikues!</button>
-    </form>
-       <p style={{ marginTop: "15px", textAlign: "center" }}>
-      Nuk ke llogari?{" "}
-      <span
-        onClick={() => setView("register")}
-        style={{
-          color: "blue",
-          cursor: "pointer",
-          fontWeight: "500"
-        }}
-      >
-        Krijo llogari
-      </span>
-    </p>
-  </div>
-);
+    </div>
+  );
 }
 
 export default LoginView;
