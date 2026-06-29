@@ -1,0 +1,855 @@
+/* ==========================================================================
+   LIGHT EDITORIAL LUXURY ARCHITECTURE ENGINE
+   ========================================================================== */
+:root {
+  --modal-bg: #ffffff;            /* Pure crisp white for card surfaces */
+  --modal-overlay: rgba(28, 26, 23, 0.4); /* Elegant warm frosted overlay */
+  --primary-color: #b3977d;       /* High-contrast luxury gold accent */
+  --primary-hover: #9c8269;       /* Deepened gold tone for rich interactions */
+  --text-main: #1c1a17;           /* True deep charcoal for premium legibility */
+  --text-muted: #6e6a64;          /* Soft slate taupe for elegant micro-descriptions */
+  --border-color: rgba(0, 0, 0, 0.08); /* Clean, ultra-thin high-contrast borders */
+  --bg-surface: #f9f8f6;          /* Alabaster cream backdrop asset */
+  --radius-lg: 24px;              /* Organic mobile bottom-sheet cornering */
+  --radius-md: 16px;              /* Standard responsive layout cornering */
+  --radius-sm: 10px;              /* Tactile UI selection component cornering */
+  --shadow-xl: 0 12px 35px rgba(28, 26, 23, 0.06); /* Balanced soft shadow profile */
+  --font-serif: "Playfair Display", serif;
+}
+
+/* ==========================================================================
+   GLOBAL PAGE
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.termini-page {
+  background: var(--bg-surface);
+  min-height: 100vh;
+  color: var(--text-main);
+  padding: 24px 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 768px) {
+  .termini-page {
+    padding: 60px 20px;
+  }
+}
+
+.termini-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.termini-header {
+  margin-bottom: 32px;
+}
+
+.termini-header h1 {
+  font-size: 28px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 768px) {
+  .termini-header h1 {
+    font-size: 36px;
+    letter-spacing: 2px;
+  }
+}
+
+.title-serif {
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+.termini-header p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* ==========================================================================
+   GRID
+   ========================================================================== */
+.termini-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+@media (min-width: 1024px) {
+  .termini-grid {
+    display: grid;
+    grid-template-columns: 7fr 4fr;
+    gap: 32px;
+  }
+}
+
+/* ==========================================================================
+   FORM CARDS
+   ========================================================================== */
+.form-section-card,
+.summary-widget {
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  box-shadow: var(--shadow-xl);
+}
+
+@media (min-width: 768px) {
+  .form-section-card,
+  .summary-widget {
+    padding: 24px;
+  }
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+}
+
+.input-group-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .input-group-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.input-box label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.input-box input,
+.input-box select,
+.input-box textarea {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 14px;
+  font-size: 16px; /* Prevents auto zoom scales on iOS Safari viewports */
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (min-width: 768px) {
+  .input-box input,
+  .input-box select,
+  .input-box textarea {
+    font-size: 14px;
+  }
+}
+
+.input-box input:focus,
+.input-box select:focus,
+.input-box textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--modal-bg);
+  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
+}
+
+/* ==========================================================================
+   PHONE INPUT OVERHAUL
+   ========================================================================== */
+.phone-input-wrapper {
+  display: flex;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.phone-input-wrapper:focus-within {
+  border-color: var(--primary-color);
+  background: var(--modal-bg);
+  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
+}
+
+.phone-prefix {
+  padding: 14px;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+  font-size: 16px;
+  font-weight: 500;
+}
+
+@media (min-width: 768px) {
+  .phone-prefix {
+    font-size: 14px;
+  }
+}
+
+.phone-input-wrapper input {
+  flex: 1;
+  border: none !important;
+  border-radius: 0;
+  background: transparent !important;
+}
+
+/* ==========================================================================
+   SERVICES
+   ========================================================================== */
+.services-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.services-search {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 14px;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.services-search:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--modal-bg);
+  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
+}
+
+@media (min-width: 768px) {
+  .services-search {
+    font-size: 14px;
+  }
+}
+
+.services-modern-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 480px) {
+  .services-modern-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 20px;
+  }
+}
+
+.service-modern-card {
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(28, 26, 23, 0.02);
+}
+
+.service-modern-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 20px rgba(28, 26, 23, 0.06);
+}
+
+.service-modern-card.selected {
+  border-color: var(--primary-color);
+  background: #fbf9f6;
+  box-shadow: 0 0 0 1px var(--primary-color);
+}
+
+.service-image-container {
+  height: 110px;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-surface);
+}
+
+@media (min-width: 480px) {
+  .service-image-container {
+    height: 130px;
+  }
+}
+
+.service-image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.selected-indicator {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.selected-indicator span {
+  background: var(--text-main);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.service-details {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.service-details h4 {
+  font-size: 15px;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.service-meta {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 10px;
+  margin-top: auto;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.service-meta .price {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   SIDEBAR / SUMMARY
+   ========================================================================== */
+.termini-sidebar {
+  position: static;
+}
+
+@media (min-width: 1024px) {
+  .termini-sidebar {
+    position: sticky;
+    top: 30px;
+  }
+}
+
+.summary-widget h3 {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 20px;
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.summary-item span:last-child {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.summary-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 20px 0;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.total-amount {
+  color: var(--text-main);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.book-now-btn {
+  width: 100%;
+  margin-top: 20px;
+  background: var(--text-main);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.book-now-btn:hover {
+  background: var(--primary-hover);
+}
+
+/* ==========================================================================
+   CUSTOM MODAL & SHEET UX (THUMB OPTIMIZED MOBILE LAYOUTS)
+   ========================================================================== */
+.custom-modal-overlay,
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end; 
+  z-index: 1000;
+  padding: 0;
+}
+
+@media (min-width: 640px) {
+  .custom-modal-overlay,
+  .modal-overlay {
+    align-items: center;
+    padding: 20px;
+  }
+}
+
+.custom-modal-sheet {
+  width: 100%;
+  max-width: 550px;
+  max-height: 85vh;
+  background: var(--modal-bg);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 -10px 30px rgba(28, 26, 23, 0.08);
+  animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: env(safe-area-inset-bottom, 14px);
+}
+
+@media (min-width: 640px) {
+  .custom-modal-sheet {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    max-height: 90vh;
+    padding-bottom: 0;
+    box-shadow: var(--shadow-xl);
+  }
+}
+
+.custom-modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (min-width: 640px) {
+  .custom-modal-header {
+    padding: 20px 24px;
+  }
+}
+
+.custom-modal-subtitle {
+  color: var(--primary-color);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.custom-modal-title {
+  color: var(--text-main);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.custom-modal-close-btn {
+  background: var(--bg-surface);
+  border: none;
+  color: var(--text-main);
+  cursor: pointer;
+  padding: 8px; 
+  font-size: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-modal-body {
+  padding: 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (min-width: 640px) {
+  .custom-modal-body {
+    padding: 24px;
+  }
+}
+
+.custom-modal-hero-wrapper {
+  height: 160px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+}
+
+@media (min-width: 480px) {
+  .custom-modal-hero-wrapper {
+    height: 220px;
+  }
+}
+
+.custom-modal-hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.custom-modal-description {
+  color: var(--text-muted);
+  margin-bottom: 20px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.custom-modal-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.custom-modal-metric-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+}
+
+.custom-modal-metric-pill label {
+  color: var(--text-muted);
+  font-size: 11px;
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.custom-modal-metric-pill span {
+  color: var(--text-main);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.custom-modal-section-title {
+  margin-top: 24px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.custom-modal-searchbar {
+  margin: 16px 0;
+}
+
+.custom-modal-searchbar input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 14px;
+  font-size: 16px;
+}
+
+.custom-modal-searchbar input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  background: var(--modal-bg);
+}
+
+.custom-modal-attributes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.custom-modal-attr-card {
+  background: var(--modal-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+.custom-modal-attr-card:hover {
+  border-color: var(--primary-color);
+  background: var(--bg-surface);
+}
+
+.custom-modal-attr-card.selected {
+  border-color: var(--text-main);
+  background: #f4f3f0;
+  font-weight: 600;
+}
+
+.custom-modal-attr-price {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+.custom-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--modal-bg);
+}
+
+@media (min-width: 640px) {
+  .custom-modal-footer {
+    padding: 20px;
+  }
+}
+
+.custom-modal-btn {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.custom-modal-btn-primary {
+  background: var(--text-main);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   OTP MODAL
+   ========================================================================== */
+.modal-box {
+  width: 100%;
+  max-width: 420px;
+  background: var(--modal-bg);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: 0 -10px 30px rgba(28, 26, 23, 0.08);
+  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: env(safe-area-inset-bottom, 24px);
+}
+
+@media (min-width: 640px) {
+  .modal-box {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-xl);
+  }
+}
+
+.modal-box h2 {
+  margin-bottom: 12px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.modal-box p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cancel-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  padding: 14px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: var(--bg-surface);
+  border-color: var(--text-main);
+}
+
+/* ==========================================================================
+   EMPLOYEE CARD
+   ========================================================================== */
+.employee-profile-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--modal-bg);
+  box-shadow: 0 4px 12px rgba(28, 26, 23, 0.02);
+}
+
+@media (min-width: 480px) {
+  .employee-profile-preview {
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+  }
+}
+
+.employee-avatar-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), #d5c3b1);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(179, 151, 125, 0.2);
+}
+
+.employee-details-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.employee-details-block h4 {
+  font-weight: 600;
+}
+
+.employee-role-tag {
+  color: var(--primary-color);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+
+.employee-bio {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   TIME PICKER GRID ARCHITECTURE
+   ========================================================================== */
+.datetime-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .datetime-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.datetime-grid input {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  padding: 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-main);
+  font-size: 16px;
+  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.datetime-grid input:focus {
+  border-color: var(--primary-color);
+  background: var(--modal-bg);
+  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
+}
+
+/* ==========================================================================
+   ANIMATIONS
+   ========================================================================== */
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  @keyframes modalSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

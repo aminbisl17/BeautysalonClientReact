@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import "../css/terminet.css";
+import "../css/terminetTest.css";
 import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
-
+import { useRef } from "react";
 export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -25,7 +25,8 @@ export default function Termini({ setView }) {
   const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [selectedAttributes, setSelectedAttributes] = useState([]); // Array of IDs: e.g., [1, 4]
   const [attributesList, setAttributesList] = useState([]);
-
+const tempDateRef = useRef("");
+const tempTimeRef = useRef("");
   const [formData, setFormData] = useState({
     clientId: null,
     emri: "",
@@ -120,13 +121,24 @@ export default function Termini({ setView }) {
       setLoading(false);
     }
   }
+const handleChange = (e) => {
+  const { name, value } = e.target;
 
-  const handleChange = (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
-  };
+  // store UI-only values safely (NOT in formData)
+  if (name === "data") tempDateRef.current = value;
+  if (name === "ora") tempTimeRef.current = value;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+
+    // ONLY backend field
+    dataCaktimit:
+      tempDateRef.current && tempTimeRef.current
+        ? `${tempDateRef.current}T${tempTimeRef.current}:00`
+        : prev.dataCaktimit,
+  }));
+};
 
   const handleSearch = (e) => {
     const value = e.target.value;

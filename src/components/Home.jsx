@@ -1,24 +1,21 @@
-import React, { useEffect, useState, useRef } from "react"; // Added useRef here
+import React, { useEffect, useState, useRef } from "react";
 import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import "../css/home.css";
 import { fetchRefreshToken } from "../javascript/APIs/Login";
-import { Alert } from "bootstrap";
 
 function Home({ setView }) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
-const [selectedAttribute, setSelectedAttribute] = useState(null);
-  // DIALOG & ATTRIBUTE STATES
+  const [selectedAttribute, setSelectedAttribute] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [attributes, setAttributes] = useState([]);
   const [loadingAttributes, setLoadingAttributes] = useState(false);
-const [attributeSearch, setAttributeSearch] = useState("");
-  // Reference hook to target the horizontal slider DOM container
+  const [attributeSearch, setAttributeSearch] = useState("");
+  
   const sliderRef = useRef(null);
-
   const discountedServices = services.filter((ser) => ser.zbritja > 0);
 
   async function loadServices() {
@@ -34,42 +31,33 @@ const [attributeSearch, setAttributeSearch] = useState("");
     }
   }
 
+  async function loadUserData() {
+    try {
+      const res = await fetchRefreshToken();
+      if (!res || !res.ok) return;
+
+      const accessToken = sessionStorage.getItem("accessToken");
+      if (!accessToken) return;
+
+      const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        credentials: "include",
+      });
+
+      if (!userRes.ok) return;
+
+      const userInfo = await userRes.json();
+      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+    } catch (err) {
+      ExceptionHandler.handle(err);
+    }
+  }
+
   useEffect(() => {
     loadUserData();
     loadServices();
   }, []);
-async function loadUserData() {
-  try {
-    const res = await fetchRefreshToken();
 
-    if (!res || !res.ok) {
-   //   alert("Your session has expired!");
-      return;
-    }
-
-    const accessToken = sessionStorage.getItem("accessToken");
-    if (!accessToken) {
-      alert("Access token missing.");
-      return;
-    }
-
-    const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      credentials: "include",
-    });
-
-    if (!userRes.ok) {
-      alert("Failed to fetch user data.");
-      return;
-    }
-
-    const userInfo = await userRes.json();
-    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
-  } catch (err) {
-    ExceptionHandler.handle(err);
-  }
-}
   useEffect(() => {
     if (discountedServices.length === 0 || selectedService) return;
 
@@ -77,21 +65,18 @@ async function loadUserData() {
       const slider = sliderRef.current;
       if (!slider) return;
 
-      // Calculate width of a single card dynamically
-      const cardWidth = slider.querySelector(".discount-slider-item")?.offsetWidth || 300;
-      const gap = 20; // Matches your gap in Home.css
+      const cardWidth = slider.querySelector(".bsn-slider-item")?.offsetWidth || 300;
+      const gap = 16; 
       const step = cardWidth + gap;
 
-      // If we've reached the absolute end of the slider contents, loop cleanly back to the beginning
       if (slider.scrollLeft + slider.offsetWidth >= slider.scrollWidth - 10) {
         slider.scrollTo({ left: 0, behavior: "smooth" });
       } else {
-        // Otherwise, move forward by exactly one item card index
         slider.scrollBy({ left: step, behavior: "smooth" });
       }
-    }, 3000); // Transitions automatically every 4 seconds
+    }, 3500);
 
-    return () => clearInterval(interval); // Clean up track loop when component unmounts
+    return () => clearInterval(interval);
   }, [discountedServices, selectedService]);
 
   const filterServices = (type) => {
@@ -101,7 +86,7 @@ async function loadUserData() {
     } else {
       setFiltered(
         services.filter((s) =>
-          (s.emri_sherbimit || "").toLowerCase().includes(type)
+          (s.emri_sherbimit || "").toLowerCase().includes(type.toLowerCase())
         )
       );
     }
@@ -127,369 +112,300 @@ async function loadUserData() {
   const closeDialog = () => {
     setSelectedService(null);
     setAttributes([]);
+    setAttributeSearch("");
   };
 
   const sortedAttributes = [...attributes].sort((a, b) => {
-  const aDiscount = Number(a.zbritja || 0);
-  const bDiscount = Number(b.zbritja || 0);
+    return Number(b.zbritja || 0) - Number(a.zbritja || 0);
+  });
 
-  return bDiscount - aDiscount; // highest discount first
-});
-return (
-  <div className="home-wrapper">
-    <div className="hero-banner">
-      <div className="hero-content">
-        <h1> Luxury Salon✨</h1>
-        <p>Hair • Nails • Skincare • Makeup</p>
-    <button
-  className="hero-btn"
-  onClick={() => setView("terminet")}
->
-  Vendos termin!
-</button>
-      </div>
-    </div>
+  const formatDuration = (mins) => {
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}h`;
+  };
 
-    <div className="home-container">
+  return (
+    <div className="bsn-home-wrapper">
+      {/* HERO BANNER */}
+      <section className="bsn-hero-banner">
+        <div className="bsn-hero-overlay"></div>
+        <div className="bsn-hero-content">
+          <span className="bsn-hero-badge">EXPERIENCE PRESTIGE</span>
+          <h1>Luxury Salon<span className="bsn-accent-sparkle">✨</span></h1>
+          <p className="bsn-hero-tags">Hair • Nails • Skincare • Makeup</p>
+          <button className="bsn-hero-btn" onClick={() => setView("terminet")}>
+            Vendos termin
+          </button>
+        </div>
+      </section>
 
-      {/* SPECIAL OFFERS */}
-      {discountedServices.length > 0 && (
-        <section style={{ marginBottom: "30px" }}>
-          <div className="slider-header-block">
-            <h2 style={{ fontSize: "22px", fontWeight: "800", margin: 0 }}>
-              Ofertat speciale 🔥
-            </h2>
-            <span className="slider-subtitle-badge">
-              Oferta me kohë të limituar
-            </span>
-          </div>
+      <div className="bsn-home-container">
+        {/* SPECIAL OFFERS */}
+        {discountedServices.length > 0 && (
+          <section className="bsn-offers-section">
+            <div className="bsn-section-header">
+              <div>
+                <h2>Ofertat speciale 🔥</h2>
+                <p className="bsn-section-subtitle">Oferta me kohë të limituar vetëm për ju</p>
+              </div>
+            </div>
 
-          <div className="discount-slider hide-scrollbar" ref={sliderRef}>
-            {discountedServices.map((ser) => {
-              const base = Number(ser.qmimi_baze || 0);
-              const discount = Number(ser.zbritja || 0);
-              const livePrice = base * (1 - discount / 100);
+            <div className="bsn-discount-slider bsn-hide-scrollbar" ref={sliderRef}>
+              {discountedServices.map((ser) => {
+                const base = Number(ser.qmimi_baze || 0);
+                const discount = Number(ser.zbritja || 0);
+                const livePrice = base * (1 - discount / 100);
 
-              return (
-                <div
-                  className="discount-slider-item"
-                  key={`slider-${ser.ID}`}
-                  onClick={() => handleServiceClick(ser)}
-                >
-                  <div className="service-card" style={{ borderTop: "3px solid #ef4444" }}>
-                    <div className="card-img-wrapper">
-                      {ser.imageURL ? (
-                        <img src={ser.imageURL} className="service-image" alt="Promo" />
-                      ) : (
-                        <div className="service-fallback discount-fallback-bg">💝</div>
-                      )}
-
-                      {discount > 0 && (
-                        <span className="discount">-{discount}% OFF</span>
-                      )}
-                    </div>
-
-                    <div className="card-content">
-                      <h2>{ser.emri_sherbimit}</h2>
-                      <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
-
-                      <div className="service-info slider-item-pricing-box">
-                        <span>⏱ Kohëzgjatja {
-    `${String(Math.floor(ser.kohezgjatja / 60)).padStart(2, "0")}:` +
-    `${String(ser.kohezgjatja % 60).padStart(2, "0")}:00`
-  }</span>
-
-                        <div>
-                          {discount > 0 && (
-                            <span className="price-strike">€{base}</span>
-                          )}
-                          <span className="price discount-active">
-                            €{livePrice.toFixed(2)}
-                          </span>
-                        </div>
+                return (
+                  <article 
+                    className="bsn-slider-item" 
+                    key={`slider-${ser.ID}`}
+                    onClick={() => handleServiceClick(ser)}
+                  >
+                    <div className="bsn-service-card bsn-promo-card">
+                      <div className="bsn-card-img-wrapper">
+                        {ser.imageURL ? (
+                          <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                        ) : (
+                          <div className="bsn-service-fallback bsn-discount-fallback-bg">💝</div>
+                        )}
+                        <span className="bsn-discount-badge">-{discount}%</span>
                       </div>
 
+                      <div className="bsn-card-content">
+                        <h3>{ser.emri_sherbimit}</h3>
+                        <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
+                        
+                        <div className="bsn-card-meta">
+                          <span className="bsn-duration-tag">⏱ {formatDuration(ser.kohezgjatja)}</span>
+                          <div className="bsn-price-wrapper">
+                            <span className="bsn-price-strike">€{base}</span>
+                            <span className="bsn-price bsn-text-accent">€{livePrice.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      {/* FILTER BAR */}
-      <div className="filter-bar-container">
-        <h4 style={{ fontSize: "18px", fontWeight: "700", marginBottom: "12px" }}>
-          Eksploro të gjitha trajtimet!
-        </h4>
-
-        <div className="filter-pills-row hide-scrollbar">
-          {["all", "Flokët", "Thonjët", "Lëkura"].map((type) => (
-            <button
-              key={type}
-              className={`filter-pill ${activeFilter === type ? "active" : ""}`}
-              onClick={() => filterServices(type)}
-            >
-              {type === "all" ? "⚡ Të gjitha shërbimet" : type}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* SERVICES GRID */}
-      <main>
-        {loading && (
-          <div className="loading">Loading our premium catalog...</div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
         )}
 
-        <div className="services-grid">
-          {filtered.length > 0 ? (
-            filtered.map((ser) => {
-              const base = Number(ser.qmimi_baze || 0);
-              const discount = Number(ser.zbritja || 0);
-              const livePrice = base * (1 - discount / 100);
+        {/* FILTER BAR */}
+        <section className="bsn-filter-section">
+          <div className="bsn-section-header">
+            <h2>Eksploro të gjitha trajtimet</h2>
+          </div>
+          <div className="bsn-filter-pills-row bsn-hide-scrollbar">
+            {[
+              { id: "all", label: "⚡ Të gjitha shërbimet" },
+              { id: "Flokët", label: "Flokët" },
+              { id: "Thonjët", label: "Thonjët" },
+              { id: "Lëkura", label: "Lëkura" }
+            ].map((category) => (
+              <button
+                key={category.id}
+                className={`bsn-filter-pill ${activeFilter === category.id ? "bsn-active" : ""}`}
+                onClick={() => filterServices(category.id)}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+        </section>
 
-              return (
-                <div
-                  className="service-card"
-                  key={ser.ID}
-                  onClick={() => handleServiceClick(ser)}
-                >
-                  <div className="card-img-wrapper">
-                    {ser.imageURL ? (
-                      <img src={ser.imageURL} className="service-image" alt="Service" />
-                    ) : (
-                      <div className="service-fallback">💇‍♀️</div>
-                    )}
+        {/* MAIN SERVICES GRID */}
+        <main className="bsn-main-catalog">
+          {loading && (
+            <div className="bsn-loading-state">
+              <div className="bsn-spinner"></div>
+              <p>Duke ngarkuar katalogun premium...</p>
+            </div>
+          )}
 
-                    {discount > 0 && (
-                      <span className="discount">-{discount}% OFF</span>
-                    )}
-                  </div>
+          <div className="bsn-services-grid">
+            {filtered.length > 0 ? (
+              filtered.map((ser) => {
+                const base = Number(ser.qmimi_baze || 0);
+                const discount = Number(ser.zbritja || 0);
+                const livePrice = base * (1 - discount / 100);
 
-                  <div className="card-content">
-                    <h2>{ser.emri_sherbimit}</h2>
-                    <p>{ser.pershkrimi}</p>
-
-                    <div className="service-info">
-                      <span>⏱  {
-    `${String(Math.floor(ser.kohezgjatja / 60)).padStart(2, "0")}:` +
-    `${String(ser.kohezgjatja % 60).padStart(2, "0")}:00`
-  }
-  </span>
-
-                      <div>
-                        {discount > 0 && (
-                          <span className="price-strike">€{base}</span>
-                        )}
-
-                        <span className={`price ${discount > 0 ? "discount-active" : ""}`}>
-                          €{livePrice.toFixed(2)}
-                        </span>
-                      </div>
+                return (
+                  <article 
+                    className="bsn-service-card" 
+                    key={ser.ID}
+                    onClick={() => handleServiceClick(ser)}
+                  >
+                    <div className="bsn-card-img-wrapper">
+                      {ser.imageURL ? (
+                        <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                      ) : (
+                        <div className="bsn-service-fallback">💇‍♀️</div>
+                      )}
+                      {discount > 0 && <span className="bsn-discount-badge">-{discount}%</span>}
                     </div>
 
-                    <button className="view-details-btn">
-                      Shiko opsionet
-                    </button>
+                    <div className="bsn-card-content">
+                      <h3>{ser.emri_sherbimit}</h3>
+                      <p>{ser.pershkrimi}</p>
+
+                      <div className="bsn-card-meta">
+                        <span className="bsn-duration-tag">⏱ {formatDuration(ser.kohezgjatja)}</span>
+                        <div className="bsn-price-wrapper">
+                          {discount > 0 && <span className="bsn-price-strike">€{base}</span>}
+                          <span className="bsn-price">€{livePrice.toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      <button className="bsn-view-details-btn">Shiko opsionet</button>
+                    </div>
+                  </article>
+                );
+              })
+            ) : (
+              !loading && (
+                <div className="bsn-empty-state">
+                  <h3>Nuk u gjet asnjë shërbim</h3>
+                  <p>Provoni të ndryshoni filtrat tuaj.</p>
+                </div>
+              )
+            )}
+          </div>
+        </main>
+
+        {/* SERVICE OPTIONS MODAL */}
+        {selectedService && (
+          <div className="bsn-modal-overlay" onClick={closeDialog}>
+            <div className="bsn-modal-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="bsn-modal-header">
+                <h3>{selectedService.emri_sherbimit}</h3>
+                <button className="bsn-modal-close-btn" onClick={closeDialog}>✕</button>
+              </div>
+
+              <div className="bsn-modal-body">
+                {selectedService.fetchedModalImage && (
+                  <div className="bsn-modal-hero-container">
+                    <img src={selectedService.fetchedModalImage} className="bsn-modal-hero-img" alt="Preview" />
+                  </div>
+                )}
+
+                {selectedService.pershkrimi && (
+                  <p className="bsn-modal-description">{selectedService.pershkrimi}</p>
+                )}
+
+                <div className="bsn-modal-base-metrics">
+                  <div className="bsn-metric-pill">
+                    <label>Çmimi Fillestar</label>
+                    <span>
+                      €{(Number(selectedService.qmimi_baze || 0) * (1 - Number(selectedService.zbritja || 0) / 100)).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="bsn-metric-pill">
+                    <label>Kohëzgjatja</label>
+                    <span>⏱ {formatDuration(selectedService.kohezgjatja)}</span>
                   </div>
                 </div>
-              );
-            })
-          ) : (
-            !loading && (
-              <div className="empty-state">
-                <h3>No services found</h3>
-                <p style={{ color: "#6b7280", fontSize: "14px" }}>
-                  Try tweaking your filter context rules.
-                </p>
-              </div>
-            )
-          )}
-        </div>
-      </main>
 
-      {/* SERVICE MODAL */}
-      {selectedService && (
-        <div className="custom-modal-overlay" onClick={closeDialog}>
-          <div className="custom-modal-sheet" onClick={(e) => e.stopPropagation()}>
-
-            <div className="modal-sheet-header">
-              <h3>{selectedService.emri_sherbimit}</h3>
-              <button className="modal-close-btn" onClick={closeDialog}>✕</button>
-            </div>
-
-            <div className="modal-sheet-body">
-
-              {selectedService.fetchedModalImage && (
-                <img
-                  src={selectedService.fetchedModalImage}
-                  className="modal-hero-img"
-                  alt="Modal Visual"
-                />
-              )}
-
-              {selectedService.pershkrimi && (
-                <p className="modal-description">
-                  {selectedService.pershkrimi}
-                </p>
-              )}
-
-              <div className="modal-base-metrics">
-                <div className="metric-pill">
-                  <label>Çmimi</label>
-                  <span>
-                    €
-                    {(
-                      Number(selectedService.qmimi_baze || 0) *
-                      (1 - Number(selectedService.zbritja || 0) / 100)
-                    ).toFixed(2)}
-                  </span>
+                <div className="bsn-category-selection-header">
+                  <h4>🪄 Zgjidhni Kategorinë / Variantet</h4>
+                  <div className="bsn-attr-searchbar">
+                    <input
+                      type="text"
+                      placeholder="Kërko kategori..."
+                      value={attributeSearch}
+                      onChange={(e) => setAttributeSearch(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div className="metric-pill">
-                  <label>Kohëzgjatja</label>
-                  <span>
-  ⏱ {
-    `${String(Math.floor(selectedService.kohezgjatja / 60)).padStart(2, "0")}:` +
-    `${String(selectedService.kohezgjatja % 60).padStart(2, "0")}:00`
-  }
-</span>
-                </div>
-              </div>
+                {loadingAttributes ? (
+                  <div className="bsn-modal-loading">
+                    <div className="bsn-spinner-sm"></div>
+                    <p>Duke përditësuar opsionet...</p>
+                  </div>
+                ) : attributes.length > 0 ? (
+                  <div className="bsn-attributes-list">
+                    {sortedAttributes
+                      .filter((attr) =>
+                        attr.opsioni?.toLowerCase().includes(attributeSearch.toLowerCase()) ||
+                        attr.pershkrimi?.toLowerCase().includes(attributeSearch.toLowerCase())
+                      )
+                      .map((attr) => {
+                        const base = Number(attr.qmimi || 0);
+                        const discount = Number(attr.zbritja || 0);
+                        const livePrice = base * (1 - discount / 100);
 
-              {/* ATTRIBUTES HEADER */}
-              <h4 className="attributes-section-title">
-                🪄 Kategoria
-              </h4>
-
-              {/* ATTRIBUTE SEARCH BAR */}
-              <div className="attr-searchbar">
-                <input
-                  type="text"
-                  placeholder="Kërko kategori..."
-                  value={attributeSearch}
-                  onChange={(e) => setAttributeSearch(e.target.value)}
-                />
-              </div>
-
-              {loadingAttributes ? (
-                <div className="loading" style={{ padding: "10px" }}>
-                  Updating current options...
-                </div>
-              ) : attributes.length > 0 ? (
-                <div className="attributes-list">
-
-                  {sortedAttributes
-                    .filter((attr) =>
-                      attr.opsioni?.toLowerCase().includes(attributeSearch.toLowerCase()) ||
-                      attr.pershkrimi?.toLowerCase().includes(attributeSearch.toLowerCase())
-                    )
-                    .map((attr) => {
-                      const base = Number(attr.qmimi || 0);
-                      const discount = Number(attr.zbritja || 0);
-                      const livePrice = base * (1 - discount / 100);
-
-                      return (
-                      <div
-  className={`attr-item-card ${discount > 0 ? "has-discount" : ""}`}
-  key={attr.id_atributit}
-  onClick={() => setSelectedAttribute(attr)}
-  style={{ cursor: "pointer" }}
->
-                          <div className="attr-left">
-                            <h5>{attr.opsioni}</h5>
-
-                            {attr.pershkrimi && <p>{attr.pershkrimi}</p>}
-
-                            <span>⏱ Kohëzgjatja {`${String(Math.floor(attr.kohezgjatja / 60)).padStart(2, "0")}:` +
-    `${String(attr.kohezgjatja % 60).padStart(2, "0")}:00`} </span>
-
-                            {discount > 0 && (
-  <span className="discount-badge pulse">
-    🔥 -{discount}%
-  </span>
-)}
+                        return (
+                          <div
+                            className={`bsn-attr-item-card ${discount > 0 ? "bsn-has-discount" : ""}`}
+                            key={attr.id_atributit}
+                            onClick={() => setSelectedAttribute(attr)}
+                          >
+                            <div className="bsn-attr-left">
+                              <h5>{attr.opsioni}</h5>
+                              {attr.pershkrimi && <p>{attr.pershkrimi}</p>}
+                              <span className="bsn-duration-sub-tag">⏱ {formatDuration(attr.kohezgjatja)}</span>
+                              {discount > 0 && <span className="bsn-badge-discount-tag">🔥 -{discount}%</span>}
+                            </div>
+                            <div className="bsn-attr-right">
+                              {discount > 0 && <span className="bsn-price-strike">€{base}</span>}
+                              <span className="bsn-price">€{livePrice.toFixed(2)}</span>
+                            </div>
                           </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <div className="bsn-standard-package-msg">Pako standarde e integruar</div>
+                )}
+              </div>
 
-                          <div className="attr-right">
-                            {discount > 0 && (
-                              <span className="price-strike">€{base}</span>
-                            )}
+              <div className="bsn-modal-footer">
+                <button className="bsn-modal-btn bsn-secondary" onClick={closeDialog}>Anulo</button>
+                <button className="bsn-modal-btn bsn-primary" onClick={() => setView("terminet")}>Krijo termin!</button>
+              </div>
+            </div>
+          </div>
+        )}
 
-                            <span className={`price ${discount > 0 ? "discount-active" : ""}`}>
-                              €{livePrice.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
+        {/* DETAILED ATTRIBUTE MODAL */}
+        {selectedAttribute && (
+          <div className="bsn-modal-overlay" onClick={() => setSelectedAttribute(null)}>
+            <div className="bsn-modal-sheet" onClick={(e) => e.stopPropagation()}>
+              <div className="bsn-modal-header">
+                <h3>{selectedAttribute.opsioni}</h3>
+                <button className="bsn-modal-close-btn" onClick={() => setSelectedAttribute(null)}>✕</button>
+              </div>
+              <div className="bsn-modal-body">
+                {selectedAttribute.pershkrimi && <p className="bsn-attr-description">{selectedAttribute.pershkrimi}</p>}
+                <div className="bsn-attr-detail-grid">
+                  <div className="bsn-detail-row">
+                    <span>Kohëzgjatja:</span>
+                    <strong>{formatDuration(selectedAttribute.kohezgjatja)}</strong>
+                  </div>
+                  <div className="bsn-detail-row">
+                    <span>Çmimi bazë:</span>
+                    <strong>€{Number(selectedAttribute.qmimi || 0).toFixed(2)}</strong>
+                  </div>
+                  {selectedAttribute.zbritja > 0 && (
+                    <div className="bsn-detail-row bsn-discount-row">
+                      <span>Zbritje speciale:</span>
+                      <strong className="bsn-text-accent">-{selectedAttribute.zbritja}%</strong>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <p style={{ color: "#6b7280", fontSize: "13px", textAlign: "center" }}>
-                  Pako standart
-                </p>
-              )}
-
+              </div>
+              <div className="bsn-modal-footer">
+                <button className="bsn-modal-btn bsn-primary" onClick={() => setSelectedAttribute(null)}>Kthehu</button>
+              </div>
             </div>
-
-            <div className="modal-sheet-footer">
-              <button className="modal-btn secondary" onClick={closeDialog}>
-                Anulo
-              </button>
-              <button className="modal-btn primary"
-              onClick={() => setView("terminet")} >
-                Krijo termin!
-              </button>
-            </div>
-
           </div>
-        </div>
-      )}
-
-      {/* ATTRIBUTE MODAL */}
-      {selectedAttribute && (
-        <div
-          className="attr-modal-overlay"
-          onClick={() => setSelectedAttribute(null)}
-        >
-          <div className="attr-modal" onClick={(e) => e.stopPropagation()}>
-
-            <h3>{selectedAttribute.opsioni}</h3>
-
-            {selectedAttribute.pershkrimi && (
-              <p>{selectedAttribute.pershkrimi}</p>
-            )}
-
-            <div className="attr-details">
-              <p>
-                <strong>Kohëzgjatja:</strong> {`${String(Math.floor(selectedAttribute.kohezgjatja / 60)).padStart(2, "0")}:` +
-    `${String(selectedAttribute.kohezgjatja % 60).padStart(2, "0")}:00`}  min
-              </p>
-
-              <p>
-                <strong>Price:</strong> €
-                {Number(selectedAttribute.qmimi || 0).toFixed(2)}
-              </p>
-              {selectedAttribute.zbritja > 0 && (
-                <p className="discount">
-                  <strong>Zbritje:</strong> -{selectedAttribute.zbritja}%
-                </p>
-              )}
-            </div>
-
-            <button onClick={() => setSelectedAttribute(null)}>
-              kthehu
-            </button>
-
-          </div>
-        </div>
-      )}
-
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
 }
 
 export default Home;
