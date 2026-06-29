@@ -276,7 +276,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
 
       const payload = {
         otpcode: otp,
-        numri_telefonit: formData.numri_telefonit,
+        numri_telefonit: `+383${formData.numri_telefonit}`,
       };
 
       const res = await fetch(endpoint, {
@@ -287,6 +287,8 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       });
 
       const data = await res.json().catch(() => ({}));
+
+      console.log(authMode + ' ' + formData.numri_telefonit + ' ' + data.token);
       if (!res.ok) {
         alert("Kodi OTP është gabim!");
         return;
@@ -456,16 +458,33 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
             </div>
 
             {/* Seksioni: Data, Ora dhe Shënimet */}
-            <div className="form-section-card">
-              <div className="input-box">
-                <label>Data dhe Ora</label>
-                <input
-                  type="datetime-local"
-                  name="dataCaktimit"
-                  value={formData.dataCaktimit}
-                  onChange={handleChange}
-                />
-              </div>
+        <div className="form-section-card">
+  <label className="section-title">Data dhe Ora</label>
+
+  <div className="datetime-grid">
+    {/* DATE */}
+    <div className="input-box">
+      <label>Data</label>
+      <input
+        type="date"
+        name="data"
+        value={formData.data}
+        onChange={handleChange}
+      />
+    </div>
+
+    {/* TIME */}
+    <div className="input-box">
+      <label>Ora</label>
+      <input
+        type="time"
+        name="ora"
+        value={formData.ora}
+        onChange={handleChange}
+      />
+    </div>
+  </div>
+
 
               <div className="input-box">
                 <label>Shënime Specifike</label>
@@ -651,44 +670,90 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
           />
         </div>
 
-        <div className="custom-modal-attributes-list">
-          {attributesList.map((attr) => {
-            const basePrice = Number(attr.qmimi || 0);
-            const discount = Number(attr.zbritja || 0);
-            const activePrice = basePrice - (basePrice * discount) / 100;
+<div className="custom-modal-attributes-list">
+  {attributesList
+    .filter((attr) =>
+      attr.opsioni
+        ?.toLowerCase()
+        .includes(attributeSearch.toLowerCase())
+    )
+    .map((attr) => {
+      const basePrice = Number(attr.qmimi || 0);
+      const discount = Number(attr.zbritja || 0);
+      const activePrice =
+        basePrice - (basePrice * discount) / 100;
 
-            return (
-              <div
-                className="custom-modal-attr-card"
-                key={attr.id_atributit}
-                onClick={() => toggleAttribute(attr.id_atributit)}
-              >
-                <div className="custom-modal-attr-left">
-                  <h5>{attr.opsioni}</h5>
-                </div>
+      const isSelected = selectedAttributes.includes(
+        attr.id_atributit
+      );
 
-                <div className="custom-modal-attr-right">
-                  <span className="custom-modal-attr-price">
-                    EUR {activePrice.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+      return (
+        <div
+          className={`custom-modal-attr-card ${
+            isSelected ? "selected" : ""
+          }`}
+          key={attr.id_atributit}
+          onClick={() => toggleAttribute(attr.id_atributit)}
+        >
+          <div className="custom-modal-attr-left">
+            <h5>{attr.opsioni}</h5>
+          </div>
+
+          <div className="custom-modal-attr-right">
+            <span className="custom-modal-attr-price">
+              EUR {activePrice.toFixed(2)}
+            </span>
+          </div>
         </div>
+      );
+    })}
+</div>
       </div>
 
       <div className="custom-modal-footer">
-        <button
-          className="custom-modal-btn custom-modal-btn-primary"
-          onClick={() => {
-            handleConfirmSelection({
-              sherbimetId: selectedService.ID,
-            });
-          }}
-        >
-          SHTO NË REZERVIM
-        </button>
+      <button
+  className="custom-modal-btn custom-modal-btn-primary"
+  onClick={() => {
+    // if no attribute selected, add base service
+    if (selectedAttributes.length === 0) {
+      handleConfirmSelection({
+        sherbimetId: selectedService.ID,
+        atributetId: null,
+        kohezgjatja: selectedService.kohezgjatja || 30,
+        pagesa: getPrice(selectedService),
+        name: selectedService.emri_sherbimit,
+      });
+      return;
+    }
+
+    // add one item for each selected attribute
+    selectedAttributes.forEach((attrId) => {
+      const attr = attributesList.find(
+        (a) => a.id_atributit === attrId
+      );
+
+      if (attr) {
+        const basePrice = Number(attr.qmimi || 0);
+        const discount = Number(attr.zbritja || 0);
+        const activePrice =
+          basePrice - (basePrice * discount) / 100;
+
+        handleConfirmSelection({
+          sherbimetId: selectedService.ID,
+          atributetId: attr.id_atributit,
+          kohezgjatja:
+            Number(attr.kohezgjatja) ||
+            Number(selectedService.kohezgjatja) ||
+            30,
+          pagesa: activePrice,
+          name: `${selectedService.emri_sherbimit} - ${attr.opsioni}`,
+        });
+      }
+    });
+  }}
+>
+  SHTO NË REZERVIM
+</button>
       </div>
     </div>
   </div>
