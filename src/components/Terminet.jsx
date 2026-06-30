@@ -32,6 +32,7 @@ const tempTimeRef = useRef("");
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
+    email : "",
     employeeId: "",
     pershkrimi: "",
     dataCaktimit: "",
@@ -81,6 +82,7 @@ const tempTimeRef = useRef("");
         clientId: user.id || null,
         emri: user.emri || "",
         mbiemri: user.mbiemri || "",
+        email: user.email || "",
         numri_telefonit: rawPhone.trim(),
       }));
     }
@@ -207,7 +209,8 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       const user = stored ? JSON.parse(stored) : null;
       const isLoggedIn = Boolean(user?.id);
 
-      if (isLoggedIn) {
+
+      if (isLoggedIn && `+383${formData.numri_telefonit}` == user.numri_telefonit) {
         const booking = buildBookingPayload(user.id || formData.clientId);
         const token = sessionStorage.getItem("accessToken");
 
@@ -242,7 +245,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
           body: JSON.stringify({
             emri: formData.emri,
             mbiemri: formData.mbiemri,
-            numri_telefonit: formData.numri_telefonit,
+            numri_telefonit: `+383${formData.numri_telefonit}`,
             email: "",
             gjinia: "m",
           }),
@@ -261,7 +264,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            numri_telefonit: formData.numri_telefonit,
+            numri_telefonit:  `+383${formData.numri_telefonit}`,
           }),
         }
       );
@@ -377,7 +380,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
                     name="emri"
                     value={formData.emri}
                     onChange={handleChange}
-                    placeholder="Filan"
+                    placeholder=""
                   />
                 </div>
                 <div className="input-box">
@@ -386,7 +389,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
                     name="mbiemri"
                     value={formData.mbiemri}
                     onChange={handleChange}
-                    placeholder="Fisteku"
+                    placeholder=""
                   />
                 </div>
               </div>
@@ -413,6 +416,18 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
                   />
                 </div>
               </div>
+
+              <div className="input-box" style={{ marginTop: "1rem" }}>
+    <label>Email <span style={{ fontSize: "0.85em", opacity: 0.7 }}>(Opsionale)</span></label>
+    <input
+      type="email"
+      name="email"
+      value={formData.email || ""}
+      onChange={handleChange}
+      placeholder=""
+    />
+  </div>
+
             </div>
 
             {/* Seksioni: Zgjedh Stafin */}
