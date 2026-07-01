@@ -21,6 +21,7 @@ export default function Termini({ setView }) {
 
   // Configurator Drawer States
   const [selectedService, setSelectedService] = useState(null);
+  const [selectedAttribute, setSelecedAttribute] = useState(null);
   const [attributeSearch, setAttributeSearch] = useState("");
   const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [selectedAttributes, setSelectedAttributes] = useState([]); // Array of IDs: e.g., [1, 4]
@@ -194,6 +195,13 @@ const handleChange = (e) => {
       }
     }
   };
+
+    const formatDuration = (mins) => {
+    const hours = Math.floor(mins / 60);
+    const minutes = mins % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}h`;
+  };
+
 
 const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, detajetTermineve: [...prev.detajetTermineve, item], })); setSelectedService(null); }; const closeDialog = () => { setSelectedService(null); }; const totalPrice = formData.detajetTermineve.reduce( (sum, item) => sum + item.pagesa, 0 );
 
@@ -580,7 +588,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
                           <h4>{s.emri_sherbimit}</h4>
                           <div className="service-meta">
                             <span className="duration">
-                              {s.kohezgjatja || 30} MIN
+                              {formatDuration(s.kohezgjatja) || 0} MIN
                             </span>
                             <span className="price">
                               EUR {getPrice(s).toFixed(2)}
@@ -680,7 +688,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
 
           <div className="custom-modal-metric-pill">
             <label>KOHËZGJATJA</label>
-            <span>{selectedService.kohezgjatja || 30} MIN</span>
+            <span>{formatDuration(selectedService.kohezgjatja) || 0} MIN</span>
           </div>
         </div>
 
@@ -730,6 +738,13 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
             <span className="custom-modal-attr-price">
               EUR {activePrice.toFixed(2)}
             </span>
+           
+           <button
+      onClick={() => setSelecedAttribute(attr)}
+    >
+      Detajet
+    </button>
+
           </div>
         </div>
       );
@@ -784,6 +799,22 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       </div>
     </div>
   </div>
+)}
+
+{selectedAttribute && (
+    <div className="modal-overlay">
+          <div className="modal-box">
+              <h1>{selectedAttribute.opsioni}</h1>
+   <button
+              className="cancel-btn"
+              onClick={() => {
+                setSelecedAttribute(null)
+              }}
+            >
+            cancel
+            </button>
+          </div>
+             </div>
 )}
 
       {/* OTP AUTHENTICATION DIALOGUE MODAL */}
