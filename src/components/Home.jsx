@@ -142,56 +142,151 @@ function Home({ setView }) {
 
       <div className="bsn-home-container">
         {/* SPECIAL OFFERS */}
-        {discountedServices.length > 0 && (
-          <section className="bsn-offers-section">
-            <div className="bsn-section-header">
-              <div>
-                <h2>Ofertat speciale 🔥</h2>
-                <p className="bsn-section-subtitle">Oferta me kohë të limituar vetëm për ju</p>
-              </div>
-            </div>
+   
+{discountedServices.length > 0 && (
+  <section className="bsn-offers-section">
+    <div className="bsn-section-header">
+      <div>
+        <h2>Ofertat speciale 🔥</h2>
+        <p className="bsn-section-subtitle">Oferta me kohë të limituar vetëm për ju</p>
+      </div>
+    </div>
 
-            <div className="bsn-discount-slider bsn-hide-scrollbar" ref={sliderRef}>
-              {discountedServices.map((ser) => {
-                const base = Number(ser.qmimi_baze || 0);
-                const discount = Number(ser.zbritja || 0);
-                const livePrice = base * (1 - discount / 100);
+    <div className="bsn-marquee-wrapper">
+      <div 
+        className="bsn-discount-slider bsn-hybrid-track" 
+        ref={(el) => {
+          // Keep your original sliderRef if needed elsewhere
+          if (typeof sliderRef === 'function') sliderRef(el);
+          else if (sliderRef) sliderRef.current = el;
+          
+          // Self-contained high-performance scrolling loop
+          if (el && !el.dataset.hybridInitialized) {
+            el.dataset.hybridInitialized = "true";
+            let isUserInteracting = false;
+            let timeoutId = null;
+            const speed = 0.5; // Scroll speed (pixels per frame). Adjust to taste.
 
-                return (
-                  <article 
-                    className="bsn-slider-item" 
-                    key={`slider-${ser.ID}`}
-                    onClick={() => handleServiceClick(ser)}
-                  >
-                    <div className="bsn-service-card bsn-promo-card">
-                      <div className="bsn-card-img-wrapper">
-                        {ser.imageURL ? (
-                          <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
-                        ) : (
-                          <div className="bsn-service-fallback bsn-discount-fallback-bg">💝</div>
-                        )}
-                        <span className="bsn-discount-badge">-{discount}%</span>
-                      </div>
+            const scrollLoop = () => {
+              if (!isUserInteracting) {
+                el.scrollLeft += speed;
+                
+                // If it scrolls halfway past the duplicated content, wrap around smoothly
+                if (el.scrollLeft >= el.scrollWidth / 2) {
+                  el.scrollLeft = 0;
+                }
+              }
+              requestAnimationFrame(scrollLoop);
+            };
 
-                      <div className="bsn-card-content">
-                        <h3>{ser.emri_sherbimit}</h3>
-                        <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
-                        
-                        <div className="bsn-card-meta">
-                          <span className="bsn-duration-tag">⏱ {formatDuration(ser.kohezgjatja)}</span>
-                          <div className="bsn-price-wrapper">
-                            <span className="bsn-price-strike">€{base}</span>
-                            <span className="bsn-price bsn-text-accent">€{livePrice.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      </div>
+            const handleInteractionStart = () => {
+              isUserInteracting = true;
+              if (timeoutId) clearTimeout(timeoutId);
+            };
+
+            const handleInteractionEnd = () => {
+              // Delays resuming the auto-scroll for 2.5 seconds after a finger releases the screen
+              timeoutId = setTimeout(() => {
+                isUserInteracting = false;
+              }, 2500);
+            };
+
+            // Event bindings for touch, drag, and mouse interactions
+            el.addEventListener('touchstart', handleInteractionStart, { passive: true });
+            el.addEventListener('touchend', handleInteractionEnd, { passive: true });
+            el.addEventListener('mousedown', handleInteractionStart);
+            el.addEventListener('mouseup', handleInteractionEnd);
+            el.addEventListener('mouseleave', handleInteractionEnd);
+            
+            // Start the loop
+            requestAnimationFrame(scrollLoop);
+          }
+        }}
+      >
+        
+        {/* First Loop */}
+        {discountedServices.map((ser, index) => {
+          const base = Number(ser.qmimi_baze || 0);
+          const discount = Number(ser.zbritja || 0);
+          const livePrice = base * (1 - discount / 100);
+
+          return (
+            <article 
+              className="bsn-slider-item" 
+              key={`slider-1-${ser.ID}-${index}`}
+              onClick={() => handleServiceClick(ser)}
+            >
+              <div className="bsn-service-card bsn-promo-card">
+                <div className="bsn-card-img-wrapper">
+                  {ser.imageURL ? (
+                    <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                  ) : (
+                    <div className="bsn-service-fallback bsn-discount-fallback-bg">💝</div>
+                  )}
+                  <span className="bsn-discount-badge">-{discount}%</span>
+                </div>
+
+                <div className="bsn-card-content">
+                  <h3>{ser.emri_sherbimit}</h3>
+                  <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
+                  
+                  <div className="bsn-card-meta">
+                    <span className="bsn-duration-tag">⏱ {formatDuration(ser.kohezgjatja)}</span>
+                    <div className="bsn-price-wrapper">
+                      <span className="bsn-price-strike">€{base}</span>
+                      <span className="bsn-price bsn-text-accent">€{livePrice.toFixed(2)}</span>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        )}
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+
+        {/* Duplicate Loop (Ensures endless landscape loop while swiping) */}
+        {discountedServices.map((ser, index) => {
+          const base = Number(ser.qmimi_baze || 0);
+          const discount = Number(ser.zbritja || 0);
+          const livePrice = base * (1 - discount / 100);
+
+          return (
+            <article 
+              className="bsn-slider-item" 
+              key={`slider-2-${ser.ID}-${index}`}
+              onClick={() => handleServiceClick(ser)}
+            >
+              <div className="bsn-service-card bsn-promo-card">
+                <div className="bsn-card-img-wrapper">
+                  {ser.imageURL ? (
+                    <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                  ) : (
+                    <div className="bsn-service-fallback bsn-discount-fallback-bg">💝</div>
+                  )}
+                  <span className="bsn-discount-badge">-{discount}%</span>
+                </div>
+
+                <div className="bsn-card-content">
+                  <h3>{ser.emri_sherbimit}</h3>
+                  <p>{ser.pershkrimi || "Exclusive treatment tier offer."}</p>
+                  
+                  <div className="bsn-card-meta">
+                    <span className="bsn-duration-tag">⏱ {formatDuration(ser.kohezgjatja)}</span>
+                    <div className="bsn-price-wrapper">
+                      <span className="bsn-price-strike">€{base}</span>
+                      <span className="bsn-price bsn-text-accent">€{livePrice.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+
+      </div>
+    </div>
+  </section>
+)}
+  
 
         {/* FILTER BAR */}
         <section className="bsn-filter-section">

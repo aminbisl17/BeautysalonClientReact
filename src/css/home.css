@@ -102,10 +102,6 @@
 }
 
 /* SECTION STRUCTURES */
-.bsn-section-header {
-  margin-bottom: 16px;
-}
-
 .bsn-section-header h2 {
   font-size: 20px;
   font-weight: 600;
@@ -117,23 +113,110 @@
   margin-top: 2px;
 }
 
+
+/* SPECIAL OFFERS CONTAINER BACKGROUND */
+
+
+/* Adjusted spacing for the header inside the colored section */
+ .bsn-section-header {
+  margin-bottom: 16px;}
+/* CLEAN & MINIMAL SPECIAL OFFERS LOOK */
 .bsn-offers-section {
-  margin-bottom: 32px;
+  margin-bottom: 40px;
+  position: relative;
+  padding: 12px 0;
+  /* Removed background, borders, and gradients entirely */
 }
 
-.bsn-discount-slider {
+/* Enhancing the header typography to match the modern vibe */
+.bsn-offers-section .bsn-section-header h2 {
+  font-size: 22px;
+  letter-spacing: -0.3px;
+}
+
+/* Smooth fading gradient edges on the sides so cards melt out of sight gracefully */
+.bsn-marquee-wrapper {
+  overflow: hidden;
+  width: 100%;
+  position: relative;
+  padding: 16px 4px 20px 4px;
+  
+  mask-image: linear-gradient(
+    to right, 
+    transparent 0%, 
+    #000 8%, 
+    #000 92%, 
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right, 
+    transparent 0%, 
+    #000 8%, 
+    #000 92%, 
+    transparent 100%
+  );
+}
+
+/* Elevate the cards slightly when inside this premium showcase */
+.bsn-offers-section .bsn-slider-item {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Interactive card pop on hover while paused */
+.bsn-offers-section .bsn-slider-item:hover {
+  transform: translateY(-4px);
+}
+
+/* Elevate the cards slightly when inside this premium showcase */
+.bsn-offers-section .bsn-slider-item {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Interactive card pop on hover while paused */
+.bsn-offers-section .bsn-slider-item:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.bsn-discount-slider.bsn-marquee-track {
   display: flex;
   gap: 16px;
-  overflow-x: auto;
-  padding: 4px 4px 16px 4px;
-  scroll-snap-type: x mandatory;
+  width: max-content; /* Allows track to expand fully past screen size */
+  overflow-x: visible; /* Let the track move outside visible bound lines safely */
+  
+  /* Disable manual gesture scrolling entirely */
+  pointer-events: auto; 
+  touch-action: none;
+  scrollbar-width: none;
+  
+  /* 
+    Triggers the strict forward animation.
+    30s = speed (lower is faster). 
+    linear = constant pace. 
+    infinite = runs forever.
+  */
+  animation: bsnMarqueeForward 30s linear infinite;
+}
+
+/* Optional: Pauses the auto-scrolling when user hovers to look at a discount deal */
+.bsn-discount-slider.bsn-marquee-track:hover {
+  animation-play-state: paused;
 }
 
 .bsn-slider-item {
-  scroll-snap-align: start;
   flex: 0 0 260px;
+  scroll-snap-align: none; /* Removed snapping entirely */
 }
 
+/* THE FORWARD ENGINE */
+@keyframes bsnMarqueeForward {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    /* Shifts exactly halfway across the combined track length for a flawless visual reset loop */
+    transform: translateX(-50%);
+  }
+}
 /* SERVICE CARDS */
 .bsn-service-card {
   background: var(--bsn-bg-surface);
