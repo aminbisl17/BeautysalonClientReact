@@ -102,6 +102,10 @@
 }
 
 /* SECTION STRUCTURES */
+.bsn-section-header {
+  margin-bottom: 16px;
+}
+
 .bsn-section-header h2 {
   font-size: 20px;
   font-weight: 600;
@@ -113,22 +117,13 @@
   margin-top: 2px;
 }
 
-
-/* SPECIAL OFFERS CONTAINER BACKGROUND */
-
-
-/* Adjusted spacing for the header inside the colored section */
- .bsn-section-header {
-  margin-bottom: 16px;}
 /* CLEAN & MINIMAL SPECIAL OFFERS LOOK */
 .bsn-offers-section {
   margin-bottom: 40px;
   position: relative;
   padding: 12px 0;
-  /* Removed background, borders, and gradients entirely */
 }
 
-/* Enhancing the header typography to match the modern vibe */
 .bsn-offers-section .bsn-section-header h2 {
   font-size: 22px;
   letter-spacing: -0.3px;
@@ -157,66 +152,36 @@
   );
 }
 
-/* Elevate the cards slightly when inside this premium showcase */
-.bsn-offers-section .bsn-slider-item {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Interactive card pop on hover while paused */
-.bsn-offers-section .bsn-slider-item:hover {
-  transform: translateY(-4px);
-}
-
-/* Elevate the cards slightly when inside this premium showcase */
-.bsn-offers-section .bsn-slider-item {
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Interactive card pop on hover while paused */
-.bsn-offers-section .bsn-slider-item:hover {
-  transform: translateY(-4px) scale(1.02);
-}
-
-.bsn-discount-slider.bsn-marquee-track {
+/* HYBRID AUTOMATIC + TOUCH TRACK */
+.bsn-discount-slider.bsn-hybrid-track {
   display: flex;
   gap: 16px;
-  width: max-content; /* Allows track to expand fully past screen size */
-  overflow-x: visible; /* Let the track move outside visible bound lines safely */
-  
-  /* Disable manual gesture scrolling entirely */
-  pointer-events: auto; 
-  touch-action: none;
+  overflow-x: auto;
+  white-space: nowrap;
+  -ms-overflow-style: none;
   scrollbar-width: none;
-  
-  /* 
-    Triggers the strict forward animation.
-    30s = speed (lower is faster). 
-    linear = constant pace. 
-    infinite = runs forever.
-  */
-  animation: bsnMarqueeForward 30s linear infinite;
+  -webkit-overflow-scrolling: touch; 
+  touch-action: pan-x; 
 }
 
-/* Optional: Pauses the auto-scrolling when user hovers to look at a discount deal */
-.bsn-discount-slider.bsn-marquee-track:hover {
-  animation-play-state: paused;
+.bsn-discount-slider.bsn-hybrid-track::-webkit-scrollbar {
+  display: none;
 }
 
 .bsn-slider-item {
   flex: 0 0 260px;
-  scroll-snap-align: none; /* Removed snapping entirely */
+  width: 260px; /* Explicit static dimensions lock size */
+  max-width: 260px;
+  user-select: none;
+  -webkit-user-drag: none;
+  scroll-snap-align: none;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* THE FORWARD ENGINE */
-@keyframes bsnMarqueeForward {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    /* Shifts exactly halfway across the combined track length for a flawless visual reset loop */
-    transform: translateX(-50%);
-  }
+.bsn-slider-item:hover {
+  transform: translateY(-4px);
 }
+
 /* SERVICE CARDS */
 .bsn-service-card {
   background: var(--bsn-bg-surface);
@@ -224,6 +189,7 @@
   border-radius: var(--bsn-radius-md);
   overflow: hidden;
   height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
   box-shadow: var(--bsn-shadow);
@@ -233,6 +199,7 @@
 .bsn-card-img-wrapper {
   position: relative;
   height: 150px;
+  width: 100%;
   background: var(--bsn-bg-surface-elevated);
 }
 
@@ -244,6 +211,7 @@
 
 .bsn-service-fallback {
   height: 100%;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -268,12 +236,15 @@
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  /* Fixes text nodes inheriting global layout white-space rules */
+  white-space: normal; 
 }
 
 .bsn-card-content h3 {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 6px;
+  white-space: normal;
 }
 
 .bsn-card-content p {
@@ -285,6 +256,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  white-space: normal;
 }
 
 .bsn-card-meta {
@@ -511,7 +483,7 @@
   border-radius: var(--bsn-radius-sm);
   padding: 12px;
   color: var(--bsn-text-primary);
-  font-size: 16px; /* Prevents auto zoom scales on iOS safari viewports */
+  font-size: 16px;
 }
 
 .bsn-attributes-list {

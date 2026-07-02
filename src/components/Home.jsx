@@ -155,53 +155,58 @@ function Home({ setView }) {
     <div className="bsn-marquee-wrapper">
       <div 
         className="bsn-discount-slider bsn-hybrid-track" 
-        ref={(el) => {
-          // Keep your original sliderRef if needed elsewhere
-          if (typeof sliderRef === 'function') sliderRef(el);
-          else if (sliderRef) sliderRef.current = el;
-          
-          // Self-contained high-performance scrolling loop
-          if (el && !el.dataset.hybridInitialized) {
-            el.dataset.hybridInitialized = "true";
-            let isUserInteracting = false;
-            let timeoutId = null;
-            const speed = 0.5; // Scroll speed (pixels per frame). Adjust to taste.
+    ref={(el) => {
+  if (typeof sliderRef === 'function') sliderRef(el);
+  else if (sliderRef) sliderRef.current = el;
+  
+  if (el && !el.dataset.hybridInitialized) {
+    el.dataset.hybridInitialized = "true";
+    let isUserInteracting = false;
+    let timeoutId = null;
+    
+    // Track exact position with a decimal accumulator to maintain high-refresh fluid updates
+    let accumulatedScroll = el.scrollLeft;
+    
+    // Increased from 0.6 to 1.2 for a noticeably faster automatic slide rate
+    const speed = 1.2; 
 
-            const scrollLoop = () => {
-              if (!isUserInteracting) {
-                el.scrollLeft += speed;
-                
-                // If it scrolls halfway past the duplicated content, wrap around smoothly
-                if (el.scrollLeft >= el.scrollWidth / 2) {
-                  el.scrollLeft = 0;
-                }
-              }
-              requestAnimationFrame(scrollLoop);
-            };
+    const scrollLoop = () => {
+      if (!isUserInteracting) {
+        accumulatedScroll += speed;
+        el.scrollLeft = Math.floor(accumulatedScroll);
+        
+        // Reset seamlessly when reaching the middle duplicate horizon checkpoint
+        if (el.scrollLeft >= el.scrollWidth / 2) {
+          accumulatedScroll = 0;
+          el.scrollLeft = 0;
+        }
+      } else {
+        // Sync position values immediately when user touches/drags
+        accumulatedScroll = el.scrollLeft;
+      }
+      requestAnimationFrame(scrollLoop);
+    };
 
-            const handleInteractionStart = () => {
-              isUserInteracting = true;
-              if (timeoutId) clearTimeout(timeoutId);
-            };
+    const handleInteractionStart = () => {
+      isUserInteracting = true;
+      if (timeoutId) clearTimeout(timeoutId);
+    };
 
-            const handleInteractionEnd = () => {
-              // Delays resuming the auto-scroll for 2.5 seconds after a finger releases the screen
-              timeoutId = setTimeout(() => {
-                isUserInteracting = false;
-              }, 2500);
-            };
+    const handleInteractionEnd = () => {
+      timeoutId = setTimeout(() => {
+        isUserInteracting = false;
+      }, 1500); // Resumes sliding 1.5 seconds after user stops dragging
+    };
 
-            // Event bindings for touch, drag, and mouse interactions
-            el.addEventListener('touchstart', handleInteractionStart, { passive: true });
-            el.addEventListener('touchend', handleInteractionEnd, { passive: true });
-            el.addEventListener('mousedown', handleInteractionStart);
-            el.addEventListener('mouseup', handleInteractionEnd);
-            el.addEventListener('mouseleave', handleInteractionEnd);
-            
-            // Start the loop
-            requestAnimationFrame(scrollLoop);
-          }
-        }}
+    el.addEventListener('touchstart', handleInteractionStart, { passive: true });
+    el.addEventListener('touchend', handleInteractionEnd, { passive: true });
+    el.addEventListener('mousedown', handleInteractionStart);
+    el.addEventListener('mouseup', handleInteractionEnd);
+    el.addEventListener('mouseleave', handleInteractionEnd);
+    
+    requestAnimationFrame(scrollLoop);
+  }
+}}
       >
         
         {/* First Loop */}
@@ -243,7 +248,7 @@ function Home({ setView }) {
           );
         })}
 
-        {/* Duplicate Loop (Ensures endless landscape loop while swiping) */}
+        {/* Duplicate Loop */}
         {discountedServices.map((ser, index) => {
           const base = Number(ser.qmimi_baze || 0);
           const discount = Number(ser.zbritja || 0);
@@ -286,7 +291,6 @@ function Home({ setView }) {
     </div>
   </section>
 )}
-  
 
         {/* FILTER BAR */}
         <section className="bsn-filter-section">
