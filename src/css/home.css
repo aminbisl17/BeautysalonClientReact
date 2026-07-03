@@ -373,15 +373,17 @@
   }
 }
 
+/* 1. Ensure the modal sheet forces its children to respect the max-height */
 .bsn-modal-sheet {
   background: var(--bsn-bg-surface);
   border-top-left-radius: var(--bsn-radius-lg);
   border-top-right-radius: var(--bsn-radius-lg);
   width: 100%;
   max-width: 540px;
-  max-height: 85vh;
+  max-height: 85vh; 
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Keeps header top, body middle, footer bottom */
+  overflow: hidden;       /* Prevents the sheet itself from growing out of bounds */
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.08);
   animation: bsnSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   padding-bottom: env(safe-area-inset-bottom, 12px);
@@ -394,12 +396,34 @@
   }
 }
 
+/* 2. Don't let the header shrink or disappear */
 .bsn-modal-header {
   padding: 18px 20px;
   border-bottom: 1px solid var(--bsn-border-subtle);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-shrink: 0; /* Forces header to stay constant */
+}
+
+
+/* 3. Force the body to absorb the scroll and safely shrink/grow */
+.bsn-modal-body {
+  padding: 20px;
+  flex-grow: 1;       /* Takes up remaining available space */
+  flex-shrink: 1;     /* Shrinks when content is too tall */
+  min-height: 0;      /* Crucial fix for flexbox containers with scrolling children */
+  overflow-y: auto;   /* Limits scroll strictly to this container */
+}
+
+/* 4. Don't let the footer shrink or cut off buttons */
+.bsn-modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--bsn-border-subtle);
+  display: flex;
+  gap: 10px;
+  background: var(--bsn-bg-surface);
+  flex-shrink: 0; /* Forces footer to stay constant */
 }
 
 .bsn-modal-header h3 {
