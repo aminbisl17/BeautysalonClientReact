@@ -17,7 +17,6 @@ export default function Termini({ setView }) {
   const [search, setSearch] = useState("");
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
-  const [authMode, setAuthMode] = useState(null); // "login" | "register"
 
   // Configurator Drawer States
   const [selectedService, setSelectedService] = useState(null);
@@ -246,7 +245,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       }
 
       const registerRes = await fetch(
-        "http://192.168.100.116:8000/api/clients/register",
+        "http://192.168.100.116:8000/api/clients/fast-login&register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -261,29 +260,10 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       );
 
       if (registerRes.ok) {
-        setAuthMode("register");
         setShowOtp(true);
         return;
       }
 
-      const loginRes = await fetch(
-        "http://192.168.100.116:8000/auth/login/client",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            numri_telefonit:  `+383${formData.numri_telefonit}`,
-          }),
-        }
-      );
-
-      if (!loginRes.ok) {
-        alert("As regjistrimi dhe as kyçja (login) nuk funksionuan!");
-        return;
-      }
-
-      setAuthMode("login");
-      setShowOtp(true);
     } catch (err) {
       console.error(err);
       alert("Ndodhi një gabim gjatë procesit.");
@@ -292,17 +272,12 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
 
   const verifyOtp = async (otp) => {
     try {
-      const endpoint =
-        authMode === "login"
-          ? "http://192.168.100.116:8000/auth/login/client/verify"
-          : "http://192.168.100.116:8000/api/clients/verify";
-
       const payload = {
         otpcode: otp,
         numri_telefonit: `+383${formData.numri_telefonit}`,
       };
 
-      const res = await fetch(endpoint, {
+      const res = await fetch("http://192.168.100.116:8000/api/clients/verify/fast-login&register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -311,7 +286,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
 
       const data = await res.json().catch(() => ({}));
 
-      console.log(authMode + ' ' + formData.numri_telefonit + ' ' + data.token);
+      console.log(formData.numri_telefonit + ' ' + data.token);
       if (!res.ok) {
         alert("Kodi OTP është gabim!");
         return;
