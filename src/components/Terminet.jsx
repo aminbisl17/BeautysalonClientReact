@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import "../css/terminetTest.css";
-import { fetchServices, fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
+import {
+  fetchServices,
+  fetchServiceAtributes,
+} from "../javascript/APIs/ServicesAPI";
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
@@ -8,7 +11,7 @@ import { useRef } from "react";
 export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
-
+const [showConfirmation, setShowConfirmation] = useState(false);
   // FIX: Storing full roster in employeesList, and the chosen individual in selectedEmployeeData
   const [employeesList, setEmployeesList] = useState([]);
   const [selectedEmployeeData, setSelectedEmployeeData] = useState(null);
@@ -25,14 +28,14 @@ export default function Termini({ setView }) {
   const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [selectedAttributes, setSelectedAttributes] = useState([]); // Array of IDs: e.g., [1, 4]
   const [attributesList, setAttributesList] = useState([]);
-const tempDateRef = useRef("");
-const tempTimeRef = useRef("");
+  const tempDateRef = useRef("");
+  const tempTimeRef = useRef("");
   const [formData, setFormData] = useState({
     clientId: null,
     emri: "",
     mbiemri: "",
     numri_telefonit: "",
-    email : "",
+    email: "",
     employeeId: "",
     pershkrimi: "",
     dataCaktimit: "",
@@ -123,24 +126,24 @@ const tempTimeRef = useRef("");
       setLoading(false);
     }
   }
-const handleChange = (e) => {
-  const { name, value } = e.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  // store UI-only values safely (NOT in formData)
-  if (name === "data") tempDateRef.current = value;
-  if (name === "ora") tempTimeRef.current = value;
+    // store UI-only values safely (NOT in formData)
+    if (name === "data") tempDateRef.current = value;
+    if (name === "ora") tempTimeRef.current = value;
 
-  setFormData((prev) => ({
-    ...prev,
-    [name]: value,
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
 
-    // ONLY backend field
-    dataCaktimit:
-      tempDateRef.current && tempTimeRef.current
-        ? `${tempDateRef.current}T${tempTimeRef.current}:00`
-        : prev.dataCaktimit,
-  }));
-};
+      // ONLY backend field
+      dataCaktimit:
+        tempDateRef.current && tempTimeRef.current
+          ? `${tempDateRef.current}T${tempTimeRef.current}:00`
+          : prev.dataCaktimit,
+    }));
+  };
 
   const handleSearch = (e) => {
     const value = e.target.value;
@@ -153,8 +156,8 @@ const handleChange = (e) => {
 
     setFiltered(
       services.filter((s) =>
-        s.emri_sherbimit?.toLowerCase().includes(value.toLowerCase())
-      )
+        s.emri_sherbimit?.toLowerCase().includes(value.toLowerCase()),
+      ),
     );
   };
 
@@ -166,14 +169,14 @@ const handleChange = (e) => {
 
   const handleServiceCardClick = async (service) => {
     const exists = formData.detajetTermineve.find(
-      (s) => s.sherbimetId === service.ID
+      (s) => s.sherbimetId === service.ID,
     );
 
     if (exists) {
       setFormData((prev) => ({
         ...prev,
         detajetTermineve: prev.detajetTermineve.filter(
-          (s) => s.sherbimetId !== service.ID
+          (s) => s.sherbimetId !== service.ID,
         ),
       }));
     } else {
@@ -195,15 +198,26 @@ const handleChange = (e) => {
     }
   };
 
-    const formatDuration = (mins) => {
+  const formatDuration = (mins) => {
     const hours = Math.floor(mins / 60);
     const minutes = mins % 60;
     return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}h`;
   };
 
-
-const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, detajetTermineve: [...prev.detajetTermineve, item], })); setSelectedService(null); }; const closeDialog = () => { setSelectedService(null); }; const totalPrice = formData.detajetTermineve.reduce( (sum, item) => sum + item.pagesa, 0 );
-
+  const handleConfirmSelection = (item) => {
+    setFormData((prev) => ({
+      ...prev,
+      detajetTermineve: [...prev.detajetTermineve, item],
+    }));
+    setSelectedService(null);
+  };
+  const closeDialog = () => {
+    setSelectedService(null);
+  };
+  const totalPrice = formData.detajetTermineve.reduce(
+    (sum, item) => sum + item.pagesa,
+    0,
+  );
 
   const handleTerminetSubmit = async () => {
     try {
@@ -215,9 +229,10 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       const stored = sessionStorage.getItem("userDetails");
       const user = stored ? JSON.parse(stored) : null;
       const isLoggedIn = Boolean(user?.id);
-
-
-      if (isLoggedIn && `+383${formData.numri_telefonit}` == user.numri_telefonit) {
+      if (
+        isLoggedIn &&
+        `+383${formData.numri_telefonit}` == user.numriTelefonit
+      ) {
         const booking = buildBookingPayload(user.id || formData.clientId);
         const token = sessionStorage.getItem("accessToken");
 
@@ -230,7 +245,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
               Authorization: token ? `Bearer ${token}` : "",
             },
             body: JSON.stringify(booking),
-          }
+          },
         );
 
         const data = await res.text();
@@ -240,7 +255,17 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
         }
 
         alert("Termini u krijua me sukses!");
-        setView("success");
+           setFormData({
+  clientId: null,
+  emri: "",
+  mbiemri: "",
+  numri_telefonit: "",
+  email: "",
+  employeeId: "",
+  pershkrimi: "",
+  dataCaktimit: "",
+  detajetTermineve: [],
+});
         return;
       }
 
@@ -256,14 +281,13 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
             email: "",
             gjinia: "m",
           }),
-        }
+        },
       );
 
       if (registerRes.ok) {
         setShowOtp(true);
         return;
       }
-
     } catch (err) {
       console.error(err);
       alert("Ndodhi një gabim gjatë procesit.");
@@ -277,16 +301,19 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
         numri_telefonit: `+383${formData.numri_telefonit}`,
       };
 
-      const res = await fetch("http://192.168.100.116:8000/api/clients/verify/fast-login&register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        credentials: "include",
-      });
+      const res = await fetch(
+        "http://192.168.100.116:8000/api/clients/verify/fast-login&register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          credentials: "include",
+        },
+      );
 
       const data = await res.json().catch(() => ({}));
 
-      console.log(formData.numri_telefonit + ' ' + data.token);
+      console.log(formData.numri_telefonit + " " + data.token);
       if (!res.ok) {
         alert("Kodi OTP është gabim!");
         return;
@@ -297,7 +324,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
         {
           headers: { Authorization: `Bearer ${data.token}` },
           credentials: "include",
-        }
+        },
       );
 
       const userInfo = await userRes.json();
@@ -314,7 +341,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
             Authorization: `Bearer ${data.token}`,
           },
           body: JSON.stringify(booking),
-        }
+        },
       );
 
       if (!resAppointment.ok) {
@@ -324,7 +351,19 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
       }
 
       setShowOtp(false);
-      setView("home");
+    setFormData({
+  clientId: null,
+  emri: "",
+  mbiemri: "",
+  numri_telefonit: "",
+  email: "",
+  employeeId: "",
+  pershkrimi: "",
+  dataCaktimit: "",
+  detajetTermineve: [],
+});
+       alert(await resAppointment.text());
+      //  setView("home");
     } catch (err) {
       console.error(err);
       alert("Gabim gjatë verifikimit të OTP-së.");
@@ -333,7 +372,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
 
   const toggleAttribute = (id) => {
     setSelectedAttributes((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -401,16 +440,20 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
               </div>
 
               <div className="input-box" style={{ marginTop: "1rem" }}>
-    <label>Email <span style={{ fontSize: "0.85em", opacity: 0.7 }}>(Opsionale)</span></label>
-    <input
-      type="email"
-      name="email"
-      value={formData.email || ""}
-      onChange={handleChange}
-      placeholder=""
-    />
-  </div>
-
+                <label>
+                  Email{" "}
+                  <span style={{ fontSize: "0.85em", opacity: 0.7 }}>
+                    (Opsionale)
+                  </span>
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={handleChange}
+                  placeholder=""
+                />
+              </div>
             </div>
 
             {/* Seksioni: Zgjedh Stafin */}
@@ -468,33 +511,32 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
             </div>
 
             {/* Seksioni: Data, Ora dhe Shënimet */}
-        <div className="form-section-card">
-  <label className="section-title">Data dhe Ora</label>
+            <div className="form-section-card">
+              <label className="section-title">Data dhe Ora</label>
 
-  <div className="datetime-grid">
-    {/* DATE */}
-    <div className="input-box">
-      <label>Data</label>
-      <input
-        type="date"
-        name="data"
-        value={formData.data}
-        onChange={handleChange}
-      />
-    </div>
+              <div className="datetime-grid">
+                {/* DATE */}
+                <div className="input-box">
+                  <label>Data</label>
+                  <input
+                    type="date"
+                    name="data"
+                    value={formData.data}
+                    onChange={handleChange}
+                  />
+                </div>
 
-    {/* TIME */}
-    <div className="input-box">
-      <label>Ora</label>
-      <input
-        type="time"
-        name="ora"
-        value={formData.ora}
-        onChange={handleChange}
-      />
-    </div>
-  </div>
-
+                {/* TIME */}
+                <div className="input-box">
+                  <label>Ora</label>
+                  <input
+                    type="time"
+                    name="ora"
+                    value={formData.ora}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
 
               <div className="input-box">
                 <label>Shënime Specifike</label>
@@ -531,7 +573,7 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
                 <div className="services-modern-grid">
                   {filtered.map((s) => {
                     const isSelected = formData.detajetTermineve.some(
-                      (item) => item.sherbimetId === s.ID
+                      (item) => item.sherbimetId === s.ID,
                     );
                     return (
                       <div
@@ -608,189 +650,272 @@ const handleConfirmSelection = (item) => { setFormData((prev) => ({ ...prev, det
                 </span>
               </div>
 
-              <button
-                className="book-now-btn"
-                onClick={handleTerminetSubmit}
-              >
-                KONFIRMO REZERVIMIN
-              </button>
+<button
+  className="book-now-btn"
+  onClick={() => setShowConfirmation(true)}
+>
+  KONFIRMO REZERVIMIN
+</button>
             </div>
           </div>
         </div>
       </div>
 
       {/* DYNAMIC EDITORIAL CONFIGURATOR SIDE SHEET */}
-  {selectedService && (
-  <div className="custom-modal-overlay" onClick={closeDialog}>
-    <div
-      className="custom-modal-sheet"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="custom-modal-header">
-        <div>
-          <span className="custom-modal-subtitle">Configurimi i Shërbimit</span>
-          <h3 className="custom-modal-title">{selectedService.emri_sherbimit}</h3>
+{showConfirmation && (
+    <div className="modal-overlay">
+        <div className="confirm-dialog">
+
+            <div className="confirm-dialog-header">
+                <div className="confirm-dialog-icon">✓</div>
+
+                <div className="confirm-dialog-subtitle">
+                    Confirm Reservation
+                </div>
+
+                <h2 className="confirm-dialog-title">
+                    Continue Booking?
+                </h2>
+
+                <p className="confirm-dialog-description">
+                    Please review your reservation details. Once confirmed,
+                    your appointment request will be submitted.
+                </p>
+            </div>
+
+            <div className="confirm-dialog-body">
+
+                <div className="confirm-summary">
+
+                    <div className="confirm-summary-row">
+                        <span>Services</span>
+                        <strong>{formData.detajetTermineve.length}</strong>
+                    </div>
+
+                    <div className="confirm-summary-row">
+                        <span>Employee</span>
+                        <strong>
+                            {selectedEmployeeData
+                                ? `${selectedEmployeeData.emri} ${selectedEmployeeData.mbiemri}`
+                                : "-"}
+                        </strong>
+                    </div>
+
+                    <div className="confirm-summary-row">
+                        <span>Date</span>
+                        <strong>{tempDateRef.current || "-"}</strong>
+                    </div>
+
+                    <div className="confirm-summary-row">
+                        <span>Time</span>
+                        <strong>{tempTimeRef.current || "-"}</strong>
+                    </div>
+
+                    <div className="confirm-total">
+                        <span>Total</span>
+                        <span>€ {totalPrice.toFixed(2)}</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div className="confirm-dialog-footer">
+
+                <button
+                    className="confirm-btn-secondary"
+                    onClick={() => setShowConfirmation(false)}
+                >
+                    Cancel
+                </button>
+
+                <button
+                    className="confirm-btn-primary"
+                    onClick={() => {
+                        setShowConfirmation(false);
+                        handleTerminetSubmit();
+                    }}
+                >
+                    Confirm Reservation
+                </button>
+
+            </div>
+
         </div>
-
-        <button
-          className="custom-modal-close-btn"
-          onClick={closeDialog}
-        >
-          ✕
-        </button>
-      </div>
-
-      <div className="custom-modal-body">
-        <div className="custom-modal-hero-wrapper">
-          <img
-            src={selectedService.imageURL}
-            className="custom-modal-hero-img"
-            alt={selectedService.emri_sherbimit}
-          />
-        </div>
-
-        {selectedService.pershkrimi && (
-          <p className="custom-modal-description">
-            {selectedService.pershkrimi}
-          </p>
-        )}
-
-        <div className="custom-modal-metrics">
-          <div className="custom-modal-metric-pill">
-            <label>ÇMIMI BAZË</label>
-            <span>EUR {getPrice(selectedService).toFixed(2)}</span>
-          </div>
-
-          <div className="custom-modal-metric-pill">
-            <label>KOHËZGJATJA</label>
-            <span>{formatDuration(selectedService.kohezgjatja) || 0} MIN</span>
-          </div>
-        </div>
-
-        <h4 className="custom-modal-section-title">
-          Zgjidhni Atributet / Variantet
-        </h4>
-
-        <div className="custom-modal-searchbar">
-          <input
-            type="text"
-            placeholder="KËRKO ME EMËR..."
-            value={attributeSearch}
-            onChange={(e) => setAttributeSearch(e.target.value)}
-          />
-        </div>
-
-<div className="custom-modal-attributes-list">
-  {attributesList
-    .filter((attr) =>
-      attr.opsioni
-        ?.toLowerCase()
-        .includes(attributeSearch.toLowerCase())
-    )
-    .map((attr) => {
-      const basePrice = Number(attr.qmimi || 0);
-      const discount = Number(attr.zbritja || 0);
-      const activePrice =
-        basePrice - (basePrice * discount) / 100;
-
-      const isSelected = selectedAttributes.includes(
-        attr.id_atributit
-      );
-
-      return (
-        <div
-          className={`custom-modal-attr-card ${
-            isSelected ? "selected" : ""
-          }`}
-          key={attr.id_atributit}
-          onClick={() => toggleAttribute(attr.id_atributit)}
-        >
-          <div className="custom-modal-attr-left">
-            <h5>{attr.opsioni}</h5>
-          </div>
-
-          <div className="custom-modal-attr-right">
-            <span className="custom-modal-attr-price">
-              EUR {activePrice.toFixed(2)}
-            </span>
-           
-           <button
-      onClick={() => setSelecedAttribute(attr)}
-    >
-      Detajet
-    </button>
-
-          </div>
-        </div>
-      );
-    })}
-</div>
-      </div>
-
-      <div className="custom-modal-footer">
-      <button
-  className="custom-modal-btn custom-modal-btn-primary"
-  onClick={() => {
-    // if no attribute selected, add base service
-    if (selectedAttributes.length === 0) {
-      handleConfirmSelection({
-        sherbimetId: selectedService.ID,
-        atributetId: null,
-        kohezgjatja: selectedService.kohezgjatja || 30,
-        pagesa: getPrice(selectedService),
-        name: selectedService.emri_sherbimit,
-      });
-      return;
-    }
-
-    // add one item for each selected attribute
-    selectedAttributes.forEach((attrId) => {
-      const attr = attributesList.find(
-        (a) => a.id_atributit === attrId
-      );
-
-      if (attr) {
-        const basePrice = Number(attr.qmimi || 0);
-        const discount = Number(attr.zbritja || 0);
-        const activePrice =
-          basePrice - (basePrice * discount) / 100;
-
-        handleConfirmSelection({
-          sherbimetId: selectedService.ID,
-          atributetId: attr.id_atributit,
-          kohezgjatja:
-            Number(attr.kohezgjatja) ||
-            Number(selectedService.kohezgjatja) ||
-            30,
-          pagesa: activePrice,
-          name: `${selectedService.emri_sherbimit} - ${attr.opsioni}`,
-        });
-      }
-    });
-  }}
->
-  SHTO NË REZERVIM
-</button>
-      </div>
     </div>
-  </div>
 )}
 
-{selectedAttribute && (
-    <div className="modal-overlay">
+      {selectedService && (
+        <div className="custom-modal-overlay" onClick={closeDialog}>
+          <div
+            className="custom-modal-sheet"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="custom-modal-header">
+              <div>
+                <span className="custom-modal-subtitle">
+                  Configurimi i Shërbimit
+                </span>
+                <h3 className="custom-modal-title">
+                  {selectedService.emri_sherbimit}
+                </h3>
+              </div>
+
+              <button className="custom-modal-close-btn" onClick={closeDialog}>
+                ✕
+              </button>
+            </div>
+
+            <div className="custom-modal-body">
+              <div className="custom-modal-hero-wrapper">
+                <img
+                  src={selectedService.imageURL}
+                  className="custom-modal-hero-img"
+                  alt={selectedService.emri_sherbimit}
+                />
+              </div>
+
+              {selectedService.pershkrimi && (
+                <p className="custom-modal-description">
+                  {selectedService.pershkrimi}
+                </p>
+              )}
+
+              <div className="custom-modal-metrics">
+                <div className="custom-modal-metric-pill">
+                  <label>ÇMIMI BAZË</label>
+                  <span>EUR {getPrice(selectedService).toFixed(2)}</span>
+                </div>
+
+                <div className="custom-modal-metric-pill">
+                  <label>KOHËZGJATJA</label>
+                  <span>
+                    {formatDuration(selectedService.kohezgjatja) || 0} MIN
+                  </span>
+                </div>
+              </div>
+
+              <h4 className="custom-modal-section-title">
+                Zgjidhni Atributet / Variantet
+              </h4>
+
+              <div className="custom-modal-searchbar">
+                <input
+                  type="text"
+                  placeholder="KËRKO ME EMËR..."
+                  value={attributeSearch}
+                  onChange={(e) => setAttributeSearch(e.target.value)}
+                />
+              </div>
+
+              <div className="custom-modal-attributes-list">
+                {attributesList
+                  .filter((attr) =>
+                    attr.opsioni
+                      ?.toLowerCase()
+                      .includes(attributeSearch.toLowerCase()),
+                  )
+                  .map((attr) => {
+                    const basePrice = Number(attr.qmimi || 0);
+                    const discount = Number(attr.zbritja || 0);
+                    const activePrice =
+                      basePrice - (basePrice * discount) / 100;
+
+                    const isSelected = selectedAttributes.includes(
+                      attr.id_atributit,
+                    );
+
+                    return (
+                      <div
+                        className={`custom-modal-attr-card ${
+                          isSelected ? "selected" : ""
+                        }`}
+                        key={attr.id_atributit}
+                        onClick={() => toggleAttribute(attr.id_atributit)}
+                      >
+                        <div className="custom-modal-attr-left">
+                          <h5>{attr.opsioni}</h5>
+                        </div>
+
+                        <div className="custom-modal-attr-right">
+                          <span className="custom-modal-attr-price">
+                            EUR {activePrice.toFixed(2)}
+                          </span>
+
+                          <button onClick={() => setSelecedAttribute(attr)}>
+                            Detajet
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+
+            <div className="custom-modal-footer">
+              <button
+                className="custom-modal-btn custom-modal-btn-primary"
+                onClick={() => {
+                  // if no attribute selected, add base service
+                  if (selectedAttributes.length === 0) {
+                    handleConfirmSelection({
+                      sherbimetId: selectedService.ID,
+                      atributetId: null,
+                      kohezgjatja: selectedService.kohezgjatja || 30,
+                      pagesa: getPrice(selectedService),
+                      name: selectedService.emri_sherbimit,
+                    });
+                    return;
+                  }
+
+                  // add one item for each selected attribute
+                  selectedAttributes.forEach((attrId) => {
+                    const attr = attributesList.find(
+                      (a) => a.id_atributit === attrId,
+                    );
+
+                    if (attr) {
+                      const basePrice = Number(attr.qmimi || 0);
+                      const discount = Number(attr.zbritja || 0);
+                      const activePrice =
+                        basePrice - (basePrice * discount) / 100;
+
+                      handleConfirmSelection({
+                        sherbimetId: selectedService.ID,
+                        atributetId: attr.id_atributit,
+                        kohezgjatja:
+                          Number(attr.kohezgjatja) ||
+                          Number(selectedService.kohezgjatja) ||
+                          30,
+                        pagesa: activePrice,
+                        name: `${selectedService.emri_sherbimit} - ${attr.opsioni}`,
+                      });
+                    }
+                  });
+                }}
+              >
+                SHTO NË REZERVIM
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedAttribute && (
+        <div className="modal-overlay">
           <div className="modal-box">
-              <h1>{selectedAttribute.opsioni}</h1>
-   <button
+            <h1>{selectedAttribute.opsioni}</h1>
+            <button
               className="cancel-btn"
               onClick={() => {
-                setSelecedAttribute(null)
+                setSelecedAttribute(null);
               }}
             >
-            cancel
+              cancel
             </button>
           </div>
-             </div>
-)}
+        </div>
+      )}
 
       {/* OTP AUTHENTICATION DIALOGUE MODAL */}
       {showOtp && (

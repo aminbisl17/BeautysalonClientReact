@@ -88,7 +88,6 @@
   border: 1px solid #262626;
   color: #f5f2eb;
   padding: 14px;
-  font-size: 14px;
   outline: none;
   border-radius: 0;
   -webkit-appearance: none;
@@ -115,7 +114,6 @@
 
 .combo-prefix {
   padding: 14px;
-  font-size: 14px;
   color: #737373;
   border-right: 1px solid #262626;
   background-color: #141414;
@@ -127,12 +125,15 @@
   background: transparent !important;
   color: #f5f2eb;
   padding: 14px;
-  font-size: 14px;
   outline: none;
   flex: 1;
   width: 100%;
 }
-
+.auth-input,
+.auth-combo-input,
+.combo-prefix {
+  font-size: 16px; /* iOS zoom prevention */
+}
 /* ==========================================================================
    BUTTON STRUCTURAL MATRIX (UNIFORM WITH PREVIOUS STYLES)
    ========================================================================== */
@@ -682,4 +683,9 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #333333;
+}
+input,
+select,
+textarea {
+  font-size: 16px;
 }
