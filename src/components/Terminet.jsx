@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "../css/terminetTest.css";
 import {
   fetchServices,
@@ -7,14 +7,17 @@ import {
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
-import { useRef } from "react";
+
 export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
-const [showConfirmation, setShowConfirmation] = useState(false);
-  // FIX: Storing full roster in employeesList, and the chosen individual in selectedEmployeeData
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   const [employeesList, setEmployeesList] = useState([]);
   const [selectedEmployeeData, setSelectedEmployeeData] = useState(null);
+
+  // Ruajmë të dhënat e disponueshmërisë të kthyeshme nga API
+  const [employeeAvailability, setEmployeeAvailability] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -26,10 +29,12 @@ const [showConfirmation, setShowConfirmation] = useState(false);
   const [selectedAttribute, setSelecedAttribute] = useState(null);
   const [attributeSearch, setAttributeSearch] = useState("");
   const [loadingAttributes, setLoadingAttributes] = useState(false);
-  const [selectedAttributes, setSelectedAttributes] = useState([]); // Array of IDs: e.g., [1, 4]
+  const [selectedAttributes, setSelectedAttributes] = useState([]);
   const [attributesList, setAttributesList] = useState([]);
+  
   const tempDateRef = useRef("");
   const tempTimeRef = useRef("");
+
   const [formData, setFormData] = useState({
     clientId: null,
     emri: "",
@@ -91,23 +96,133 @@ const [showConfirmation, setShowConfirmation] = useState(false);
     }
 
     loadEmployees();
-    loadServices();
+    // VEREJTJE: Nuk thërrasim më loadServices() këtu automatikisht
   }, []);
 
-  // FIX: Fixed state setter mutation mix-up here
-  const handleEmployeeChange = (e) => {
+  // // THIRRJA E API-it PAS ZGJEDHJES SË PUNËTORIT
+  const handleEmployeeChange = async (e) => {
     const chosenId = Number(e.target.value);
 
-    setFormData((prev) => ({ ...prev, employeeId: chosenId }));
+    if (!chosenId) {
+      setFormData((prev) => ({ ...prev, employeeId: "", detajetTermineve: [] }));
+      setSelectedEmployeeData(null);
+      setServices([]);
+      setFiltered([]);
+      setEmployeeAvailability(null);
+      return;
+    }
 
-    const matchedStaff = employeesList.find((emp) => emp.ID === chosenId);
+    // Ruajmë punëtorin e zgjedhur
+    setFormData((prev) => ({
+      ...prev,
+      employeeId: chosenId,
+      detajetTermineve: [],
+    }));
+
+    const matchedStaff = employeesList.find((emp) => Number(emp.ID) === chosenId || Number(emp.id) === chosenId);
     setSelectedEmployeeData(matchedStaff || null);
+
+    const token = sessionStorage.getItem("accessToken");
+
+    if (token) {
+      await fetchEmployeeDetails(chosenId, token);
+    } else {
+      // Kontrolli për Mobile Safari: plotësimi i të dhënave personale
+      if (!formData.emri?.trim() || !formData.mbiemri?.trim() || !formData.numri_telefonit?.trim()) {
+        alert("Ju lutemi plotësoni Emrin, Mbiemrin dhe Numrin e Telefonit te '01. Detajet Personale' për të vazhduar!");
+        setFormData((prev) => ({ ...prev, employeeId: "" }));
+        setSelectedEmployeeData(null);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const registerRes = await fetch(
+          "http://localhost:8000/api/clients/fast-login&register",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              emri: formData.emri,
+              mbiemri: formData.mbiemri,
+              numri_telefonit: `+383${formData.numri_telefonit}`,
+              email: formData.email || "",
+              gjinia: "m",
+            }),
+          }
+        );
+
+        if (registerRes.ok) {
+          setShowOtp(true);
+        } else {
+          alert("Dështoi regjistrimi i shpejtë. Ju lutemi kontrolloni të dhënat.");
+        }
+      } catch (err) {
+        console.error("Gabim gjatë fast-login:", err);
+        alert("Ndodhi një gabim gjatë lidhjes me serverin.");
+      } finally {
+        setLoading(false);
+      }
+    }
   };
 
-  // FIX: Set the fetched roster list into employeesList instead of preview placeholder
+  // FUNKSIONI PËR MARRJEN E SHËRBIMEVE DHE DATAVE (Compatibël me Safari/iPhone)
+  const fetchEmployeeDetails = async (employeeId, token) => {
+    try {
+      setLoading(true);
+
+      const refreshToken = sessionStorage.getItem("refreshToken");
+
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      if (refreshToken) {
+        headers["Refresh-Token"] = refreshToken;
+      }
+
+      const res = await fetch(
+        `http://192.168.100.116:8000/api/mixed/terminet/employee-details/${employeeId}`,
+        {
+          method: "GET",
+          headers: headers,
+          // 'credentials' mund të shkaktojë bllokim CORS në Mobile Safari nëse nuk përdoret HTTPS
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(`Kodi i gabimit: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      // Normalizimi i datave për Safari / iOS
+      const rawDates = data.dates || data.availability || [];
+      const parsedDates = Array.isArray(rawDates)
+        ? rawDates.map((d) => (typeof d === "string" ? d.replace(/-/g, "/") : d))
+        : rawDates;
+
+      setEmployeeAvailability(parsedDates);
+
+      // Normalizimi i shërbimeve për iPhone
+      const employeeServices = data.services || data.sherbimet || [];
+      setServices(employeeServices);
+      setFiltered(employeeServices);
+    } catch (err) {
+      console.error("Gabim gjatë marrjes së të dhënave të punëtorit:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   async function loadEmployees() {
     try {
       const data = await fetchEmployees();
+      console.log(data);
       setEmployeesList(data || []);
     } catch (err) {
       ExceptionHandler.handle(err);
@@ -118,31 +233,36 @@ const [showConfirmation, setShowConfirmation] = useState(false);
     try {
       setLoading(true);
       const data = await fetchServices();
-      setServices(data);
-      setFiltered(data);
+      setServices(data || []);
+      setFiltered(data || []);
     } catch (err) {
       ExceptionHandler.handle(err);
     } finally {
       setLoading(false);
     }
   }
-  const handleChange = (e) => {
+const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // store UI-only values safely (NOT in formData)
     if (name === "data") tempDateRef.current = value;
     if (name === "ora") tempTimeRef.current = value;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
+    setFormData((prev) => {
+      const updatedDate = name === "data" ? value : tempDateRef.current;
+      const updatedTime = name === "ora" ? value : tempTimeRef.current;
 
-      // ONLY backend field
-      dataCaktimit:
-        tempDateRef.current && tempTimeRef.current
-          ? `${tempDateRef.current}T${tempTimeRef.current}:00`
-          : prev.dataCaktimit,
-    }));
+      let combinedDataCaktimit = prev.dataCaktimit;
+      if (updatedDate && updatedTime) {
+        // Formatim ISO standard i pranueshëm nga të gjithë shfletuesit mobile
+        combinedDataCaktimit = `${updatedDate}T${updatedTime.length === 5 ? updatedTime + ":00" : updatedTime}`;
+      }
+
+      return {
+        ...prev,
+        [name]: value,
+        dataCaktimit: combinedDataCaktimit,
+      };
+    });
   };
 
   const handleSearch = (e) => {
@@ -211,9 +331,11 @@ const [showConfirmation, setShowConfirmation] = useState(false);
     }));
     setSelectedService(null);
   };
+
   const closeDialog = () => {
     setSelectedService(null);
   };
+
   const totalPrice = formData.detajetTermineve.reduce(
     (sum, item) => sum + item.pagesa,
     0,
@@ -255,17 +377,17 @@ const [showConfirmation, setShowConfirmation] = useState(false);
         }
 
         alert("Termini u krijua me sukses!");
-           setFormData({
-  clientId: null,
-  emri: "",
-  mbiemri: "",
-  numri_telefonit: "",
-  email: "",
-  employeeId: "",
-  pershkrimi: "",
-  dataCaktimit: "",
-  detajetTermineve: [],
-});
+        setFormData({
+          clientId: null,
+          emri: "",
+          mbiemri: "",
+          numri_telefonit: "",
+          email: "",
+          employeeId: "",
+          pershkrimi: "",
+          dataCaktimit: "",
+          detajetTermineve: [],
+        });
         return;
       }
 
@@ -293,8 +415,7 @@ const [showConfirmation, setShowConfirmation] = useState(false);
       alert("Ndodhi një gabim gjatë procesit.");
     }
   };
-
-  const verifyOtp = async (otp) => {
+const verifyOtp = async (otp) => {
     try {
       const payload = {
         otpcode: otp,
@@ -302,68 +423,44 @@ const [showConfirmation, setShowConfirmation] = useState(false);
       };
 
       const res = await fetch(
-        "http://192.168.100.116:8000/api/clients/verify/fast-login&register",
+        "http://localhost:8000/api/clients/verify/fast-login&register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
           credentials: "include",
-        },
+        }
       );
 
       const data = await res.json().catch(() => ({}));
 
-      console.log(formData.numri_telefonit + " " + data.token);
       if (!res.ok) {
         alert("Kodi OTP është gabim!");
         return;
       }
 
-      const userRes = await fetch(
-        "http://192.168.100.116:8000/api/clients/data",
-        {
-          headers: { Authorization: `Bearer ${data.token}` },
-          credentials: "include",
-        },
-      );
+      // Ruajmë token-at në sessionStorage
+      sessionStorage.setItem("accessToken", data.token);
+      if (data.refreshToken) {
+        sessionStorage.setItem("refreshToken", data.refreshToken);
+      }
+
+      // Marrim të dhënat e përdoruesit
+      const userRes = await fetch("http://localhost:8000/api/clients/data", {
+        headers: { Authorization: `Bearer ${data.token}` },
+        credentials: "include",
+      });
 
       const userInfo = await userRes.json();
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-      const booking = buildBookingPayload(userInfo.id);
-      sessionStorage.setItem("accessToken", data.token);
-
-      const resAppointment = await fetch(
-        "http://192.168.100.116:8000/api/mixed/terminet/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${data.token}`,
-          },
-          body: JSON.stringify(booking),
-        },
-      );
-
-      if (!resAppointment.ok) {
-        const err = await resAppointment.text();
-        alert(err || "Dështoi krijimi i terminit.");
-        return;
-      }
 
       setShowOtp(false);
-    setFormData({
-  clientId: null,
-  emri: "",
-  mbiemri: "",
-  numri_telefonit: "",
-  email: "",
-  employeeId: "",
-  pershkrimi: "",
-  dataCaktimit: "",
-  detajetTermineve: [],
-});
-       alert(await resAppointment.text());
-      //  setView("home");
+      setOtpCode("");
+
+      // Nëse përdoruesi kishte zgjedhur tashmë një punëtor, marrim detajet e tij menjëherë
+      if (formData.employeeId) {
+        await fetchEmployeeDetails(formData.employeeId, data.token);
+      }
     } catch (err) {
       console.error(err);
       alert("Gabim gjatë verifikimit të OTP-së.");
@@ -384,7 +481,7 @@ const [showConfirmation, setShowConfirmation] = useState(false);
             REZERVO NJË <span className="title-serif">Termin</span>
           </h1>
           <p>
-            Zgjidhni shërbimet tuaja, stafin e preferuar dhe kohën ideale për
+            Zgjidhni stafin tuaj të preferuar, shërbimet dhe kohën ideale për
             trajtimin tuaj.
           </p>
         </div>
@@ -458,7 +555,7 @@ const [showConfirmation, setShowConfirmation] = useState(false);
 
             {/* Seksioni: Zgjedh Stafin */}
             <div className="form-section-card">
-              <h3 className="section-title">Zgjedh Stafin</h3>
+              <h3 className="section-title">02. Zgjedh Stafin</h3>
               <div className="input-box">
                 <label>Stafi i disponueshëm</label>
                 <select
@@ -510,114 +607,129 @@ const [showConfirmation, setShowConfirmation] = useState(false);
               )}
             </div>
 
-            {/* Seksioni: Data, Ora dhe Shënimet */}
-            <div className="form-section-card">
-              <label className="section-title">Data dhe Ora</label>
+            {/* KONDITA: Këto seksione shfaqen VETËM pasi të përzgjidhet punëtori */}
+            {formData.employeeId ? (
+              <>
+                {/* Seksioni: Data, Ora dhe Shënimet */}
+                <div className="form-section-card animate-fade-in">
+                  <label className="section-title">03. Data dhe Ora</label>
 
-              <div className="datetime-grid">
-                {/* DATE */}
-                <div className="input-box">
-                  <label>Data</label>
-                  <input
-                    type="date"
-                    name="data"
-                    value={formData.data}
-                    onChange={handleChange}
-                  />
+                  <div className="datetime-grid">
+                    {/* DATE */}
+                    <div className="input-box">
+                      <label>Data</label>
+                      <input
+                        type="date"
+                        name="data"
+                        value={formData.data || ""}
+                        onChange={handleChange}
+                      />
+                    </div>
+
+                    {/* TIME */}
+                    <div className="input-box">
+                      <label>Ora</label>
+                      <input
+                        type="time"
+                        name="ora"
+                        value={formData.ora || ""}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-box">
+                    <label>Shënime Specifike</label>
+                    <textarea
+                      name="pershkrimi"
+                      value={formData.pershkrimi}
+                      onChange={handleChange}
+                      placeholder="Shkruani çfarëdo preference ose kërkese të veçantë këtu..."
+                    />
+                  </div>
                 </div>
 
-                {/* TIME */}
-                <div className="input-box">
-                  <label>Ora</label>
-                  <input
-                    type="time"
-                    name="ora"
-                    value={formData.ora}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
+                {/* SERVICES CARD */}
+                <div className="form-section-card animate-fade-in">
+                  <div className="services-section-header">
+                    <h2 className="section-title">04. Përzgjedhja e Shërbimeve</h2>
+                    <div className="search-wrapper">
+                      <input
+                        type="text"
+                        className="services-search"
+                        placeholder="KËRKO SHËRBIMIN..."
+                        value={search}
+                        onChange={handleSearch}
+                      />
+                    </div>
+                  </div>
 
-              <div className="input-box">
-                <label>Shënime Specifike</label>
-                <textarea
-                  name="pershkrimi"
-                  value={formData.pershkrimi}
-                  onChange={handleChange}
-                  placeholder="Shkruani çfarëdo preference ose kërkese të veçantë këtu..."
-                />
-              </div>
-            </div>
-
-            {/* SERVICES CARD */}
-            <div className="form-section-card">
-              <div className="services-section-header">
-                <h2 className="section-title">02. Përzgjedhja e Shërbimeve</h2>
-                <div className="search-wrapper">
-                  <input
-                    type="text"
-                    className="services-search"
-                    placeholder="KËRKO SHËRBIMIN..."
-                    value={search}
-                    onChange={handleSearch}
-                  />
-                </div>
-              </div>
-
-              {loading ? (
-                <div className="spinner-wrapper">
-                  <div className="spinner"></div>
-                  <p>Duke ngarkuar katalogun...</p>
-                </div>
-              ) : (
-                <div className="services-modern-grid">
-                  {filtered.map((s) => {
-                    const isSelected = formData.detajetTermineve.some(
-                      (item) => item.sherbimetId === s.ID,
-                    );
-                    return (
-                      <div
-                        key={s.ID}
-                        className={`service-modern-card ${
-                          isSelected ? "selected" : ""
-                        }`}
-                        onClick={() => handleServiceCardClick(s)}
-                      >
-                        <div className="service-image-container">
-                          <img
-                            src={
-                              s.imageURL ||
-                              "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
-                            }
-                            alt={s.emri_sherbimit}
-                            onError={(e) => {
-                              e.target.src =
-                                "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
-                            }}
-                          />
-                          {isSelected && (
-                            <div className="selected-indicator">
-                              <span>ZGJEDHUR</span>
+                  {loading ? (
+                    <div className="spinner-wrapper">
+                      <div className="spinner"></div>
+                      <p>Duke ngarkuar shërbimet e punëtorit...</p>
+                    </div>
+                  ) : filtered.length === 0 ? (
+                    <p style={{ textAlign: "center", padding: "1rem", color: "#666" }}>
+                      Ky punëtor nuk ka shërbime të disponueshme për kërkimin tuaj.
+                    </p>
+                  ) : (
+                    <div className="services-modern-grid">
+                      {filtered.map((s) => {
+                        const isSelected = formData.detajetTermineve.some(
+                          (item) => item.sherbimetId === s.ID,
+                        );
+                        return (
+                          <div
+                            key={s.ID}
+                            className={`service-modern-card ${
+                              isSelected ? "selected" : ""
+                            }`}
+                            onClick={() => handleServiceCardClick(s)}
+                          >
+                            <div className="service-image-container">
+                              <img
+                                src={
+                                  s.imageURL ||
+                                  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
+                                }
+                                alt={s.emri_sherbimit}
+                                onError={(e) => {
+                                  e.target.src =
+                                    "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
+                                }}
+                              />
+                              {isSelected && (
+                                <div className="selected-indicator">
+                                  <span>ZGJEDHUR</span>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                        <div className="service-details">
-                          <h4>{s.emri_sherbimit}</h4>
-                          <div className="service-meta">
-                            <span className="duration">
-                              {formatDuration(s.kohezgjatja) || 0} MIN
-                            </span>
-                            <span className="price">
-                              EUR {getPrice(s).toFixed(2)}
-                            </span>
+                            <div className="service-details">
+                              <h4>{s.emri_sherbimit}</h4>
+                              <div className="service-meta">
+                                <span className="duration">
+                                  {formatDuration(s.kohezgjatja) || 0} MIN
+                                </span>
+                                <span className="price">
+                                  EUR {getPrice(s).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <div className="form-section-card" style={{ textAlign: "center", padding: "2rem" }}>
+                <p style={{ margin: 0, color: "#777", fontWeight: "500" }}>
+                  Ju lutemi zgjidhni një punëtor më sipër për të parë datat e lira dhe shërbimet që ofron.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* RIGHT COLUMN SIDEBAR */}
@@ -650,101 +762,86 @@ const [showConfirmation, setShowConfirmation] = useState(false);
                 </span>
               </div>
 
-<button
-  className="book-now-btn"
-  onClick={() => setShowConfirmation(true)}
->
-  KONFIRMO REZERVIMIN
-</button>
+              <button
+                className="book-now-btn"
+                onClick={() => setShowConfirmation(true)}
+              >
+                KONFIRMO REZERVIMIN
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* DYNAMIC EDITORIAL CONFIGURATOR SIDE SHEET */}
-{showConfirmation && (
-    <div className="modal-overlay">
-        <div className="confirm-dialog">
-
+      {/* CONFIRMATION DIALOG MODAL */}
+      {showConfirmation && (
+        <div className="modal-overlay">
+          <div className="confirm-dialog">
             <div className="confirm-dialog-header">
-                <div className="confirm-dialog-icon">✓</div>
-
-                <div className="confirm-dialog-subtitle">
-                    Confirm Reservation
-                </div>
-
-                <h2 className="confirm-dialog-title">
-                    Continue Booking?
-                </h2>
-
-                <p className="confirm-dialog-description">
-                    Please review your reservation details. Once confirmed,
-                    your appointment request will be submitted.
-                </p>
+              <div className="confirm-dialog-icon">✓</div>
+              <div className="confirm-dialog-subtitle">Confirm Reservation</div>
+              <h2 className="confirm-dialog-title">Continue Booking?</h2>
+              <p className="confirm-dialog-description">
+                Please review your reservation details. Once confirmed, your appointment request will be submitted.
+              </p>
             </div>
 
             <div className="confirm-dialog-body">
-
-                <div className="confirm-summary">
-
-                    <div className="confirm-summary-row">
-                        <span>Services</span>
-                        <strong>{formData.detajetTermineve.length}</strong>
-                    </div>
-
-                    <div className="confirm-summary-row">
-                        <span>Employee</span>
-                        <strong>
-                            {selectedEmployeeData
-                                ? `${selectedEmployeeData.emri} ${selectedEmployeeData.mbiemri}`
-                                : "-"}
-                        </strong>
-                    </div>
-
-                    <div className="confirm-summary-row">
-                        <span>Date</span>
-                        <strong>{tempDateRef.current || "-"}</strong>
-                    </div>
-
-                    <div className="confirm-summary-row">
-                        <span>Time</span>
-                        <strong>{tempTimeRef.current || "-"}</strong>
-                    </div>
-
-                    <div className="confirm-total">
-                        <span>Total</span>
-                        <span>€ {totalPrice.toFixed(2)}</span>
-                    </div>
-
+              <div className="confirm-summary">
+                <div className="confirm-summary-row">
+                  <span>Services</span>
+                  <strong>{formData.detajetTermineve.length}</strong>
                 </div>
 
+                <div className="confirm-summary-row">
+                  <span>Employee</span>
+                  <strong>
+                    {selectedEmployeeData
+                      ? `${selectedEmployeeData.emri} ${selectedEmployeeData.mbiemri}`
+                      : "-"}
+                  </strong>
+                </div>
+
+                <div className="confirm-summary-row">
+                  <span>Date</span>
+                  <strong>{tempDateRef.current || "-"}</strong>
+                </div>
+
+                <div className="confirm-summary-row">
+                  <span>Time</span>
+                  <strong>{tempTimeRef.current || "-"}</strong>
+                </div>
+
+                <div className="confirm-total">
+                  <span>Total</span>
+                  <span>€ {totalPrice.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
 
             <div className="confirm-dialog-footer">
+              <button
+                className="confirm-btn-secondary"
+                onClick={() => setShowConfirmation(false)}
+              >
+                Cancel
+              </button>
 
-                <button
-                    className="confirm-btn-secondary"
-                    onClick={() => setShowConfirmation(false)}
-                >
-                    Cancel
-                </button>
-
-                <button
-                    className="confirm-btn-primary"
-                    onClick={() => {
-                        setShowConfirmation(false);
-                        handleTerminetSubmit();
-                    }}
-                >
-                    Confirm Reservation
-                </button>
-
+              <button
+                className="confirm-btn-primary"
+                onClick={() => {
+                  setShowConfirmation(false);
+                  handleTerminetSubmit();
+                }}
+              >
+                Confirm Reservation
+              </button>
             </div>
-
+          </div>
         </div>
-    </div>
-)}
+      )}
 
+      {/* DYNAMIC EDITORIAL CONFIGURATOR SIDE SHEET */}
       {selectedService && (
         <div className="custom-modal-overlay" onClick={closeDialog}>
           <div
@@ -856,7 +953,6 @@ const [showConfirmation, setShowConfirmation] = useState(false);
               <button
                 className="custom-modal-btn custom-modal-btn-primary"
                 onClick={() => {
-                  // if no attribute selected, add base service
                   if (selectedAttributes.length === 0) {
                     handleConfirmSelection({
                       sherbimetId: selectedService.ID,
@@ -868,7 +964,6 @@ const [showConfirmation, setShowConfirmation] = useState(false);
                     return;
                   }
 
-                  // add one item for each selected attribute
                   selectedAttributes.forEach((attrId) => {
                     const attr = attributesList.find(
                       (a) => a.id_atributit === attrId,
