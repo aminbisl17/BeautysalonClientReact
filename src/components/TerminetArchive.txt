@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import "../css/terminet.css";
+import "../css/terminetTest.css";
 import {
   fetchServices,
   fetchServiceAtributes,
@@ -136,7 +136,7 @@ export default function Termini({ setView }) {
   try {
     setLoading(true);
     const registerRes = await fetch(
-      "http://192.168.100.116:8000/api/clients/fast-login&register",
+      "http://localhost:8000/api/clients/fast-login&register",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -424,7 +424,7 @@ const handleChange = (e) => {
     };
 
     const res = await fetch(
-      "http://192.168.100.116:8000/api/clients/verify/fast-login&register",
+      "http://localhost:8000/api/clients/verify/fast-login&register",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -447,7 +447,7 @@ const handleChange = (e) => {
     }
 
     // Get user info
-    const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+    const userRes = await fetch("http://localhost:8000/api/clients/data", {
       headers: { Authorization: `Bearer ${data.token}` },
       credentials: "include",
     });
@@ -481,63 +481,52 @@ const handleChange = (e) => {
     );
   };
 
-  
- return (
+  return (
     <div className="termini-page">
-      {/* Mobile-Optimized Top Header */}
-      <header className="termini-header">
-        <span className="badge-pill">Sallon Bukurie</span>
-        <h1>
-          REZERVO <span className="title-serif">Terminin</span>
-        </h1>
-        <p>Zgjidhni stafin, shërbimet dhe kohën tuaj ideale</p>
-      </header>
+      <div className="termini-container">
+        <div className="termini-header">
+          <h1>
+            REZERVO NJË <span className="title-serif">Termin</span>
+          </h1>
+          <p>
+            Zgjidhni stafin tuaj të preferuar, shërbimet dhe kohën ideale për
+            trajtimin tuaj.
+          </p>
+        </div>
 
-      <main className="termini-container">
         <div className="termini-grid">
-          {/* MAIN FORM COLUMN */}
+          {/* LEFT COLUMN */}
           <div className="termini-main-content">
-            
-            {/* STEP 01: Detajet Personale */}
-            <section className="form-section-card">
-              <div className="section-title-wrapper">
-                <span className="step-badge">1</span>
-                <div>
-                  <h2 className="section-title">Detajet Personale</h2>
-                  <p className="section-subtitle">Ju lutemi plotësoni të dhënat tuaja</p>
-                </div>
-              </div>
-
+            {/* Seksioni 01: Detajet Personale */}
+            <div className="form-section-card">
+              <h2 className="section-title">01. Detajet Personale</h2>
               <div className="input-group-grid">
                 <div className="input-box">
                   <label>Emri</label>
                   <input
-                    type="text"
                     name="emri"
                     value={formData.emri}
                     onChange={handleChange}
-                    placeholder="Emri"
+                    placeholder=""
                   />
                 </div>
                 <div className="input-box">
                   <label>Mbiemri</label>
                   <input
-                    type="text"
                     name="mbiemri"
                     value={formData.mbiemri}
                     onChange={handleChange}
-                    placeholder="Mbiemri"
+                    placeholder=""
                   />
                 </div>
               </div>
 
               <div className="input-box">
-                <label>Numri i telefonit *</label>
+                <label>Numri i telefonit</label>
                 <div className="phone-input-wrapper">
                   <span className="phone-prefix">+383</span>
                   <input
-                    type="tel"
-                    inputMode="numeric"
+                    type="text"
                     name="numri_telefonit"
                     value={formData.numri_telefonit}
                     onChange={(e) => {
@@ -549,91 +538,94 @@ const handleChange = (e) => {
                         numri_telefonit: value,
                       }));
                     }}
-                    placeholder="4XXXXXXX"
+                    placeholder="4xxxxxxx"
                     required
                   />
                 </div>
               </div>
 
-              <div className="input-box">
+              <div className="input-box" style={{ marginTop: "1rem" }}>
                 <label>
-                  Email <span className="optional-tag">(Opsionale)</span>
+                  Email{" "}
+                  <span style={{ fontSize: "0.85em", opacity: 0.7 }}>
+                    (Opsionale)
+                  </span>
                 </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email || ""}
                   onChange={handleChange}
-                  placeholder="shembull@email.com"
+                  placeholder=""
                 />
               </div>
-            </section>
+            </div>
 
-            {/* STEP 02: Zgjedh Stafin */}
-            <section className="form-section-card">
-              <div className="section-title-wrapper">
-                <span className="step-badge">2</span>
-                <div>
-                  <h2 className="section-title">Zgjedh Stafin</h2>
-                  <p className="section-subtitle">Përzgjidhni profesionistin tuaj</p>
-                </div>
-              </div>
+            {/* Seksioni: Zgjedh Stafin */}
+            <div className="form-section-card">
+          
+          <h3 className="section-title">02. Zgjedh Stafin</h3>
+  <div className="input-box">
+    <label>Stafi i disponueshëm</label>
+    <select
+      value={formData.employeeId || ""}
+      onChange={handleEmployeeChange}
+      disabled={showOtp || loading}
+    >
+      <option value="">Zgjedh një profesionist...</option>
+      {employeesList.map((emp) => (
+        <option key={emp.ID} value={emp.ID}>
+          {emp.emri} {emp.mbiemri}
+        </option>
+      ))}
+    </select>
+  </div>
 
-              {/* Mobile-Friendly Horizontal Staff Selector */}
-              <div className="staff-tiles-scroll">
-                {employeesList.map((emp) => {
-                  const isEmpSelected = formData.employeeId === emp.ID;
-                  return (
-                    <div
-                      key={emp.ID}
-                      className={`staff-tile-card ${isEmpSelected ? "selected" : ""}`}
-                      onClick={() => {
-                        // Trigger synthetic change or custom function
-                        handleEmployeeChange({ target: { value: emp.ID } });
-                      }}
-                    >
-                      <div className="staff-avatar">
-                        {emp.emri?.charAt(0)}{emp.mbiemri?.charAt(0)}
-                      </div>
-                      <span className="staff-name">{emp.emri}</span>
-                      <span className="staff-role">Specialist</span>
-                      {isEmpSelected && <span className="staff-check">✓</span>}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Selected Staff Info Card */}
+              {/* DYNAMIC EMPLOYEE PROFILE CARD */}
               {selectedEmployeeData && (
                 <div className="employee-profile-preview animate-fade-in">
+                  <div className="employee-avatar-badge">
+                    {selectedEmployeeData.emri?.charAt(0)}
+                    {selectedEmployeeData.mbiemri?.charAt(0)}
+                  </div>
                   <div className="employee-profile-info">
+                    <h4>
+                      {selectedEmployeeData.emri} {selectedEmployeeData.mbiemri}
+                    </h4>
+                    <span className="employee-role-tag">
+                      Specialist i Çertifikuar
+                    </span>
                     <p className="employee-bio">
-                      {selectedEmployeeData.pershkrimi || "Staf i kualifikuar për shërbimet e bukurisë."}
+                      {selectedEmployeeData.pershkrimi || ""}
                     </p>
                     <div className="employee-contact-meta">
-                      {selectedEmployeeData.numri_telefonit && (
-                        <span>📞 {selectedEmployeeData.numri_telefonit}</span>
-                      )}
+                      <div className="meta-item">
+                        <span className="meta-label">Telefon:</span>
+                        <span className="meta-value">
+                          {selectedEmployeeData.numri_telefonit}
+                        </span>
+                      </div>
+                      <div className="meta-item">
+                        <span className="meta-label">Email:</span>
+                        <span className="meta-value">
+                          {selectedEmployeeData.email}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
-            </section>
+            </div>
 
-            {/* CONDITIONAL STEPS: Visible after choosing staff */}
+            {/* KONDITA: Këto seksione shfaqen VETËM pasi të përzgjidhet punëtori */}
             {formData.employeeId ? (
               <>
-                {/* STEP 03: Data & Ora */}
-                <section className="form-section-card animate-fade-in">
-                  <div className="section-title-wrapper">
-                    <span className="step-badge">3</span>
-                    <div>
-                      <h2 className="section-title">Data dhe Ora</h2>
-                      <p className="section-subtitle">Zgjidhni kohën e përshtatshme</p>
-                    </div>
-                  </div>
+                {/* Seksioni: Data, Ora dhe Shënimet */}
+                <div className="form-section-card animate-fade-in">
+                  <label className="section-title">03. Data dhe Ora</label>
 
                   <div className="datetime-grid">
+                    {/* DATE */}
                     <div className="input-box">
                       <label>Data</label>
                       <input
@@ -644,6 +636,7 @@ const handleChange = (e) => {
                       />
                     </div>
 
+                    {/* TIME */}
                     <div className="input-box">
                       <label>Ora</label>
                       <input
@@ -659,30 +652,22 @@ const handleChange = (e) => {
                     <label>Shënime Specifike</label>
                     <textarea
                       name="pershkrimi"
-                      rows={2}
                       value={formData.pershkrimi}
                       onChange={handleChange}
-                      placeholder="Preferenca ose kërkesa të veçanta..."
+                      placeholder="Shkruani çfarëdo preference ose kërkese të veçantë këtu..."
                     />
                   </div>
-                </section>
+                </div>
 
-                {/* STEP 04: Shërbimet */}
-                <section className="form-section-card animate-fade-in">
+                {/* SERVICES CARD */}
+                <div className="form-section-card animate-fade-in">
                   <div className="services-section-header">
-                    <div className="section-title-wrapper">
-                      <span className="step-badge">4</span>
-                      <div>
-                        <h2 className="section-title">Shërbimet</h2>
-                        <p className="section-subtitle">Zgjidhni një apo më shumë shërbime</p>
-                      </div>
-                    </div>
-
+                    <h2 className="section-title">04. Përzgjedhja e Shërbimeve</h2>
                     <div className="search-wrapper">
                       <input
                         type="text"
                         className="services-search"
-                        placeholder="🔍 Kërko shërbimin..."
+                        placeholder="KËRKO SHËRBIMIN..."
                         value={search}
                         onChange={handleSearch}
                       />
@@ -692,22 +677,24 @@ const handleChange = (e) => {
                   {loading ? (
                     <div className="spinner-wrapper">
                       <div className="spinner"></div>
-                      <p>Duke ngarkuar shërbimet...</p>
+                      <p>Duke ngarkuar shërbimet e punëtorit...</p>
                     </div>
                   ) : filtered.length === 0 ? (
-                    <div className="empty-state">
-                      <p>Nuk u gjet asnjë shërbim me këtë kërkim.</p>
-                    </div>
+                    <p style={{ textAlign: "center", padding: "1rem", color: "#666" }}>
+                      Ky punëtor nuk ka shërbime të disponueshme për kërkimin tuaj.
+                    </p>
                   ) : (
                     <div className="services-modern-grid">
                       {filtered.map((s) => {
                         const isSelected = formData.detajetTermineve.some(
-                          (item) => item.sherbimetId === s.ID
+                          (item) => item.sherbimetId === s.ID,
                         );
                         return (
                           <div
                             key={s.ID}
-                            className={`service-modern-card ${isSelected ? "selected" : ""}`}
+                            className={`service-modern-card ${
+                              isSelected ? "selected" : ""
+                            }`}
                             onClick={() => handleServiceCardClick(s)}
                           >
                             <div className="service-image-container">
@@ -724,7 +711,7 @@ const handleChange = (e) => {
                               />
                               {isSelected && (
                                 <div className="selected-indicator">
-                                  <span>✓ ZGJEDHUR</span>
+                                  <span>ZGJEDHUR</span>
                                 </div>
                               )}
                             </div>
@@ -732,10 +719,10 @@ const handleChange = (e) => {
                               <h4>{s.emri_sherbimit}</h4>
                               <div className="service-meta">
                                 <span className="duration">
-                                  ⏱ {formatDuration(s.kohezgjatja) || 0} min
+                                  {formatDuration(s.kohezgjatja) || 0} MIN
                                 </span>
                                 <span className="price">
-                                  €{getPrice(s).toFixed(2)}
+                                  EUR {getPrice(s).toFixed(2)}
                                 </span>
                               </div>
                             </div>
@@ -744,22 +731,25 @@ const handleChange = (e) => {
                       })}
                     </div>
                   )}
-                </section>
+                </div>
               </>
             ) : (
-              <div className="form-section-card empty-prompt-card">
-                <p>👈 Zgjidhni më sipër punëtorin për të parë orarin dhe shërbimet.</p>
+              <div className="form-section-card" style={{ textAlign: "center", padding: "2rem" }}>
+                <p style={{ margin: 0, color: "#777", fontWeight: "500" }}>
+                  Ju lutemi zgjidhni një punëtor më sipër për të parë datat e lira dhe shërbimet që ofron.
+                </p>
               </div>
             )}
           </div>
 
-          {/* DESKTOP SIDEBAR */}
-          <aside className="termini-sidebar">
+          {/* RIGHT COLUMN SIDEBAR */}
+          <div className="termini-sidebar">
             <div className="summary-widget">
               <h3>PËRMBLEDHJA</h3>
               {formData.detajetTermineve.length === 0 ? (
                 <p className="empty-summary-text">
-                  Zgjidhni shërbimet e dëshiruara për të vazhduar rezervimin.
+                  Asnjë shërbim nuk është përzgjedhur. Klikoni mbi shërbimet e
+                  mësipërme për të ndërtuar seancën tuaj.
                 </p>
               ) : (
                 <div className="summary-items-list">
@@ -767,7 +757,7 @@ const handleChange = (e) => {
                     <div key={i} className="summary-item">
                       <span className="summary-item-name">{s.name}</span>
                       <span className="summary-item-price">
-                        €{Number(s.pagesa).toFixed(2)}
+                        EUR {Number(s.pagesa).toFixed(2)}
                       </span>
                     </div>
                   ))}
@@ -778,61 +768,43 @@ const handleChange = (e) => {
               <div className="summary-total">
                 <span>TOTALI</span>
                 <span className="total-amount">
-                  €{totalPrice.toFixed(2)}
+                  EUR {totalPrice.toFixed(2)}
                 </span>
               </div>
 
               <button
                 className="book-now-btn"
-                disabled={formData.detajetTermineve.length === 0}
                 onClick={() => setShowConfirmation(true)}
               >
                 KONFIRMO REZERVIMIN
               </button>
             </div>
-          </aside>
+          </div>
         </div>
-      </main>
-
-      {/* MOBILE FLOATING BOTTOM ACTION BAR */}
-      <div className="mobile-sticky-bar">
-        <div className="mobile-total-info">
-          <span className="mobile-total-price">€{totalPrice.toFixed(2)}</span>
-          <span className="mobile-item-count">
-            {formData.detajetTermineve.length} {formData.detajetTermineve.length === 1 ? 'shërbim' : 'shërbime'}
-          </span>
-        </div>
-        <button
-          className="mobile-book-btn"
-          disabled={formData.detajetTermineve.length === 0}
-          onClick={() => setShowConfirmation(true)}
-        >
-          Konfirmo
-        </button>
       </div>
 
       {/* CONFIRMATION DIALOG MODAL */}
       {showConfirmation && (
-        <div className="modal-overlay" onClick={() => setShowConfirmation(false)}>
-          <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-drag-handle"></div>
+        <div className="modal-overlay">
+          <div className="confirm-dialog">
             <div className="confirm-dialog-header">
               <div className="confirm-dialog-icon">✓</div>
-              <h2 className="confirm-dialog-title">Konfirmo Rezervimin</h2>
+              <div className="confirm-dialog-subtitle">Confirm Reservation</div>
+              <h2 className="confirm-dialog-title">Continue Booking?</h2>
               <p className="confirm-dialog-description">
-                Rishikoni detajet e takimit tuaj përpara se të vazhdoni.
+                Please review your reservation details. Once confirmed, your appointment request will be submitted.
               </p>
             </div>
 
             <div className="confirm-dialog-body">
               <div className="confirm-summary">
                 <div className="confirm-summary-row">
-                  <span>Shërbimet:</span>
-                  <strong>{formData.detajetTermineve.length} shërbim(e)</strong>
+                  <span>Services</span>
+                  <strong>{formData.detajetTermineve.length}</strong>
                 </div>
 
                 <div className="confirm-summary-row">
-                  <span>Stafi:</span>
+                  <span>Employee</span>
                   <strong>
                     {selectedEmployeeData
                       ? `${selectedEmployeeData.emri} ${selectedEmployeeData.mbiemri}`
@@ -841,15 +813,18 @@ const handleChange = (e) => {
                 </div>
 
                 <div className="confirm-summary-row">
-                  <span>Data & Ora:</span>
-                  <strong>
-                    {tempDateRef.current || formData.data || "-"} @ {tempTimeRef.current || formData.ora || "-"}
-                  </strong>
+                  <span>Date</span>
+                  <strong>{tempDateRef.current || "-"}</strong>
+                </div>
+
+                <div className="confirm-summary-row">
+                  <span>Time</span>
+                  <strong>{tempTimeRef.current || "-"}</strong>
                 </div>
 
                 <div className="confirm-total">
-                  <span>Totali i pagesës</span>
-                  <span>€{totalPrice.toFixed(2)}</span>
+                  <span>Total</span>
+                  <span>€ {totalPrice.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -859,7 +834,7 @@ const handleChange = (e) => {
                 className="confirm-btn-secondary"
                 onClick={() => setShowConfirmation(false)}
               >
-                Kthehu
+                Cancel
               </button>
 
               <button
@@ -869,24 +844,25 @@ const handleChange = (e) => {
                   handleTerminetSubmit();
                 }}
               >
-                Përfundo
+                Confirm Reservation
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* SERVICE ATTRIBUTES SHEET */}
+      {/* DYNAMIC EDITORIAL CONFIGURATOR SIDE SHEET */}
       {selectedService && (
         <div className="custom-modal-overlay" onClick={closeDialog}>
           <div
             className="custom-modal-sheet"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-drag-handle"></div>
             <div className="custom-modal-header">
               <div>
-                <span className="custom-modal-subtitle">Konfigurimi</span>
+                <span className="custom-modal-subtitle">
+                  Configurimi i Shërbimit
+                </span>
                 <h3 className="custom-modal-title">
                   {selectedService.emri_sherbimit}
                 </h3>
@@ -898,46 +874,69 @@ const handleChange = (e) => {
             </div>
 
             <div className="custom-modal-body">
-              {selectedService.imageURL && (
+              <div className="custom-modal-hero-wrapper">
                 <img
                   src={selectedService.imageURL}
                   className="custom-modal-hero-img"
                   alt={selectedService.emri_sherbimit}
                 />
+              </div>
+
+              {selectedService.pershkrimi && (
+                <p className="custom-modal-description">
+                  {selectedService.pershkrimi}
+                </p>
               )}
 
               <div className="custom-modal-metrics">
                 <div className="custom-modal-metric-pill">
                   <label>ÇMIMI BAZË</label>
-                  <span>€{getPrice(selectedService).toFixed(2)}</span>
+                  <span>EUR {getPrice(selectedService).toFixed(2)}</span>
                 </div>
 
                 <div className="custom-modal-metric-pill">
                   <label>KOHËZGJATJA</label>
                   <span>
-                    {formatDuration(selectedService.kohezgjatja) || 0} Min
+                    {formatDuration(selectedService.kohezgjatja) || 0} MIN
                   </span>
                 </div>
               </div>
 
-              <h4 className="custom-modal-section-title">Variantet / Opsionet</h4>
+              <h4 className="custom-modal-section-title">
+                Zgjidhni Atributet / Variantet
+              </h4>
+
+              <div className="custom-modal-searchbar">
+                <input
+                  type="text"
+                  placeholder="KËRKO ME EMËR..."
+                  value={attributeSearch}
+                  onChange={(e) => setAttributeSearch(e.target.value)}
+                />
+              </div>
 
               <div className="custom-modal-attributes-list">
                 {attributesList
                   .filter((attr) =>
                     attr.opsioni
                       ?.toLowerCase()
-                      .includes(attributeSearch.toLowerCase())
+                      .includes(attributeSearch.toLowerCase()),
                   )
                   .map((attr) => {
                     const basePrice = Number(attr.qmimi || 0);
                     const discount = Number(attr.zbritja || 0);
-                    const activePrice = basePrice - (basePrice * discount) / 100;
-                    const isSelected = selectedAttributes.includes(attr.id_atributit);
+                    const activePrice =
+                      basePrice - (basePrice * discount) / 100;
+
+                    const isSelected = selectedAttributes.includes(
+                      attr.id_atributit,
+                    );
 
                     return (
                       <div
-                        className={`custom-modal-attr-card ${isSelected ? "selected" : ""}`}
+                        className={`custom-modal-attr-card ${
+                          isSelected ? "selected" : ""
+                        }`}
                         key={attr.id_atributit}
                         onClick={() => toggleAttribute(attr.id_atributit)}
                       >
@@ -947,8 +946,12 @@ const handleChange = (e) => {
 
                         <div className="custom-modal-attr-right">
                           <span className="custom-modal-attr-price">
-                            €{activePrice.toFixed(2)}
+                            EUR {activePrice.toFixed(2)}
                           </span>
+
+                          <button onClick={() => setSelecedAttribute(attr)}>
+                            Detajet
+                          </button>
                         </div>
                       </div>
                     );
@@ -958,7 +961,7 @@ const handleChange = (e) => {
 
             <div className="custom-modal-footer">
               <button
-                className="custom-modal-btn-primary"
+                className="custom-modal-btn custom-modal-btn-primary"
                 onClick={() => {
                   if (selectedAttributes.length === 0) {
                     handleConfirmSelection({
@@ -972,11 +975,15 @@ const handleChange = (e) => {
                   }
 
                   selectedAttributes.forEach((attrId) => {
-                    const attr = attributesList.find((a) => a.id_atributit === attrId);
+                    const attr = attributesList.find(
+                      (a) => a.id_atributit === attrId,
+                    );
+
                     if (attr) {
                       const basePrice = Number(attr.qmimi || 0);
                       const discount = Number(attr.zbritja || 0);
-                      const activePrice = basePrice - (basePrice * discount) / 100;
+                      const activePrice =
+                        basePrice - (basePrice * discount) / 100;
 
                       handleConfirmSelection({
                         sherbimetId: selectedService.ID,
@@ -999,41 +1006,47 @@ const handleChange = (e) => {
         </div>
       )}
 
-     {/* OTP AUTHENTICATION DIALOGUE MODAL */}
-{showOtp && (
-  <div className="modal-overlay otp-modal-overlay">
-    <div className="modal-box otp-dialog-box animate-slide-up">
-      <div className="modal-drag-handle"></div>
-      
-      <div className="otp-header">
-        <div className="otp-icon">🔒</div>
-        <h2>VERIFIKIMI</h2>
-        <p>Kodi i sigurisë është dërguar me SMS në numrin tuaj të telefonit.</p>
-      </div>
+      {selectedAttribute && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h1>{selectedAttribute.opsioni}</h1>
+            <button
+              className="cancel-btn"
+              onClick={() => {
+                setSelecedAttribute(null);
+              }}
+            >
+              cancel
+            </button>
+          </div>
+        </div>
+      )}
 
-      <div className="otp-container-slot">
-        <OtpInput
-          value={otpCode}
-          onChange={setOtpCode}
-          onComplete={verifyOtp}
-        />
-      </div>
-
-      <div className="otp-actions">
-        <button
-          type="button"
-          className="otp-cancel-btn"
-          onClick={() => {
-            setShowOtp(false);
-            setOtpCode("");
-          }}
-        >
-          ANULO
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+      {/* OTP AUTHENTICATION DIALOGUE MODAL */}
+      {showOtp && (
+        <div className="modal-overlay">
+          <div className="modal-box">
+            <h2>VERIFIKIMI</h2>
+            <p>Kodi i sigurisë është dërguar në numrin tuaj të telefonit.</p>
+            <div className="otp-container-slot">
+              <OtpInput
+                value={otpCode}
+                onChange={setOtpCode}
+                onComplete={verifyOtp}
+              />
+            </div>
+            <button
+              className="cancel-btn"
+              onClick={() => {
+                setShowOtp(false);
+                setOtpCode("");
+              }}
+            >
+              ANULO
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
