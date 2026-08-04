@@ -15,7 +15,12 @@ export default function Termini({ setView }) {
   const [pendingEmployeeId, setPendingEmployeeId] = useState(null);
   const [employeesList, setEmployeesList] = useState([]);
   const [selectedEmployeeData, setSelectedEmployeeData] = useState(null);
-
+  const [selectedAvailability, setSelectedAvailability] = useState(null);
+const [fieldErrors, setFieldErrors] = useState({
+  emri: false,
+  mbiemri: false,
+  numri_telefonit: false,
+});
   // Ruajmë të dhënat e disponueshmërisë të kthyeshme nga API
   const [employeeAvailability, setEmployeeAvailability] = useState(null);
 
@@ -125,11 +130,17 @@ export default function Termini({ setView }) {
 
   // --- UNAUTHENTICATED FLOW ---
   // Validate required personal details before triggering OTP
-  if (!formData.emri?.trim() || !formData.mbiemri?.trim() || !formData.numri_telefonit?.trim()) {
-    alert("Ju lutemi plotësoni Emrin, Mbiemrin dhe Numrin e Telefonit te '01. Detajet Personale' për të vazhduar!");
-    return;
-  }
+const errors = {
+  emri: !formData.emri.trim(),
+  mbiemri: !formData.mbiemri.trim(),
+  numri_telefonit: !formData.numri_telefonit.trim(),
+};
 
+setFieldErrors(errors);
+
+if (Object.values(errors).some(Boolean)) {
+  return;
+}
   // Save the intended employee choice temporarily
   setPendingEmployeeId(chosenId);
 
@@ -242,20 +253,38 @@ export default function Termini({ setView }) {
     }
   }
 const handleChange = (e) => {
+  
     const { name, value } = e.target;
 
-    if (name === "data") tempDateRef.current = value;
-    if (name === "ora") tempTimeRef.current = value;
+  if (fieldErrors[name]) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      [name]: false,
+    }));
+  }
 
-    setFormData((prev) => {
-      const updatedDate = name === "data" ? value : tempDateRef.current;
-      const updatedTime = name === "ora" ? value : tempTimeRef.current;
+  if (name === "data") {
+    tempDateRef.current = value;
 
-      let combinedDataCaktimit = prev.dataCaktimit;
-      if (updatedDate && updatedTime) {
-        // Formatim ISO standard i pranueshëm nga të gjithë shfletuesit mobile
-        combinedDataCaktimit = `${updatedDate}T${updatedTime.length === 5 ? updatedTime + ":00" : updatedTime}`;
-      }
+    const availability = getAvailabilityForDate(value);
+    setSelectedAvailability(availability);
+  }
+
+  if (name === "ora") {
+    tempTimeRef.current = value;
+  }
+
+  setFormData((prev) => {
+    const updatedDate = name === "data" ? value : tempDateRef.current;
+    const updatedTime = name === "ora" ? value : tempTimeRef.current;
+
+    let combinedDataCaktimit = "";
+
+    if (updatedDate && updatedTime) {
+      combinedDataCaktimit = `${updatedDate}T${
+        updatedTime.length === 5 ? updatedTime + ":00" : updatedTime
+      }`;
+    }
 
       return {
         ...prev,
@@ -340,6 +369,101 @@ const handleChange = (e) => {
     (sum, item) => sum + item.pagesa,
     0,
   );
+
+  const getAvailabilityForDate = (selectedDate) => {
+  if (!employeeAvailability) return null;
+
+  const date = new Date(selectedDate);
+
+  // JS: Sunday=0 ... Saturday=6
+  const jsDay = date.getDay();
+
+  // Backend: Monday=1 ... Sunday=7
+  const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+  for (const period of employeeAvailability) {
+    if (
+      selectedDate >= period.start_date &&
+      selectedDate <= period.end_date
+    ) {
+      const detail = period.availabilityDetails.find(
+        d => d.day_of_week === dayOfWeek
+      );
+
+      if (detail) {
+        return detail;
+      }
+    }
+  }
+
+  return null;
+};
+
+const availableDates = [];
+
+if (employeeAvailability) {
+  employeeAvailability.forEach((period) => {
+    let current = new Date(period.start_date);
+    const end = new Date(period.end_date);
+
+    while (current <= end) {
+      const jsDay = current.getDay();
+      const day = jsDay === 0 ? 7 : jsDay;
+
+      const exists = period.availabilityDetails.some(
+        (d) => d.day_of_week === day
+      );
+
+      if (exists) {
+        availableDates.push(current.toISOString().split("T")[0]);
+      }
+
+      current.setDate(current.getDate() + 1);
+    }
+  });
+}
+
+const handleDateChange = (e) => {
+    const date = e.target.value;
+
+    const availability = getAvailabilityForDate(date);
+
+    setSelectedAvailability(availability);
+
+    setFormData(prev => ({
+        ...prev,
+        data: date,
+        ora: ""
+    }));
+};
+
+const generateTimes = (start, end) => {
+    const result = [];
+
+    let current = new Date(`1970-01-01T${start}`);
+    const finish = new Date(`1970-01-01T${end}`);
+
+    while (current < finish) {
+        result.push(
+            current.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            })
+        );
+
+        current.setMinutes(current.getMinutes() + 15);
+    }
+
+    return result;
+};
+
+const availableTimes = selectedAvailability
+    ? generateTimes(
+        selectedAvailability.start_time,
+        selectedAvailability.end_time
+      )
+    : [];
 
   const handleTerminetSubmit = async () => {
     try {
@@ -511,23 +635,37 @@ const handleChange = (e) => {
               <div className="input-group-grid">
                 <div className="input-box">
                   <label>Emri</label>
-                  <input
-                    type="text"
-                    name="emri"
-                    value={formData.emri}
-                    onChange={handleChange}
-                    placeholder="Emri"
-                  />
+               <input
+  type="text"
+  name="emri"
+  value={formData.emri}
+  onChange={handleChange}
+  placeholder="Emri"
+  className={fieldErrors.emri ? "input-error" : ""}
+/>
+
+{fieldErrors.emri && (
+  <small className="error-text">
+    Ju lutemi shkruani emrin.
+  </small>
+)}
                 </div>
                 <div className="input-box">
                   <label>Mbiemri</label>
                   <input
-                    type="text"
-                    name="mbiemri"
-                    value={formData.mbiemri}
-                    onChange={handleChange}
-                    placeholder="Mbiemri"
-                  />
+  type="text"
+  name="mbiemri"
+  value={formData.mbiemri}
+  onChange={handleChange}
+  placeholder="Mbiemri"
+  className={fieldErrors.mbiemri ? "input-error" : ""}
+/>
+
+{fieldErrors.mbiemri && (
+  <small className="error-text">
+    Ju lutemi shkruani mbiemrin.
+  </small>
+)}
                 </div>
               </div>
 
@@ -535,23 +673,38 @@ const handleChange = (e) => {
                 <label>Numri i telefonit *</label>
                 <div className="phone-input-wrapper">
                   <span className="phone-prefix">+383</span>
-                  <input
-                    type="tel"
-                    inputMode="numeric"
-                    name="numri_telefonit"
-                    value={formData.numri_telefonit}
+                <input
+  type="tel"
+  inputMode="numeric"
+  name="numri_telefonit"
+  value={formData.numri_telefonit}
+  className={fieldErrors.numri_telefonit ? "input-error" : ""}
+                  
                     onChange={(e) => {
-                      let value = e.target.value.replace(/\D/g, "");
-                      if (value.startsWith("0")) value = value.substring(1);
-                      value = value.slice(0, 8);
-                      setFormData((prev) => ({
-                        ...prev,
-                        numri_telefonit: value,
-                      }));
-                    }}
+  let value = e.target.value.replace(/\D/g, "");
+  if (value.startsWith("0")) value = value.substring(1);
+  value = value.slice(0, 8);
+
+  setFormData((prev) => ({
+    ...prev,
+    numri_telefonit: value,
+  }));
+
+  if (fieldErrors.numri_telefonit) {
+    setFieldErrors((prev) => ({
+      ...prev,
+      numri_telefonit: false,
+    }));
+  }
+}}
                     placeholder="4XXXXXXX"
                     required
                   />
+                  {fieldErrors.numri_telefonit && (
+  <small className="error-text">
+    Ju lutemi shkruani numrin e telefonit.
+  </small>
+)}
                 </div>
               </div>
 
@@ -640,18 +793,23 @@ const handleChange = (e) => {
                         type="date"
                         name="data"
                         value={formData.data || ""}
-                        onChange={handleChange}
+                        min={availableDates[0]}
+max={availableDates[availableDates.length - 1]}
+                         onChange={handleChange}
                       />
                     </div>
 
                     <div className="input-box">
                       <label>Ora</label>
-                      <input
-                        type="time"
-                        name="ora"
-                        value={formData.ora || ""}
-                        onChange={handleChange}
-                      />
+                <input
+  type="time"
+  name="ora"
+  value={formData.ora || ""}
+  min={selectedAvailability?.start_time?.substring(0, 5)}
+  max={selectedAvailability?.end_time?.substring(0, 5)}
+  step={900} // 15-minute intervals
+  onChange={handleChange}
+/>
                     </div>
                   </div>
 

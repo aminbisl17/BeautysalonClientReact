@@ -135,7 +135,7 @@ function Home({ setView }) {
           <h1>Luxury Salon<span className="bsn-accent-sparkle">✨</span></h1>
           <p className="bsn-hero-tags">Hair • Nails • Skincare • Makeup</p>
           <button className="bsn-hero-btn" onClick={() => setView("terminet")}>
-            Vendos termin
+            Rezervo termin!
           </button>
         </div>
       </section>
