@@ -7,6 +7,7 @@ import {
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
+import AppointmentDateTimePicker from "./CustomizedCalendar";
 
 export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
@@ -422,6 +423,14 @@ if (employeeAvailability) {
     }
   });
 }
+const handleDateTimeChange = ({ data, ora, dataCaktimit }) => {
+  setFormData((prev) => ({
+    ...prev,
+    data,
+    ora,
+    dataCaktimit // Contains "2026-01-19T17:00:00"
+  }));
+};
 
 const handleDateChange = (e) => {
     const date = e.target.value;
@@ -777,53 +786,35 @@ const availableTimes = selectedAvailability
             {formData.employeeId ? (
               <>
                 {/* STEP 03: Data & Ora */}
-                <section className="form-section-card animate-fade-in">
-                  <div className="section-title-wrapper">
-                    <span className="step-badge">3</span>
-                    <div>
-                      <h2 className="section-title">Data dhe Ora</h2>
-                      <p className="section-subtitle">Zgjidhni kohën e përshtatshme</p>
-                    </div>
-                  </div>
+            <section className="form-section-card animate-fade-in">
+  <div className="section-title-wrapper">
+    <span className="step-badge">3</span>
+    <div>
+      <h2 className="section-title">Data dhe Ora</h2>
+      <p className="section-subtitle">Zgjidhni kohën e përshtatshme</p>
+    </div>
+  </div>
 
-                  <div className="datetime-grid">
-                    <div className="input-box">
-                      <label>Data</label>
-                      <input
-                        type="date"
-                        name="data"
-                        value={formData.data || ""}
-                        min={availableDates[0]}
-max={availableDates[availableDates.length - 1]}
-                         onChange={handleChange}
-                      />
-                    </div>
+  {/* Replaced <div className="datetime-grid"> with component */}
+  <AppointmentDateTimePicker
+    availabilityData={{ dates: employeeAvailability }} // Pass backend availability object here
+    valueData={formData.data}
+    valueOra={formData.ora}
+    onChange={handleDateTimeChange}
+    slotDuration={15} // 15-minute slot steps
+  />
 
-                    <div className="input-box">
-                      <label>Ora</label>
-                <input
-  type="time"
-  name="ora"
-  value={formData.ora || ""}
-  min={selectedAvailability?.start_time?.substring(0, 5)}
-  max={selectedAvailability?.end_time?.substring(0, 5)}
-  step={900} // 15-minute intervals
-  onChange={handleChange}
-/>
-                    </div>
-                  </div>
-
-                  <div className="input-box">
-                    <label>Shënime Specifike</label>
-                    <textarea
-                      name="pershkrimi"
-                      rows={2}
-                      value={formData.pershkrimi}
-                      onChange={handleChange}
-                      placeholder="Preferenca ose kërkesa të veçanta..."
-                    />
-                  </div>
-                </section>
+  <div className="input-box" style={{ marginTop: '1rem' }}>
+    <label>Shënime Specifike</label>
+    <textarea
+      name="pershkrimi"
+      rows={2}
+      value={formData.pershkrimi}
+      onChange={handleChange}
+      placeholder="Preferenca ose kërkesa të veçanta..."
+    />
+  </div>
+</section>
 
                 {/* STEP 04: Shërbimet */}
                 <section className="form-section-card animate-fade-in">
