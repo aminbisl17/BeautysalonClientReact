@@ -220,8 +220,9 @@ if (Object.values(errors).some(Boolean)) {
 
       setEmployeeAvailability(parsedDates);
 
-      // Normalizimi i shërbimeve për iPhone
+      
       const employeeServices = data.services || data.sherbimet || [];
+      console.log(employeeServices);
       setServices(employeeServices);
       setFiltered(employeeServices);
     } catch (err) {
@@ -860,17 +861,21 @@ const availableTimes = selectedAvailability
                             onClick={() => handleServiceCardClick(s)}
                           >
                             <div className="service-image-container">
-                              <img
-                                src={
-                                  s.imageURL ||
-                                  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
-                                }
-                                alt={s.emri_sherbimit}
-                                onError={(e) => {
-                                  e.target.src =
-                                    "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
-                                }}
-                              />
+                            <img
+  src={
+    s.imagePath
+      ? s.imagePath.startsWith("data:") || s.imagePath.startsWith("http")
+        ? s.imagePath
+        : `data:image/png;base64,${s.imagePath}`
+      : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
+  }
+  alt={s.emri_sherbimit || "Sherbimi"}
+  onError={(e) => {
+    e.currentTarget.onerror = null; // Prevents infinite loops if fallback fails
+    e.currentTarget.src =
+      "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
+  }}
+/>
                               {isSelected && (
                                 <div className="selected-indicator">
                                   <span>✓ ZGJEDHUR</span>
