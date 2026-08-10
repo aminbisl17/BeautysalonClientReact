@@ -26,7 +26,7 @@ export default function AppointmentDateTimePicker({
   onChange = () => {},
   valueData = '',
   valueOra = '',
-  slotDuration = 15
+  slotDuration = 30 // Default 30 min salon slots
 }) {
   const [currentMonth, setCurrentMonth] = useState(() => {
     return valueData ? new Date(`${valueData}T00:00:00`) : new Date();
@@ -73,7 +73,7 @@ export default function AppointmentDateTimePicker({
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
 
-    let startDayOfWeek = firstDayOfMonth.getDay() - 1; // Align to Mon = 0
+    let startDayOfWeek = firstDayOfMonth.getDay() - 1; // Mon = 0
     if (startDayOfWeek === -1) startDayOfWeek = 6;
 
     const days = [];
@@ -95,38 +95,31 @@ export default function AppointmentDateTimePicker({
     return days;
   }, [currentMonth, availabilityData]);
 
-  // Generate categorized slots
-  const groupedTimeSlots = useMemo(() => {
-    if (!selectedDateStr) return { morning: [], afternoon: [], evening: [] };
+  // Generate simple available time slots list
+  const availableSlots = useMemo(() => {
+    if (!selectedDateStr) return [];
 
     const dateObj = new Date(`${selectedDateStr}T00:00:00`);
     const rule = getRuleForDate(dateObj);
-    if (!rule) return { morning: [], afternoon: [], evening: [] };
+    if (!rule) return [];
 
     const startMin = timeToMinutes(rule.start_time);
     const endMin = timeToMinutes(rule.end_time);
     const pauseStartMin = timeToMinutes(rule.pause_start);
     const pauseEndMin = timeToMinutes(rule.pause_end);
 
-    const morning = [];
-    const afternoon = [];
-    const evening = [];
+    const slots = [];
 
     for (let current = startMin; current + slotDuration <= endMin; current += slotDuration) {
       const slotEnd = current + slotDuration;
       const overlapsPause = !(slotEnd <= pauseStartMin || current >= pauseEndMin);
 
       if (!overlapsPause) {
-        const timeStr = minutesToTime(current);
-        const hour = Math.floor(current / 60);
-
-        if (hour < 12) morning.push(timeStr);
-        else if (hour < 17) afternoon.push(timeStr);
-        else evening.push(timeStr);
+        slots.push(minutesToTime(current));
       }
     }
 
-    return { morning, afternoon, evening };
+    return slots;
   }, [selectedDateStr, availabilityData, slotDuration]);
 
   // Handlers
@@ -157,121 +150,81 @@ export default function AppointmentDateTimePicker({
   const monthYearLabel = currentMonth.toLocaleString('sq-AL', { month: 'long', year: 'numeric' });
 
   return (
-    <div className="picker-container">
-      {/* Calendar Header */}
-      <div className="calendar-header">
-        <button type="button" className="nav-btn" onClick={handlePrevMonth} aria-label="Previous Month">‹</button>
-        <span className="month-title">{monthYearLabel}</span>
-        <button type="button" className="nav-btn" onClick={handleNextMonth} aria-label="Next Month">›</button>
+    <div className="picker-card">
+      {/* Left Column: Calendar */}
+      <div className="calendar-section">
+        {/* Date Header & Month Switcher */}
+        <div className="calendar-header">
+          <button type="button" className="nav-btn" onClick={handlePrevMonth} aria-label="Previous Month">‹</button>
+          <span className="month-title">{monthYearLabel}</span>
+          <button type="button" className="nav-btn" onClick={handleNextMonth} aria-label="Next Month">›</button>
+        </div>
+
+        {/* Days Header */}
+        <div className="weekdays-grid">
+          <span>Hën</span><span>Mar</span><span>Mër</span><span>Enj</span><span>Prem</span><span>Sht</span><span>Di</span>
+        </div>
+
+        {/* Calendar Grid */}
+        <div className="days-grid">
+          {calendarDays.map((day, idx) => {
+            if (!day) return <div key={`empty-${idx}`} />;
+            const isSelected = selectedDateStr === day.dateStr;
+
+            return (
+              <button
+                key={day.dateStr}
+                type="button"
+                disabled={!day.isAvailable}
+                onClick={() => handleDateSelect(day.dateStr)}
+                className={`day-cell ${day.isAvailable ? 'available' : ''} ${isSelected ? 'selected' : ''}`}
+              >
+                {day.dayNumber}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Weekday Labels */}
-      <div className="weekdays-grid">
-        <span>Hën</span><span>Mar</span><span>Mër</span><span>Enj</span><span>Prem</span><span>Sht</span><span>Di</span>
-      </div>
+      {/* Right Column: Vertical Time Slot Scroll */}
+      <div className="time-section">
+        <div className="section-header">
+          <span className="section-title">Termini i Lirë</span>
+          <span className="section-subtitle">
+            {selectedDateStr ? 'Zgjidhni orarin tuaj' : 'Zgjidhni një datë në fillim'}
+          </span>
+        </div>
 
-      {/* Days Grid */}
-      <div className="days-grid">
-        {calendarDays.map((day, idx) => {
-          if (!day) return <div key={`empty-${idx}`} />;
-          const isSelected = selectedDateStr === day.dateStr;
-
-          return (
-            <button
-              key={day.dateStr}
-              type="button"
-              disabled={!day.isAvailable}
-              onClick={() => handleDateSelect(day.dateStr)}
-              className={`day-cell ${day.isAvailable ? 'available' : ''} ${isSelected ? 'selected' : ''}`}
-            >
-              {day.dayNumber}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Time Slots Area */}
-      {selectedDateStr && (
-        <div className="time-section">
-          <span className="section-label">Zgjidhni Orën</span>
-
-          {(groupedTimeSlots.morning.length > 0 ||
-            groupedTimeSlots.afternoon.length > 0 ||
-            groupedTimeSlots.evening.length > 0) ? (
-            <>
-              {groupedTimeSlots.morning.length > 0 && (
-                <div className="period-group">
-                  <span className="period-title">Mëngjes</span>
-                  <div className="slots-grid">
-                    {groupedTimeSlots.morning.map((time) => {
-                      const displayTime = time.substring(0, 5);
-                      const isSelected = selectedTimeStr === time;
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          className={`time-pill ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleTimeSelect(time)}
-                        >
-                          {displayTime}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {groupedTimeSlots.afternoon.length > 0 && (
-                <div className="period-group">
-                  <span className="period-title">Pasdite</span>
-                  <div className="slots-grid">
-                    {groupedTimeSlots.afternoon.map((time) => {
-                      const displayTime = time.substring(0, 5);
-                      const isSelected = selectedTimeStr === time;
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          className={`time-pill ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleTimeSelect(time)}
-                        >
-                          {displayTime}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {groupedTimeSlots.evening.length > 0 && (
-                <div className="period-group">
-                  <span className="period-title">Mbrëmje</span>
-                  <div className="slots-grid">
-                    {groupedTimeSlots.evening.map((time) => {
-                      const displayTime = time.substring(0, 5);
-                      const isSelected = selectedTimeStr === time;
-                      return (
-                        <button
-                          key={time}
-                          type="button"
-                          className={`time-pill ${isSelected ? 'selected' : ''}`}
-                          onClick={() => handleTimeSelect(time)}
-                        >
-                          {displayTime}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </>
+        {selectedDateStr ? (
+          availableSlots.length > 0 ? (
+            <div className="time-vertical-scroll">
+              {availableSlots.map((time) => {
+                const displayTime = time.substring(0, 5);
+                const isSelected = selectedTimeStr === time;
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    className={`time-slot-btn ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleTimeSelect(time)}
+                  >
+                    <span>{displayTime}</span>
+                    {isSelected && <span className="check-icon">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
           ) : (
             <div className="empty-state">
-              Nuk ka termine të lira për këtë datë.
+              S'ka termine të lira për këtë datë.
             </div>
-          )}
-        </div>
-      )}
+          )
+        ) : (
+          <div className="select-date-prompt">
+            Klikoni një datë në kalendar për të parë oraret e lira.
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,26 +1,35 @@
-/* Container Card */
-.picker-container {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+/* Card Container (Large Desktop Layout) */
+.picker-card {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #ffffff;
-  border-radius: 1rem;
-  padding: 1.25rem;
+  border-radius: 1.5rem;
+  padding: 1.75rem;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  max-width: 100%;
+  box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 680px; /* Expands to dual-column on desktop */
   margin: 0 auto;
   box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr 220px; /* Calendar on left, time list on right */
+  gap: 1.75rem;
 }
 
-/* Header Controls */
+/* Left Column: Calendar Section */
+.calendar-section {
+  display: flex;
+  flex-direction: column;
+}
+
 .calendar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .month-title {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #0f172a;
   text-transform: capitalize;
@@ -38,55 +47,45 @@
   cursor: pointer;
   transition: all 0.2s ease;
   color: #475569;
-  font-size: 1rem;
-  /* Prevent touch delay on modern browsers */
-  touch-action: manipulation;
+  font-size: 1.3rem;
 }
 
 .nav-btn:hover {
-  background: #2563eb;
-  color: #ffffff;
-  border-color: #2563eb;
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
 }
 
-.nav-btn:active {
-  transform: scale(0.92);
-}
-
-/* Calendar Grids */
+/* Days Header & Grid */
 .weekdays-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: #94a3b8;
-  text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .days-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 6px;
+  gap: 8px;
 }
 
-/* Day Buttons */
 .day-cell {
   aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.6rem;
-  font-size: 0.9rem;
+  border-radius: 50%;
+  font-size: 1rem;
   font-weight: 500;
   border: none;
   background: transparent;
   color: #cbd5e1;
   cursor: not-allowed;
   transition: all 0.15s ease;
-  user-select: none;
-  touch-action: manipulation;
 }
 
 .day-cell.available {
@@ -98,123 +97,137 @@
 }
 
 .day-cell.available:hover {
-  background-color: #eff6ff;
-  color: #2563eb;
-  border-color: #bfdbfe;
-}
-
-.day-cell.available:active {
-  transform: scale(0.95);
+  background-color: #fdf2f8;
+  color: #ec4899;
+  border-color: #fbcfe8;
 }
 
 .day-cell.selected {
-  background-color: #2563eb !important;
+  background-color: #ec4899 !important; /* Elegant Salon Rose/Pink */
   color: #ffffff !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  font-weight: 700;
+  border-color: #ec4899 !important;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);
 }
 
-/* Time Selection Area */
+/* Right Column: Time Section */
 .time-section {
-  border-top: 1px solid #f1f5f9;
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
+  border-left: 1px solid #f1f5f9;
+  padding-left: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
 }
 
-.section-label {
-  font-size: 0.95rem;
+.section-header {
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  display: block;
+  font-size: 1rem;
   font-weight: 700;
   color: #0f172a;
 }
 
-.period-group {
+.section-subtitle {
+  display: block;
+  font-size: 0.775rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+/* Vertical Scroll List */
+.time-vertical-scroll {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.period-title {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.slots-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
   gap: 8px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+
+  /* Subtle styled scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
-/* Time Slot Pills */
-.time-pill {
-  padding: 10px 0;
-  border-radius: 0.6rem;
+.time-vertical-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.time-vertical-scroll::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 10px;
+}
+
+/* Time Slot Buttons */
+.time-slot-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-radius: 0.75rem;
   border: 1px solid #e2e8f0;
-  background-color: #ffffff;
+  background-color: #f8fafc;
   color: #334155;
-  font-size: 0.875rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
-  text-align: center;
-  touch-action: manipulation;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.time-pill:hover {
-  border-color: #3b82f6;
-  color: #2563eb;
-  background-color: #eff6ff;
+.time-slot-btn:hover {
+  border-color: #f472b6;
+  color: #ec4899;
+  background-color: #fdf2f8;
 }
 
-.time-pill:active {
-  transform: scale(0.96);
-}
-
-.time-pill.selected {
-  background-color: #2563eb;
+.time-slot-btn.selected {
+  background-color: #ec4899;
   color: #ffffff;
-  border-color: #2563eb;
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);
+  border-color: #ec4899;
+  box-shadow: 0 4px 10px rgba(236, 72, 153, 0.25);
+}
+
+.check-icon {
+  font-size: 0.85rem;
+}
+
+.empty-state, .select-date-prompt {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.85rem;
+  text-align: center;
+  line-height: 1.4;
 }
 
 .empty-state {
-  padding: 1rem;
-  background-color: #fef2f2;
-  color: #ef4444;
-  border-radius: 0.6rem;
-  font-size: 0.875rem;
-  text-align: center;
-  border: 1px solid #fee2e2;
+  background-color: #fff1f2;
+  color: #e11d48;
 }
 
-/* Mobile Responsiveness Tweaks */
-@media (max-width: 480px) {
-  .picker-container {
-    padding: 1rem;
-    border-radius: 0.75rem;
+.select-date-prompt {
+  background-color: #f8fafc;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+}
+
+/* Mobile Responsive Fallback */
+@media (max-width: 640px) {
+  .picker-card {
+    grid-template-columns: 1fr;
+    max-width: 360px;
   }
 
-  .days-grid {
-    gap: 4px;
+  .time-section {
+    border-left: none;
+    border-top: 1px solid #f1f5f9;
+    padding-left: 0;
+    padding-top: 1.25rem;
   }
 
-  .day-cell {
-    font-size: 0.85rem;
-    border-radius: 0.5rem;
-  }
-
-  .slots-grid {
-    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
-    gap: 6px;
-  }
-
-  .time-pill {
-    padding: 12px 0; /* Larger touch target for mobile thumbs */
-    font-size: 0.825rem;
+  .time-vertical-scroll {
+    max-height: 200px;
   }
 }
