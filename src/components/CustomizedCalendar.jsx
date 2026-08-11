@@ -96,7 +96,7 @@ export default function AppointmentDateTimePicker({
   }, [currentMonth, availabilityData]);
 
   // Generate simple available time slots list
-  const availableSlots = useMemo(() => {
+   const availableSlots = useMemo(() => {
     if (!selectedDateStr) return [];
 
     const dateObj = new Date(`${selectedDateStr}T00:00:00`);
@@ -110,7 +110,8 @@ export default function AppointmentDateTimePicker({
 
     const slots = [];
 
-    for (let current = startMin; current + slotDuration <= endMin; current += slotDuration) {
+    // Step by 5 minutes instead of slotDuration
+    for (let current = startMin; current + slotDuration <= endMin; current += 5) {
       const slotEnd = current + slotDuration;
       const overlapsPause = !(slotEnd <= pauseStartMin || current >= pauseEndMin);
 
@@ -120,7 +121,7 @@ export default function AppointmentDateTimePicker({
     }
 
     return slots;
-  }, [selectedDateStr, availabilityData, slotDuration]);
+  }, [selectedDateStr, availabilityData, slotDuration])
 
   // Handlers
   const handleDateSelect = (dateStr) => {
