@@ -109,12 +109,14 @@ const [fieldErrors, setFieldErrors] = useState({
   const handleEmployeeChange = async (e) => {
   const chosenId = Number(e.target.value);
 
+  // Clear services immediately so old employee data vanishes instantly
+  setServices([]);
+  setFiltered([]);
+  setEmployeeAvailability(null);
+
   if (!chosenId) {
     setFormData((prev) => ({ ...prev, employeeId: "", detajetTermineve: [] }));
     setSelectedEmployeeData(null);
-    setServices([]);
-    setFiltered([]);
-    setEmployeeAvailability(null);
     return;
   }
 
@@ -176,62 +178,51 @@ if (Object.values(errors).some(Boolean)) {
     setLoading(false);
   }
 };
-  // FUNKSIONI PËR MARRJEN E SHËRBIMEVE DHE DATAVE (Compatibël me Safari/iPhone)
-  const fetchEmployeeDetails = async (employeeId, token) => {
-    try {
-      setLoading(true);
+ 
+const fetchEmployeeDetails = async (employeeId, token) => {
+  try {
+    setLoading(true);
 
-      const refreshToken = sessionStorage.getItem("refreshToken");
+    const refreshToken = sessionStorage.getItem("refreshToken");
+    const headers = { "Content-Type": "application/json" };
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    if (refreshToken) headers["Refresh-Token"] = refreshToken;
 
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
+    const res = await fetch(
+      `http://192.168.100.116:8000/api/mixed/terminet/employee-details/${employeeId}`,
+      { method: "GET", headers }
+    );
 
-      if (refreshToken) {
-        headers["Refresh-Token"] = refreshToken;
-      }
-
-      const res = await fetch(
-        `http://192.168.100.116:8000/api/mixed/terminet/employee-details/${employeeId}`,
-        {
-          method: "GET",
-          headers: headers,
-          // 'credentials' mund të shkaktojë bllokim CORS në Mobile Safari nëse nuk përdoret HTTPS
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`Kodi i gabimit: ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      console.log(data);
-
-      // Normalizimi i datave për Safari / iOS
-      const rawDates = data.dates || data.availability || [];
-      const parsedDates = Array.isArray(rawDates)
-        ? rawDates.map((d) => (typeof d === "string" ? d.replace(/-/g, "/") : d))
-        : rawDates;
-
-      setEmployeeAvailability(parsedDates);
-
-      
-      const employeeServices = data.services || data.sherbimet || [];
-      console.log(employeeServices);
-      setServices(employeeServices);
-      setFiltered(employeeServices);
-    } catch (err) {
-      console.error("Gabim gjatë marrjes së të dhënave të punëtorit:", err);
-    } finally {
-      setLoading(false);
+    if (!res.ok) {
+      throw new Error(`Kodi i gabimit: ${res.status}`);
     }
-  };
 
+    const data = await res.json();
+
+    const rawDates = data.dates || data.availability || [];
+    const parsedDates = Array.isArray(rawDates)
+      ? rawDates.map((d) => (typeof d === "string" ? d.replace(/-/g, "/") : d))
+      : rawDates;
+
+    setEmployeeAvailability(parsedDates);
+
+    // Default to empty array if no services are found
+    const employeeServices = data.services || data.sherbimet || [];
+    
+    setServices(employeeServices);
+    setFiltered(employeeServices); // Directly sync filtered with new employee services
+
+  } catch (err) {
+    console.error("Gabim gjatë marrjes së të dhënave të punëtorit:", err);
+    // Clear state on error so previous services don't persist
+    setServices([]);
+    setFiltered([]);
+    setEmployeeAvailability(null);
+  } finally {
+    setLoading(false);
+  }
+};
   async function loadEmployees() {
     try {
       const data = await fetchEmployees();
