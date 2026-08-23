@@ -200,18 +200,22 @@ const fetchEmployeeDetails = async (employeeId, token) => {
 
     const data = await res.json();
 
-    const rawDates = data.dates || data.availability || [];
-    const parsedDates = Array.isArray(rawDates)
-      ? rawDates.map((d) => (typeof d === "string" ? d.replace(/-/g, "/") : d))
-      : rawDates;
+const rawDates = data.dates || data.availability || [];
 
-    setEmployeeAvailability(parsedDates);
+const parsedDates = Array.isArray(rawDates)
+  ? rawDates.map((d) =>
+      typeof d === "string"
+        ? d.replace(/-/g, "/")
+        : d
+    )
+  : rawDates;
 
-    // Default to empty array if no services are found
-    const employeeServices = data.services || data.sherbimet || [];
-    
-    setServices(employeeServices);
-    setFiltered(employeeServices); // Directly sync filtered with new employee services
+setEmployeeAvailability(parsedDates);
+
+// Services are date-dependent.
+// Do NOT use data.services/data.sherbimet here.
+setServices([]);
+setFiltered([]);
 
   } catch (err) {
     console.error("Gabim gjatë marrjes së të dhënave të punëtorit:", err);
@@ -233,18 +237,6 @@ const fetchEmployeeDetails = async (employeeId, token) => {
     }
   }
 
-  async function loadServices() {
-    try {
-      setLoading(true);
-      const data = await fetchServices();
-      setServices(data || []);
-      setFiltered(data || []);
-    } catch (err) {
-      ExceptionHandler.handle(err);
-    } finally {
-      setLoading(false);
-    }
-  }
 const handleChange = (e) => {
   
     const { name, value } = e.target;
@@ -340,6 +332,7 @@ const handleChange = (e) => {
     }
   };
 
+
   const formatDuration = (mins) => {
     const hours = Math.floor(mins / 60);
     const minutes = mins % 60;
@@ -392,6 +385,50 @@ const handleChange = (e) => {
   return null;
 };
 
+const getAvailabilityPeriodForDate = (selectedDate) => {
+  if (!selectedDate || !employeeAvailability) return null;
+
+  return employeeAvailability.find((period) => {
+    return (
+      selectedDate >= period.start_date &&
+      selectedDate <= period.end_date
+    );
+  }) || null;
+};
+
+const filterServicesForDate = (selectedDate) => {
+  if (!selectedDate || !employeeAvailability) {
+    setServices([]);
+    setFiltered([]);
+    return;
+  }
+
+  const period = getAvailabilityPeriodForDate(selectedDate);
+
+  if (!period) {
+    setServices([]);
+    setFiltered([]);
+    return;
+  }
+
+  const dateServices = period.sherbimetDisplay || [];
+
+  setServices(dateServices);
+
+  // Apply existing search as well
+  if (search.trim()) {
+    setFiltered(
+      dateServices.filter((service) =>
+        service.emri_sherbimit
+          ?.toLowerCase()
+          .includes(search.toLowerCase())
+      )
+    );
+  } else {
+    setFiltered(dateServices);
+  }
+};
+
 const availableDates = [];
 
 if (employeeAvailability) {
@@ -415,28 +452,46 @@ if (employeeAvailability) {
     }
   });
 }
+
 const handleDateTimeChange = ({ data, ora, dataCaktimit }) => {
+  // Find availability for the newly selected date
+  const availability = getAvailabilityForDate(data);
+
+  setSelectedAvailability(availability);
+
+  // Filter services belonging to that date's availability period
+  filterServicesForDate(data);
+
   setFormData((prev) => ({
     ...prev,
     data,
     ora,
-    dataCaktimit // Contains "2026-01-19T17:00:00"
+    dataCaktimit,
+    // Clear previously selected services because they may
+    // not be available on the new date
+    detajetTermineve: []
   }));
 };
 
+
 const handleDateChange = (e) => {
-    const date = e.target.value;
+  const date = e.target.value;
 
-    const availability = getAvailabilityForDate(date);
+  const availability = getAvailabilityForDate(date);
 
-    setSelectedAvailability(availability);
+  setSelectedAvailability(availability);
 
-    setFormData(prev => ({
-        ...prev,
-        data: date,
-        ora: ""
-    }));
+  // Filter services according to the selected date
+  filterServicesForDate(date);
+
+  setFormData(prev => ({
+    ...prev,
+    data: date,
+    ora: "",
+    detajetTermineve: []
+  }));
 };
+
 
 const generateTimes = (start, end) => {
     const result = [];
