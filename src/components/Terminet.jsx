@@ -102,7 +102,6 @@ const [fieldErrors, setFieldErrors] = useState({
     }
 
     loadEmployees();
-    // VEREJTJE: Nuk thërrasim më loadServices() këtu automatikisht
   }, []);
 
   
