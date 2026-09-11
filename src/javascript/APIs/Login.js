@@ -3,7 +3,7 @@ import { ExceptionHandler } from "../Exceptions/ExceptionHandler";
 
 export async function fetchRefreshToken() {
   try {
-    const res = await fetch("http://192.168.100.116:8000/auth/refresh-token", {
+    const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/auth/refresh-token", {
       method: "POST",
       credentials: "include",
     });

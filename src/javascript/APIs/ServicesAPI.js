@@ -5,7 +5,7 @@ export async function fetchServices() {
 
   try {
     const response = await fetch(
-      "http://192.168.100.116:8000/api/mixed/sherbimet/all",
+      "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/mixed/sherbimet/all",
       {
         method: "GET"
      //   headers: {

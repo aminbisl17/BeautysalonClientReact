@@ -149,7 +149,7 @@ if (Object.values(errors).some(Boolean)) {
   try {
     setLoading(true);
     const registerRes = await fetch(
-      "http://192.168.100.116:8000/api/clients/fast-login&register",
+      "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/fast-login&register",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -189,7 +189,7 @@ const fetchEmployeeDetails = async (employeeId, token) => {
     if (refreshToken) headers["Refresh-Token"] = refreshToken;
 
     const res = await fetch(
-      `http://192.168.100.116:8000/api/mixed/terminet/employee-details/${employeeId}`,
+      `https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/mixed/terminet/employee-details/${employeeId}`,
       { method: "GET", headers }
     );
 
@@ -538,7 +538,7 @@ const availableTimes = selectedAvailability
         const token = sessionStorage.getItem("accessToken");
 
         const res = await fetch(
-          "http://192.168.100.116:8000/api/mixed/terminet/create",
+          "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/mixed/terminet/create",
           {
             method: "POST",
             headers: {
@@ -571,7 +571,7 @@ const availableTimes = selectedAvailability
       }
 
       const registerRes = await fetch(
-        "http://192.168.100.116:8000/api/clients/fast-login&register",
+        "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/fast-login&register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -603,7 +603,7 @@ const availableTimes = selectedAvailability
     };
 
     const res = await fetch(
-      "http://192.168.100.116:8000/api/clients/verify/fast-login&register",
+      "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/verify/fast-login&register",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -626,7 +626,7 @@ const availableTimes = selectedAvailability
     }
 
     // Get user info
-    const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+    const userRes = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/data", {
       headers: { Authorization: `Bearer ${data.token}` },
       credentials: "include",
     });

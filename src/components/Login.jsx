@@ -53,7 +53,7 @@ function LoginView() {
           return;
         }
 
-        const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+        const userRes = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/data", {
           headers: { Authorization: `Bearer ${accessToken}` },
           credentials: "include",
         });
@@ -88,7 +88,7 @@ function LoginView() {
     setError("");
 
     try {
-      const res = await fetch("http://192.168.100.116:8000/auth/login/client", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/auth/login/client", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ numri_telefonit: `+383${numriTelefonit}` }),
@@ -110,7 +110,7 @@ function LoginView() {
   const fetchUserData = async () => {
     try {
       const token = sessionStorage.getItem("accessToken");
-      const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+      const userRes = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/data", {
         headers: { Authorization: `Bearer ${token}` },
         credentials: "include",
       });
@@ -135,7 +135,7 @@ function LoginView() {
     }
 
     try {
-      const res = await fetch("http://192.168.100.116:8000/api/clients/send/email-verification-request", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/send/email-verification-request", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -157,7 +157,7 @@ function LoginView() {
   const verifyEmailCode = async () => {
     const token = sessionStorage.getItem("accessToken");
     try {
-      const res = await fetch("http://192.168.100.116:8000/api/clients/verify/email", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/verify/email", {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -185,7 +185,7 @@ function LoginView() {
   const handleVerify = async (code) => {
     setError("");
     try {
-      const res = await fetch("http://192.168.100.116:8000/api/clients/verify", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -212,7 +212,7 @@ function LoginView() {
   const handleLogout = async () => {
     if (!window.confirm("Dëshironi të dilni?")) return;
     try {
-      await fetch("http://192.168.100.116:8000/auth/delete-refresh-token", {
+      await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/auth/delete-refresh-token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -238,7 +238,7 @@ function LoginView() {
 
     try {
       const payload = { ...regData, numri_telefonit: `+383${regData.numri_telefonit}` };
-      const res = await fetch("http://192.168.100.116:8000/api/clients/register", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -262,7 +262,7 @@ function LoginView() {
   const handleAutoVerify = async (code) => {
     setError("");
     try {
-      const res = await fetch("http://192.168.100.116:8000/auth/login/client/verify", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/auth/login/client/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otpcode: code, numri_telefonit: `+383${numriTelefonit}` }),
@@ -279,7 +279,7 @@ function LoginView() {
       const data = await res.json();
       sessionStorage.setItem("accessToken", data.token);
 
-      const userRes = await fetch("http://192.168.100.116:8000/api/clients/data", {
+      const userRes = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/data", {
         headers: { Authorization: `Bearer ${data.token}` },
         credentials: "include",
       });
@@ -308,7 +308,7 @@ function LoginView() {
   const handleSave = async () => {
     if (!window.confirm("Dëshiron të ruash ndryshimet?")) return;
     try {
-      const res = await fetch("http://192.168.100.116:8000/api/clients/update", {
+      const res = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/clients/update", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
