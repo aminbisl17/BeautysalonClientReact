@@ -3,7 +3,7 @@ import { ExceptionHandler } from "../Exceptions/ExceptionHandler";
 export async function fetchEmployees() {
   try {
     const response = await fetch(
-      "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/web/employees/all",
+      process.env.REACT_APP_EMPLOYEES_GET_ALL,
       {
         method: "GET",
       }

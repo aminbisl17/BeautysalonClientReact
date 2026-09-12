@@ -5,7 +5,7 @@ export async function fetchServices() {
 
   try {
     const response = await fetch(
-      "https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/mixed/sherbimet/all",
+      process.env.REACT_APP_SERVICES_GET_ALL,
       {
         method: "GET"
      //   headers: {
@@ -49,7 +49,7 @@ export async function fetchServiceAtributes(ID) {
 
   try {
     const response = await fetch(
-      `https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net/api/mixed/sherbimet/atributet/${ID}`,
+      `${process.env.REACT_APP_SERVICE_GET_ATTRIBUTES}/${ID}`,
       {
         method: "GET",
       }

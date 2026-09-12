@@ -39,7 +39,7 @@ function Home({ setView }) {
       const accessToken = sessionStorage.getItem("accessToken");
       if (!accessToken) return;
 
-      const userRes = await fetch("https://beautysalon-amin-2026-ghfzbxbqcvdfb2hf.austriaeast-01.azurewebsites.net:8000/api/clients/data", {
+      const userRes = await fetch(process.env.REACT_APP_CLIENT_GET_DATA, {
         headers: { Authorization: `Bearer ${accessToken}` },
         credentials: "include",
       });
