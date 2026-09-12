@@ -40,10 +40,13 @@ function Home({ setView }) {
       if (!accessToken) return;
 
       const userRes = await fetch(process.env.REACT_APP_CLIENT_GET_DATA, {
+
         headers: { Authorization: `Bearer ${accessToken}` },
         credentials: "include",
       });
 
+
+      
       if (!userRes.ok) return;
 
       const userInfo = await userRes.json();
