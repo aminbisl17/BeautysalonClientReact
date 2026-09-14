@@ -226,8 +226,8 @@ function Home({ setView }) {
             >
               <div className="bsn-service-card bsn-promo-card">
                 <div className="bsn-card-img-wrapper">
-                  {ser.imageURL ? (
-                    <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                  {ser.imagePath ? (
+                    <img src={ser.imagePath} className="bsn-service-image" alt={ser.emri_sherbimit} />
                   ) : (
                     <div className="bsn-service-fallback bsn-discount-fallback-bg">💝</div>
                   )}
@@ -265,8 +265,8 @@ function Home({ setView }) {
             >
               <div className="bsn-service-card bsn-promo-card">
                 <div className="bsn-card-img-wrapper">
-                  {ser.imageURL ? (
-                    <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                  {ser.imagePath ? (
+                    <img src={ser.imagePath} className="bsn-service-image" alt={ser.emri_sherbimit} />
                   ) : (
                     <div className="bsn-service-fallback bsn-discount-fallback-bg">💝</div>
                   )}
@@ -341,8 +341,8 @@ function Home({ setView }) {
                     onClick={() => handleServiceClick(ser)}
                   >
                     <div className="bsn-card-img-wrapper">
-                      {ser.imageURL ? (
-                        <img src={ser.imageURL} className="bsn-service-image" alt={ser.emri_sherbimit} />
+                      {ser.imagePath ? (
+                        <img src={ser.imagePath} className="bsn-service-image" alt={ser.emri_sherbimit} />
                       ) : (
                         <div className="bsn-service-fallback">💇‍♀️</div>
                       )}
@@ -387,9 +387,9 @@ function Home({ setView }) {
               </div>
 
               <div className="bsn-modal-body">
-                {selectedService.fetchedModalImage && (
+                {selectedService.imagePath && (
                   <div className="bsn-modal-hero-container">
-                    <img src={selectedService.fetchedModalImage} className="bsn-modal-hero-img" alt="Preview" />
+                    <img src={selectedService.imagePath} className="bsn-modal-hero-img" alt="Preview" />
                   </div>
                 )}
 
