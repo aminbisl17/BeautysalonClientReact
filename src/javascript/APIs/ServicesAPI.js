@@ -65,7 +65,8 @@ export async function fetchServiceAtributes(ID) {
 
        if (data.imagePath) {
     
-      data.imageURL = `data:image/jpeg;base64,${data.imagePath}`;
+     // data.imageURL = `data:image/jpeg;base64,${data.imagePath}`;
+     data.imageURL = data.imagePath;
     } else {
       data.imageURL = null; 
    
