@@ -30,31 +30,55 @@ function Home({ setView }) {
       setLoading(false);
     }
   }
+async function loadUserData() {
+  try {
+    const res = await fetchRefreshToken();
 
-  async function loadUserData() {
-    try {
-      const res = await fetchRefreshToken();
-      if (!res || !res.ok) return;
+    console.log("REFRESH STATUS:", res?.status);
+    console.log("REFRESH OK:", res?.ok);
 
-      const accessToken = sessionStorage.getItem("accessToken");
-      if (!accessToken) return;
+    if (!res || !res.ok) return;
 
-      const userRes = await fetch(process.env.REACT_APP_CLIENT_GET_DATA, {
+    const accessToken = sessionStorage.getItem("accessToken");
 
-        headers: { Authorization: `Bearer ${accessToken}` },
-        credentials: "include",
-      });
+    console.log("ACCESS TOKEN EXISTS:", !!accessToken);
+    console.log("ACCESS TOKEN:", accessToken);
 
+    if (!accessToken) return;
 
-      
-      if (!userRes.ok) return;
+    const url = process.env.REACT_APP_CLIENT_GET_DATA;
 
-      const userInfo = await userRes.json();
-      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-    } catch (err) {
-      ExceptionHandler.handle(err);
-    }
+    console.log("CLIENT DATA URL:", url);
+
+const userRes = await fetch(url, {
+  method: "GET",
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+    "Content-Type": "application/json",
+  },
+  credentials: "include",
+});
+
+console.log("CLIENT DATA STATUS:", userRes.status);
+
+if (!userRes.ok) {
+  console.log("CLIENT DATA ERROR:", await userRes.text());
+  return;
+}
+
+const userInfo = await userRes.json();
+
+console.log("CLIENT DATA:", userInfo);
+
+sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+    if (!userRes.ok) return;
+    // If you use .text() above, don't call .json() afterward.
+  } catch (err) {
+    console.error(err);
+    ExceptionHandler.handle(err);
   }
+}
 
   useEffect(() => {
     loadUserData();

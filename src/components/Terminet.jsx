@@ -76,7 +76,7 @@ const [fieldErrors, setFieldErrors] = useState({
 
   useEffect(() => {
     const storedUser = sessionStorage.getItem("userDetails");
-
+ console.log("stored user " + JSON.parse(storedUser));
     if (storedUser) {
       const user = JSON.parse(storedUser);
       let rawPhone = user.numri_telefonit || user.numriTelefonit || "";
