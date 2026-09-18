@@ -1,127 +1,301 @@
 /* ==========================================================================
-   EDITORIAL HIGH-END MINIMALISM (CHARCOAL & CHAMPAGNE)
+   BEAUTY SALON — DARK LUXURY NAVBAR
    ========================================================================== */
+
 nav.navbar.custom-navbar {
-  background-color: #121212 !important; /* Solid, crisp luxury charcoal */
-  border-bottom: 1px solid #262626 !important; /* Razor thin accent divider */
-  padding: 20px 0 !important;
-  transition: padding 0.3s ease;
+  background: #111111 !important;
+  border-bottom: 1px solid #242424 !important;
+  padding: 16px 0 !important;
+
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+
+  transition:
+    padding 0.25s ease,
+    box-shadow 0.25s ease !important;
 }
 
-/* Elegant Contrast Logo */
+
+/* ==========================================================================
+   LOGO
+   ========================================================================== */
+
 nav.navbar.custom-navbar .navbar-brand {
-  color: #f5f2eb !important; /* Soft premium champagne cream */
-  font-size: 20px !important;
-  font-weight: 700 !important;
-  letter-spacing: 2px !important;
+  color: #f4f1eb !important;
+
+  font-size: 19px !important;
+  font-weight: 800 !important;
+  letter-spacing: 2.5px !important;
+
   text-transform: uppercase;
+  line-height: 1;
+
+  text-decoration: none !important;
+
+  transition: opacity 0.2s ease;
+}
+
+nav.navbar.custom-navbar .navbar-brand:hover {
+  opacity: 0.8;
 }
 
 nav.navbar.custom-navbar .logo-serif {
   font-family: "Playfair Display", "Didot", "Georgia", serif;
+
   font-style: italic;
   font-weight: 400;
-  letter-spacing: 0px;
-  text-transform: transform-none;
-  color: #c9b097; /* Matte warm gold accent */
+
+  letter-spacing: -0.3px;
+
+  text-transform: none;
+
+  color: #c7a982;
+
+  margin-left: 3px;
 }
 
-/* Elegant Text Links with Fade Transition */
+
+/* ==========================================================================
+   NAVIGATION LINKS
+   ========================================================================== */
+
+nav.navbar.custom-navbar .navbar-nav {
+  gap: 4px !important;
+}
+
 nav.navbar.custom-navbar .nav-link {
-  color: #a3a3a3 !important; /* Muted matte gray */
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  letter-spacing: 1px !important;
-  text-transform: uppercase;
-  padding: 6px 20px !important;
-  transition: color 0.2s ease !important;
+  position: relative;
+
+  color: #9c9c9c !important;
+
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.6px !important;
+
+  text-transform: none;
+
+  padding: 9px 15px !important;
+
+  border-radius: 9px;
+
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease !important;
 }
 
 nav.navbar.custom-navbar .nav-link:hover {
-  color: #f5f2eb !important; /* Snaps clean back to raw champagne white */
+  color: #f4f1eb !important;
+  background: #1a1a1a !important;
 }
 
-/* Tailored Minimalist Action Button (Profile) */
+
+/* ==========================================================================
+   PROFILE BUTTON
+   ========================================================================== */
+
 nav.navbar.custom-navbar .profile-nav-link {
-  border: 1px solid #c9b097 !important; /* Crisp metallic structural outline */
-  background-color: transparent !important;
-  color: #c9b097 !important;
-  margin-left: 16px !important;
-  padding: 8px 24px !important;
-  border-radius: 0px !important; /* Square sharp architecture, no rounded curves */
-  font-weight: 600 !important;
-  letter-spacing: 1.5px !important;
-  transition: all 0.25s ease !important;
+  margin-left: 10px !important;
+
+  padding: 9px 21px !important;
+
+  border: 1px solid #c7a982 !important;
+
+  background: transparent !important;
+
+  color: #c7a982 !important;
+
+  border-radius: 999px !important;
+
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.2px !important;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease !important;
+
   box-shadow: none !important;
 }
 
 nav.navbar.custom-navbar .profile-nav-link:hover {
-  background-color: #c9b097 !important; /* Clean fill inversion on hover */
-  color: #121212 !important;
+  background: #c7a982 !important;
+  border-color: #c7a982 !important;
+
+  color: #111111 !important;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 16px rgba(199, 169, 130, 0.18) !important;
 }
 
-/* ULTRA-MINIMALIST 2-LINE TOGGLER */
+
+/* ==========================================================================
+   MOBILE TOGGLER
+   ========================================================================== */
+
 nav.navbar.custom-navbar .custom-toggler {
-  border: none !important;
-  background: transparent !important;
+  border: 1px solid #303030 !important;
+
+  background: #181818 !important;
+
   padding: 0 !important;
+
   box-shadow: none !important;
   outline: none !important;
+
   display: flex;
+
   flex-direction: column;
-  justify-content: space-between;
-  width: 22px;
-  height: 10px; /* Slimmed down width to track line spacing nicely */
+  justify-content: center;
+  align-items: center;
+
+  gap: 5px;
+
+  width: 42px;
+  height: 42px;
+
+  border-radius: 11px !important;
+
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease !important;
+}
+
+nav.navbar.custom-navbar .custom-toggler:hover {
+  background: #202020 !important;
+  border-color: #3b3b3b !important;
 }
 
 nav.navbar.custom-navbar .custom-toggler span {
   display: block;
-  width: 22px;
-  height: 1px; /* Sharper 1px line instead of clunky 2px blocks */
-  background-color: #f5f2eb;
-  transition: transform 0.25s ease, opacity 0.2s ease;
+
+  width: 17px;
+  height: 1.5px;
+
+  background-color: #f4f1eb;
+
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease;
 }
 
-/* Two-line clean symmetric rotation to make the close state 'X' */
-nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(1) {
-  transform: translateY(4.5px) rotate(45deg);
+
+/* Hamburger → X */
+
+nav.navbar.custom-navbar
+  .custom-toggler:not(.collapsed)
+  span:nth-child(1) {
+  transform: translateY(3.25px) rotate(45deg);
 }
 
-nav.navbar.custom-navbar .custom-toggler:not(.collapsed) span:nth-child(2) {
-  transform: translateY(-4.5px) rotate(-45deg);
+nav.navbar.custom-navbar
+  .custom-toggler:not(.collapsed)
+  span:nth-child(2) {
+  transform: translateY(-3.25px) rotate(-45deg);
 }
+
 
 /* ==========================================================================
-   MOBILE DROPDOWN SHEET OVERRIDES
+   MOBILE MENU
    ========================================================================== */
+
 @media (max-width: 991.98px) {
+
   nav.navbar.custom-navbar {
-    padding: 16px 0 !important;
+    padding: 13px 0 !important;
   }
 
   nav.navbar.custom-navbar .navbar-collapse {
-    background-color: #121212 !important; 
-    margin-top: 16px !important;
-    padding: 24px 12px !important;
-    border-top: 1px solid #262626 !important; /* Horizontal rule partition line */
-    border-radius: 0px !important; /* Keep design square and structural */
-    box-shadow: none !important; /* Rely on clean solid fills instead of blur shadows */
+    background: #111111 !important;
+
+    margin-top: 13px !important;
+
+    padding: 12px 8px 8px !important;
+
+    border-top: 1px solid #272727 !important;
+
+    border-radius: 0 0 16px 16px !important;
+
+    box-shadow:
+      0 15px 30px rgba(0, 0, 0, 0.3) !important;
   }
+
 
   nav.navbar.custom-navbar .navbar-nav {
-    gap: 12px !important;
+    gap: 3px !important;
+
+    align-items: stretch !important;
   }
+
 
   nav.navbar.custom-navbar .nav-link {
-    text-align: left !important; /* Left alignment resembles clean magazine columns */
     width: 100% !important;
-    padding: 8px 0 !important;
+
+    padding: 13px 12px !important;
+
+    border-radius: 9px !important;
+
+    color: #a2a2a2 !important;
+
+    font-size: 14px !important;
+
+    text-align: left !important;
   }
 
+  nav.navbar.custom-navbar .nav-link:hover {
+    background: #1b1b1b !important;
+
+    color: #f4f1eb !important;
+  }
+
+
+  /* Mobile profile */
+
   nav.navbar.custom-navbar .profile-nav-link {
-    margin-left: 0 !important;
-    margin-top: 16px !important;
-    text-align: center !important;
     width: 100% !important;
+
+    margin-left: 0 !important;
+    margin-top: 8px !important;
+
+    padding: 12px 18px !important;
+
+    text-align: center !important;
+
+    border-radius: 10px !important;
+  }
+}
+
+
+/* ==========================================================================
+   SMALL PHONES
+   ========================================================================== */
+
+@media (max-width: 420px) {
+
+  nav.navbar.custom-navbar .navbar-brand {
+    font-size: 17px !important;
+    letter-spacing: 2px !important;
+  }
+
+  nav.navbar.custom-navbar .custom-toggler {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+
+/* ==========================================================================
+   REDUCED MOTION
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+  nav.navbar.custom-navbar,
+  nav.navbar.custom-navbar *,
+  nav.navbar.custom-navbar *::before,
+  nav.navbar.custom-navbar *::after {
+    transition-duration: 0.01ms !important;
   }
 }
