@@ -1,52 +1,64 @@
 import React, { useState } from "react";
 import "../css/Navbar.css";
 
-function Navigation({ onNavClick }) {
+function Navigation({ onNavClick, currentPath = "home" }) {
   const [isNavExpanded, setIsNavExpanded] = useState(false);
+  // Track active tab locally if parent router state isn't active
+  const [activeTab, setActiveTab] = useState(currentPath);
 
   const handleToggle = () => {
     setIsNavExpanded(!isNavExpanded);
   };
 
   const handleLinkClick = (e, target) => {
-    setIsNavExpanded(false); 
+    e.preventDefault(); // Prevents default jump if using client routing
+    setActiveTab(target); // Highlights selected button instantly
+    setIsNavExpanded(false); // Closes mobile menu
     if (onNavClick) {
       onNavClick(e, target);
     }
   };
 
+  // Helper to check active link
+  const isActive = (tabName) => activeTab === tabName;
+
   return (
-    <nav className="navbar navbar-expand-lg sticky-top custom-navbar">
-      <div className="container px-4">
+    <nav className="navbar navbar-expand-lg fixed-top bsn-navbar">
+      <div className="container px-3 px-md-4">
         
-        {/* LOGO - Elegant Editorial Typography */}
-        <a className="navbar-brand" href="/">
-          BEAUTY <span className="logo-serif">Salon</span>
+        {/* BRAND LOGO */}
+        <a 
+          className="navbar-brand bsn-brand me-auto" 
+          href="/" 
+          onClick={(e) => handleLinkClick(e, "home")}
+        >
+          BEAUTY <span className="bsn-brand-serif">Salon</span>
         </a>
 
-        {/* MINIMALIST LINE TOGGLER */}
+        {/* CUSTOM TOGGLER BUTTON */}
         <button
-          className={`navbar-toggler custom-toggler ${!isNavExpanded ? "collapsed" : ""}`}
+          className={`navbar-toggler bsn-toggler ${!isNavExpanded ? "collapsed" : ""}`}
           type="button"
           onClick={handleToggle}
-          aria-controls="navMenu"
+          aria-controls="bsnNavMenu"
           aria-expanded={isNavExpanded}
           aria-label="Toggle navigation"
         >
           <span></span>
           <span></span>
+          <span></span>
         </button>
 
-        {/* NAVIGATION LINKS CONTAINER */}
+        {/* COLLAPSIBLE NAVIGATION CONTENT */}
         <div 
-          className={`collapse navbar-collapse ${isNavExpanded ? "show" : ""}`} 
-          id="navMenu"
+          className={`collapse navbar-collapse bsn-collapse ${isNavExpanded ? "show" : ""}`} 
+          id="bsnNavMenu"
         >
-          <ul className="navbar-nav ms-auto align-items-lg-center">
+          <ul className="navbar-nav ms-auto align-items-lg-center bsn-nav-list">
             
             <li className="nav-item">
               <a
-                className="nav-link"
+                className={`nav-link bsn-nav-link ${isActive("home") ? "active" : ""}`}
                 href="/"
                 onClick={(e) => handleLinkClick(e, "home")}
               >
@@ -56,7 +68,7 @@ function Navigation({ onNavClick }) {
 
             <li className="nav-item">
               <a
-                className="nav-link"
+                className={`nav-link bsn-nav-link ${isActive("about") ? "active" : ""}`}
                 href="/about"
                 onClick={(e) => handleLinkClick(e, "about")}
               >
@@ -64,12 +76,13 @@ function Navigation({ onNavClick }) {
               </a>
             </li>
 
-            <li className="nav-item">
+            <li className="nav-item mt-2 mt-lg-0">
               <a
-                className="nav-link profile-nav-link text-center"
+                className={`nav-link bsn-profile-link ${isActive("login") ? "active" : ""}`}
                 href="/login"
                 onClick={(e) => handleLinkClick(e, "login")}
               >
+                <span className="bsn-profile-dot"></span>
                 PROFILI
               </a>
             </li>

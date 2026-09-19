@@ -1,301 +1,189 @@
 /* ==========================================================================
-   BEAUTY SALON — DARK LUXURY NAVBAR
+   BEAUTY SALON — CLEAN & STABLE BRAND NAVBAR
    ========================================================================== */
 
-nav.navbar.custom-navbar {
-  background: #111111 !important;
-  border-bottom: 1px solid #242424 !important;
-  padding: 16px 0 !important;
-
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
-
-  transition:
-    padding 0.25s ease,
-    box-shadow 0.25s ease !important;
+nav.navbar.bsn-navbar {
+  background: rgba(17, 19, 17, 0.92) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 12px 0 !important;
+  z-index: 1030;
 }
 
-
-/* ==========================================================================
-   LOGO
-   ========================================================================== */
-
-nav.navbar.custom-navbar .navbar-brand {
-  color: #f4f1eb !important;
-
-  font-size: 19px !important;
+/* BRAND LOGO */
+nav.navbar.bsn-navbar .bsn-brand {
+  color: #ffffff !important;
+  font-size: 18px !important;
   font-weight: 800 !important;
-  letter-spacing: 2.5px !important;
-
+  letter-spacing: 2px !important;
   text-transform: uppercase;
-  line-height: 1;
-
   text-decoration: none !important;
-
-  transition: opacity 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  margin: 0 !important;
 }
 
-nav.navbar.custom-navbar .navbar-brand:hover {
-  opacity: 0.8;
-}
-
-nav.navbar.custom-navbar .logo-serif {
-  font-family: "Playfair Display", "Didot", "Georgia", serif;
-
+nav.navbar.bsn-navbar .bsn-brand-serif {
+  font-family: Georgia, "Times New Roman", serif;
   font-style: italic;
   font-weight: 400;
-
-  letter-spacing: -0.3px;
-
   text-transform: none;
-
-  color: #c7a982;
-
-  margin-left: 3px;
+  color: var(--bsn-gold, #b69663);
+  margin-left: 5px;
 }
 
-
-/* ==========================================================================
-   NAVIGATION LINKS
-   ========================================================================== */
-
-nav.navbar.custom-navbar .navbar-nav {
+/* DESKTOP NAV LINKS */
+nav.navbar.bsn-navbar .bsn-nav-list {
   gap: 4px !important;
 }
 
-nav.navbar.custom-navbar .nav-link {
-  position: relative;
-
-  color: #9c9c9c !important;
-
+/* Base inactive link style */
+nav.navbar.bsn-navbar .bsn-nav-link {
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: transparent !important;
   font-size: 13px !important;
   font-weight: 600 !important;
-  letter-spacing: 0.6px !important;
-
-  text-transform: none;
-
-  padding: 9px 15px !important;
-
-  border-radius: 9px;
-
-  transition:
-    color 0.2s ease,
-    background-color 0.2s ease !important;
+  letter-spacing: 0.5px !important;
+  padding: 8px 14px !important;
+  border-radius: 8px;
+  transition: all 0.2s ease !important;
 }
 
-nav.navbar.custom-navbar .nav-link:hover {
-  color: #f4f1eb !important;
-  background: #1a1a1a !important;
+/* Hover state */
+nav.navbar.bsn-navbar .bsn-nav-link:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 
-
-/* ==========================================================================
-   PROFILE BUTTON
-   ========================================================================== */
-
-nav.navbar.custom-navbar .profile-nav-link {
-  margin-left: 10px !important;
-
-  padding: 9px 21px !important;
-
-  border: 1px solid #c7a982 !important;
-
-  background: transparent !important;
-
-  color: #c7a982 !important;
-
-  border-radius: 999px !important;
-
-  font-size: 12px !important;
+/* Active state (ONLY current active page) */
+nav.navbar.bsn-navbar .bsn-nav-link.active {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.14) !important;
   font-weight: 700 !important;
+}
+
+/* PROFILE BUTTON */
+nav.navbar.bsn-navbar .bsn-profile-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-left: 8px !important;
+  padding: 8px 18px !important;
+  border: 1px solid var(--bsn-gold, #b69663) !important;
+  background: transparent !important;
+  color: var(--bsn-gold, #b69663) !important;
+  border-radius: 100px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
   letter-spacing: 1.2px !important;
-
-  transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease !important;
-
-  box-shadow: none !important;
+  text-decoration: none !important;
+  transition: all 0.2s ease !important;
 }
 
-nav.navbar.custom-navbar .profile-nav-link:hover {
-  background: #c7a982 !important;
-  border-color: #c7a982 !important;
-
-  color: #111111 !important;
-
-  transform: translateY(-1px);
-
-  box-shadow:
-    0 5px 16px rgba(199, 169, 130, 0.18) !important;
+.bsn-profile-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bsn-gold, #b69663);
 }
 
+nav.navbar.bsn-navbar .bsn-profile-link:hover,
+nav.navbar.bsn-navbar .bsn-profile-link.active {
+  background: var(--bsn-gold, #b69663) !important;
+  color: var(--bsn-black, #111311) !important;
+}
 
-/* ==========================================================================
-   MOBILE TOGGLER
-   ========================================================================== */
+nav.navbar.bsn-navbar .bsn-profile-link:hover .bsn-profile-dot,
+nav.navbar.bsn-navbar .bsn-profile-link.active .bsn-profile-dot {
+  background: var(--bsn-black, #111311);
+}
 
-nav.navbar.custom-navbar .custom-toggler {
-  border: 1px solid #303030 !important;
+/* TOGGLER BUTTON */
+nav.navbar.bsn-navbar .bsn-toggler {
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
 
-  background: #181818 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 
   padding: 0 !important;
 
-  box-shadow: none !important;
-  outline: none !important;
-
-  display: flex;
+  display: none;
 
   flex-direction: column;
   justify-content: center;
   align-items: center;
 
-  gap: 5px;
+  gap: 4px;
 
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
 
-  border-radius: 11px !important;
+  border-radius: 8px !important;
 
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease !important;
+  box-shadow: none !important;
 }
 
-nav.navbar.custom-navbar .custom-toggler:hover {
-  background: #202020 !important;
-  border-color: #3b3b3b !important;
-}
-
-nav.navbar.custom-navbar .custom-toggler span {
+nav.navbar.bsn-navbar .bsn-toggler span {
   display: block;
-
   width: 17px;
   height: 1.5px;
-
-  background-color: #f4f1eb;
-
-  transition:
-    transform 0.25s ease,
-    opacity 0.2s ease;
+  background-color: var(--bsn-cream, #f7f5f0);
+  transition: transform 0.25s ease, opacity 0.2s ease;
 }
 
-
-/* Hamburger → X */
-
-nav.navbar.custom-navbar
-  .custom-toggler:not(.collapsed)
-  span:nth-child(1) {
-  transform: translateY(3.25px) rotate(45deg);
+/* HAMBURGER TO X ANIMATION */
+nav.navbar.bsn-navbar .bsn-toggler:not(.collapsed) span:nth-child(1) {
+  transform: translateY(5.5px) rotate(45deg);
 }
 
-nav.navbar.custom-navbar
-  .custom-toggler:not(.collapsed)
-  span:nth-child(2) {
-  transform: translateY(-3.25px) rotate(-45deg);
+nav.navbar.bsn-navbar .bsn-toggler:not(.collapsed) span:nth-child(2) {
+  opacity: 0;
 }
 
+nav.navbar.bsn-navbar .bsn-toggler:not(.collapsed) span:nth-child(3) {
+  transform: translateY(-5.5px) rotate(-45deg);
+}
 
 /* ==========================================================================
-   MOBILE MENU
+   MOBILE DROPDOWN
    ========================================================================== */
 
 @media (max-width: 991.98px) {
 
-  nav.navbar.custom-navbar {
-    padding: 13px 0 !important;
+  nav.navbar.bsn-navbar .bsn-toggler {
+    display: flex !important;
   }
 
-  nav.navbar.custom-navbar .navbar-collapse {
-    background: #111111 !important;
-
-    margin-top: 13px !important;
-
-    padding: 12px 8px 8px !important;
-
-    border-top: 1px solid #272727 !important;
-
-    border-radius: 0 0 16px 16px !important;
-
-    box-shadow:
-      0 15px 30px rgba(0, 0, 0, 0.3) !important;
+  nav.navbar.bsn-navbar .bsn-collapse {
+    background: var(--bsn-black, #111311) !important;
+    margin-top: 10px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 14px !important;
   }
 
-
-  nav.navbar.custom-navbar .navbar-nav {
-    gap: 3px !important;
-
-    align-items: stretch !important;
+  
+  nav.navbar.bsn-navbar .bsn-collapse {
+    background: var(--bsn-black, #111311) !important;
+    margin-top: 10px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 14px !important;
   }
 
-
-  nav.navbar.custom-navbar .nav-link {
+  nav.navbar.bsn-navbar .bsn-nav-link {
     width: 100% !important;
-
-    padding: 13px 12px !important;
-
-    border-radius: 9px !important;
-
-    color: #a2a2a2 !important;
-
+    padding: 10px 12px !important;
     font-size: 14px !important;
-
     text-align: left !important;
   }
 
-  nav.navbar.custom-navbar .nav-link:hover {
-    background: #1b1b1b !important;
-
-    color: #f4f1eb !important;
-  }
-
-
-  /* Mobile profile */
-
-  nav.navbar.custom-navbar .profile-nav-link {
+  nav.navbar.bsn-navbar .bsn-profile-link {
     width: 100% !important;
-
     margin-left: 0 !important;
-    margin-top: 8px !important;
-
-    padding: 12px 18px !important;
-
-    text-align: center !important;
-
+    padding: 11px !important;
+    text-align: center;
     border-radius: 10px !important;
-  }
-}
-
-
-/* ==========================================================================
-   SMALL PHONES
-   ========================================================================== */
-
-@media (max-width: 420px) {
-
-  nav.navbar.custom-navbar .navbar-brand {
-    font-size: 17px !important;
-    letter-spacing: 2px !important;
-  }
-
-  nav.navbar.custom-navbar .custom-toggler {
-    width: 40px;
-    height: 40px;
-  }
-}
-
-
-/* ==========================================================================
-   REDUCED MOTION
-   ========================================================================== */
-
-@media (prefers-reduced-motion: reduce) {
-
-  nav.navbar.custom-navbar,
-  nav.navbar.custom-navbar *,
-  nav.navbar.custom-navbar *::before,
-  nav.navbar.custom-navbar *::after {
-    transition-duration: 0.01ms !important;
   }
 }

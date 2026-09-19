@@ -11,7 +11,7 @@ function LoginView() {
     if (storedUser && token) return "profile";
     return "checking";
   });
-  
+
   const [error, setError] = useState("");
   const [numriTelefonit, setNumriTelefonit] = useState("");
   const [expandedRow, setExpandedRow] = useState(null);
@@ -560,26 +560,28 @@ function LoginView() {
                 <label>Numri i telefonit</label>
                 <div className="prefix-input-combo">
                   <span className="combo-prefix">+383</span>
-                <input
-  type="tel"
-  inputMode="numeric"
-  pattern="[0-9]*"
-  value={numriTelefonit}
-  onChange={(e) => {
-    let val = e.target.value.replace(/\D/g, "");
-    if (val.startsWith("0")) val = val.substring(1);
-    setNumriTelefonit(val.slice(0, 8));
-  }}
-  placeholder="4xxxxxxx"
-  required
-  maxLength={8}
-  className="auth-combo-input"
-/>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={numriTelefonit}
+                    onChange={(e) => {
+                      let val = e.target.value.replace(/\D/g, "");
+                      if (val.startsWith("0")) val = val.substring(1);
+                      setNumriTelefonit(val.slice(0, 8));
+                    }}
+                    placeholder="4xxxxxxx"
+                    required
+                    maxLength={8}
+                    className="auth-combo-input"
+                  />
                 </div>
               </div>
               <button type="submit" className="auth-btn btn-submit-primary">Dërgo kodin verifikues</button>
             </form>
-            <p className="auth-switch-view-footer">Nuk ke llogari? <span onClick={() => { setView("register"); setError(""); setPhoneError(""); }}>Krijo llogari</span></p>
+            <p className="auth-switch-view-footer">
+              Nuk ke llogari? <span onClick={() => { setView("register"); setError(""); setPhoneError(""); }}>Krijo llogari</span>
+            </p>
           </>
         )}
 
@@ -621,7 +623,9 @@ function LoginView() {
 
               <button type="submit" className="auth-btn btn-submit-primary">Krijo llogari</button>
             </form>
-            <p className="auth-switch-view-footer">Keni llogari? <span onClick={() => { setView("login"); setError(""); }}>Kyçu</span></p>
+            <p className="auth-switch-view-footer">
+              Keni llogari? <span onClick={() => { setView("login"); setError(""); }}>Kyçu</span>
+            </p>
           </>
         )}
 
