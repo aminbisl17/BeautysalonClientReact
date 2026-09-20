@@ -1,0 +1,4 @@
+name = "beautysalon-client"
+
+[assets]
+directory = "./build"
