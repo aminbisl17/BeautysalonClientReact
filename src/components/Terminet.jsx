@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { Client } from "@stomp/stompjs";
 import "../css/terminet.css";
 import {
   fetchServices,
@@ -41,6 +42,9 @@ const [fieldErrors, setFieldErrors] = useState({
   const tempDateRef = useRef("");
   const tempTimeRef = useRef("");
 
+  const stompClientRef = useRef(null);
+const availabilitySubscriptionRef = useRef(null);
+
   const [formData, setFormData] = useState({
     clientId: null,
     emri: "",
@@ -75,6 +79,7 @@ const [fieldErrors, setFieldErrors] = useState({
   });
 
   useEffect(() => {
+
     const storedUser = sessionStorage.getItem("userDetails");
  console.log("stored user " + JSON.parse(storedUser));
     if (storedUser) {
@@ -104,7 +109,59 @@ const [fieldErrors, setFieldErrors] = useState({
     loadEmployees();
   }, []);
 
-  
+  useEffect(() => {
+
+    const client = new Client({
+
+        webSocketFactory: () => {
+            return new WebSocket(
+                process.env.REACT_APP_WEBSOCKET_URL
+            );
+        },
+
+        reconnectDelay: 5000,
+
+        debug: (message) => {
+            console.log("[STOMP]", message);
+        },
+
+        onConnect: () => {
+            console.log("✅ STOMP CONNECTED");
+            stompClientRef.current = client;
+        },
+
+        onWebSocketError: (error) => {
+            console.error("❌ WebSocket error:", error);
+        },
+
+        onStompError: (frame) => {
+            console.error("❌ STOMP error:", frame.headers);
+            console.error(frame.body);
+        },
+
+        onDisconnect: () => {
+            console.log("🔌 WebSocket disconnected");
+        }
+    });
+
+    stompClientRef.current = client;
+
+    client.activate();
+
+    return () => {
+        console.log("🔌 Closing STOMP connection");
+
+        if (availabilitySubscriptionRef.current) {
+            availabilitySubscriptionRef.current.unsubscribe();
+            availabilitySubscriptionRef.current = null;
+        }
+
+        client.deactivate();
+        stompClientRef.current = null;
+    };
+
+}, []);
+
   const handleEmployeeChange = async (e) => {
   const chosenId = Number(e.target.value);
 
@@ -126,7 +183,12 @@ const [fieldErrors, setFieldErrors] = useState({
     setFormData((prev) => ({ ...prev, employeeId: chosenId, detajetTermineve: [] }));
     const matchedStaff = employeesList.find((emp) => Number(emp.ID) === chosenId || Number(emp.id) === chosenId);
     setSelectedEmployeeData(matchedStaff || null);
+  try {
     await fetchEmployeeDetails(chosenId, token);
+
+      } catch (err) {
+  console.error("Employee WebSocket failed:", err);
+}
     return;
   }
 
@@ -177,6 +239,8 @@ if (Object.values(errors).some(Boolean)) {
     setLoading(false);
   }
 };
+
+/*
  
 const fetchEmployeeDetails = async (employeeId, token) => {
   try {
@@ -225,6 +289,83 @@ setFiltered([]);
   } finally {
     setLoading(false);
   }
+};
+*/
+const fetchEmployeeDetails = async (employeeId) => {
+    const client = stompClientRef.current;
+
+    if (!client || !client.connected) {
+        throw new Error("WebSocket is not connected");
+    }
+
+    setLoading(true);
+
+    if (availabilitySubscriptionRef.current) {
+        availabilitySubscriptionRef.current.unsubscribe();
+    }
+
+    availabilitySubscriptionRef.current = client.subscribe(
+        `/topic/availability/${employeeId}`,
+        (message) => {
+            try {
+             //   console.log("📨 Availability update:", message.body);
+
+                const data = JSON.parse(message.body);
+
+                const rawDates = data.dates || [];
+
+                const parsedDates = rawDates.map((d) =>
+                    typeof d === "string"
+                        ? d.replace(/-/g, "/")
+                        : d
+                );
+
+                setEmployeeAvailability(parsedDates);
+                setLoading(false);
+
+            } catch (err) {
+                console.error("Error processing availability:", err);
+                setLoading(false);
+            }
+        }
+    );
+
+    // Initial HTTP fetch
+    try {
+        const response = await fetch(
+           `${process.env.REACT_APP_TERMINET_EMPLOYEE_DETAILS}/${employeeId}`,
+            {
+                headers: {
+                    Authorization:
+                        `Bearer ${sessionStorage.getItem("accessToken")}`
+                }
+            }
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const rawDates = data.dates || [];
+
+        const parsedDates = rawDates.map((d) =>
+            typeof d === "string"
+                ? d.replace(/-/g, "/")
+                : d
+        );
+
+        setEmployeeAvailability(parsedDates);
+        setLoading(false);
+
+        return data;
+
+    } catch (error) {
+        setLoading(false);
+        console.error("Failed to fetch employee availability:", error);
+        throw error;
+    }
 };
   async function loadEmployees() {
     try {
@@ -645,7 +786,15 @@ const availableTimes = selectedAvailability
         (emp) => Number(emp.ID) === targetEmpId || Number(emp.id) === targetEmpId
       );
       setSelectedEmployeeData(matchedStaff || null);
+      
+
+      try {
+  
       await fetchEmployeeDetails(targetEmpId, data.token);
+} catch (err) {
+  console.error("Employee WebSocket failed:", err);
+}
+
       setPendingEmployeeId(null);
     }
   } catch (err) {
