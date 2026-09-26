@@ -25,6 +25,7 @@ const [fieldErrors, setFieldErrors] = useState({
 });
   // Ruajmë të dhënat e disponueshmërisë të kthyeshme nga API
   const [employeeAvailability, setEmployeeAvailability] = useState(null);
+  const [unavailableDates, setUnavailableDates] = useState([]);
 
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -166,9 +167,10 @@ const availabilitySubscriptionRef = useRef(null);
   const chosenId = Number(e.target.value);
 
   // Clear services immediately so old employee data vanishes instantly
-  setServices([]);
-  setFiltered([]);
-  setEmployeeAvailability(null);
+setServices([]);
+setFiltered([]);
+setEmployeeAvailability(null);
+setUnavailableDates([]);
 
   if (!chosenId) {
     setFormData((prev) => ({ ...prev, employeeId: "", detajetTermineve: [] }));
@@ -308,20 +310,20 @@ const fetchEmployeeDetails = async (employeeId) => {
         `/topic/availability/${employeeId}`,
         (message) => {
             try {
-             //   console.log("📨 Availability update:", message.body);
+                console.log("📨 Availability update:");
 
                 const data = JSON.parse(message.body);
+const rawDates = data.dates || [];
 
-                const rawDates = data.dates || [];
+const parsedDates = rawDates.map((d) =>
+    typeof d === "string"
+        ? d.replace(/-/g, "/")
+        : d
+);
 
-                const parsedDates = rawDates.map((d) =>
-                    typeof d === "string"
-                        ? d.replace(/-/g, "/")
-                        : d
-                );
-
-                setEmployeeAvailability(parsedDates);
-                setLoading(false);
+setEmployeeAvailability(parsedDates);
+setUnavailableDates(data.unavailableDates || []);
+setLoading(false);
 
             } catch (err) {
                 console.error("Error processing availability:", err);
@@ -348,17 +350,17 @@ const fetchEmployeeDetails = async (employeeId) => {
 
         const data = await response.json();
 
-        const rawDates = data.dates || [];
+       const rawDates = data.dates || [];
 
-        const parsedDates = rawDates.map((d) =>
-            typeof d === "string"
-                ? d.replace(/-/g, "/")
-                : d
-        );
+const parsedDates = rawDates.map((d) =>
+    typeof d === "string"
+        ? d.replace(/-/g, "/")
+        : d
+);
 
-        setEmployeeAvailability(parsedDates);
-        setLoading(false);
-
+setEmployeeAvailability(parsedDates);
+setUnavailableDates(data.unavailableDates || []);
+setLoading(false);
         return data;
 
     } catch (error) {
@@ -991,13 +993,14 @@ const availableTimes = selectedAvailability
   </div>
 
   {/* Replaced <div className="datetime-grid"> with component */}
-  <AppointmentDateTimePicker
-    availabilityData={{ dates: employeeAvailability }} // Pass backend availability object here
-    valueData={formData.data}
-    valueOra={formData.ora}
-    onChange={handleDateTimeChange}
-    slotDuration={15} // 15-minute slot steps
-  />
+ <AppointmentDateTimePicker
+  availabilityData={{ dates: employeeAvailability }}
+  unavailableDates={unavailableDates}
+  valueData={formData.data}
+  valueOra={formData.ora}
+  onChange={handleDateTimeChange}
+  slotDuration={15}
+/>
 
   <div className="input-box" style={{ marginTop: '1rem' }}>
     <label>Shënime Specifike</label>

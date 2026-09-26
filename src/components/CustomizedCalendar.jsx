@@ -23,11 +23,13 @@ const formatDateString = (date) => {
 
 export default function AppointmentDateTimePicker({
   availabilityData = { dates: [] },
+  unavailableDates = [],
   onChange = () => {},
   valueData = '',
   valueOra = '',
-  slotDuration = 30 // Default 30 min salon slots
+  slotDuration = 30
 }) {
+
   const [currentMonth, setCurrentMonth] = useState(() => {
     return valueData ? new Date(`${valueData}T00:00:00`) : new Date();
   });
@@ -95,33 +97,53 @@ export default function AppointmentDateTimePicker({
     return days;
   }, [currentMonth, availabilityData]);
 
-  // Generate simple available time slots list
-   const availableSlots = useMemo(() => {
-    if (!selectedDateStr) return [];
 
-    const dateObj = new Date(`${selectedDateStr}T00:00:00`);
-    const rule = getRuleForDate(dateObj);
-    if (!rule) return [];
+  const availableSlots = useMemo(() => {
+  if (!selectedDateStr) return [];
 
-    const startMin = timeToMinutes(rule.start_time);
-    const endMin = timeToMinutes(rule.end_time);
-    const pauseStartMin = timeToMinutes(rule.pause_start);
-    const pauseEndMin = timeToMinutes(rule.pause_end);
+  const dateObj = new Date(`${selectedDateStr}T00:00:00`);
+  const rule = getRuleForDate(dateObj);
 
-    const slots = [];
+  if (!rule) return [];
 
-    // Step by 5 minutes instead of slotDuration
-    for (let current = startMin; current + slotDuration <= endMin; current += 5) {
-      const slotEnd = current + slotDuration;
-      const overlapsPause = !(slotEnd <= pauseStartMin || current >= pauseEndMin);
+  const startMin = timeToMinutes(rule.start_time);
+  const endMin = timeToMinutes(rule.end_time);
+  const pauseStartMin = timeToMinutes(rule.pause_start);
+  const pauseEndMin = timeToMinutes(rule.pause_end);
 
-      if (!overlapsPause) {
-        slots.push(minutesToTime(current));
-      }
+  const slots = [];
+
+  for (
+    let current = startMin;
+    current + slotDuration <= endMin;
+    current += 5
+  ) {
+    const slotEnd = current + slotDuration;
+
+    const overlapsPause =
+      !(slotEnd <= pauseStartMin || current >= pauseEndMin);
+
+    if (!overlapsPause) {
+      const time = minutesToTime(current);
+
+      const isUnavailable = unavailableDates.some((unavailable) => {
+        return unavailable === `${selectedDateStr}T${time}`;
+      });
+
+      slots.push({
+        time,
+        unavailable: isUnavailable
+      });
     }
+  }
 
-    return slots;
-  }, [selectedDateStr, availabilityData, slotDuration])
+  return slots;
+}, [
+  selectedDateStr,
+  availabilityData,
+  unavailableDates,
+  slotDuration
+]);
 
   // Handlers
   const handleDateSelect = (dateStr) => {
@@ -199,21 +221,37 @@ export default function AppointmentDateTimePicker({
         {selectedDateStr ? (
           availableSlots.length > 0 ? (
             <div className="time-vertical-scroll">
-              {availableSlots.map((time) => {
-                const displayTime = time.substring(0, 5);
-                const isSelected = selectedTimeStr === time;
-                return (
-                  <button
-                    key={time}
-                    type="button"
-                    className={`time-slot-btn ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleTimeSelect(time)}
-                  >
-                    <span>{displayTime}</span>
-                    {isSelected && <span className="check-icon">✓</span>}
-                  </button>
-                );
-              })}
+            {availableSlots.map(({ time, unavailable }) => {
+  const displayTime = time.substring(0, 5);
+  const isSelected = selectedTimeStr === time;
+
+  return (
+    <button
+      key={time}
+      type="button"
+      disabled={unavailable}
+      className={`time-slot-btn
+        ${isSelected ? 'selected' : ''}
+        ${unavailable ? 'unavailable' : ''}
+      `}
+      onClick={() => {
+        if (!unavailable) {
+          handleTimeSelect(time);
+        }
+      }}
+    >
+      <span>{displayTime}</span>
+
+      {unavailable && (
+        <span className="unavailable-label">Zënë</span>
+      )}
+
+      {isSelected && !unavailable && (
+        <span className="check-icon">✓</span>
+      )}
+    </button>
+  );
+})}
             </div>
           ) : (
             <div className="empty-state">
