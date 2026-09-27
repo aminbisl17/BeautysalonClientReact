@@ -616,25 +616,6 @@ const handleDateTimeChange = ({ data, ora, dataCaktimit }) => {
 };
 
 
-const handleDateChange = (e) => {
-  const date = e.target.value;
-
-  const availability = getAvailabilityForDate(date);
-
-  setSelectedAvailability(availability);
-
-  // Filter services according to the selected date
-  filterServicesForDate(date);
-
-  setFormData(prev => ({
-    ...prev,
-    data: date,
-    ora: "",
-    detajetTermineve: []
-  }));
-};
-
-
 const generateTimes = (start, end) => {
     const result = [];
 
