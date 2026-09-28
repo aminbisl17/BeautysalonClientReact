@@ -9,6 +9,7 @@ import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
 import AppointmentDateTimePicker from "./CustomizedCalendar";
+import SockJS from "sockjs-client";
 
 export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
