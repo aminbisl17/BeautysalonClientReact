@@ -241,58 +241,6 @@ if (Object.values(errors).some(Boolean)) {
     setLoading(false);
   }
 };
-
-/*
- 
-const fetchEmployeeDetails = async (employeeId, token) => {
-  try {
-    setLoading(true);
-
-    const refreshToken = sessionStorage.getItem("refreshToken");
-    const headers = { "Content-Type": "application/json" };
-
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    if (refreshToken) headers["Refresh-Token"] = refreshToken;
-
-    const res = await fetch(
-      `${process.env.REACT_APP_TERMINET_EMPLOYEE_DETAILS}/${employeeId}`,
-      { method: "GET", headers }
-    );
-
-    if (!res.ok) {
-      throw new Error(`Kodi i gabimit: ${res.status}`);
-    }
-
-    const data = await res.json();
-
-const rawDates = data.dates || data.availability || [];
-
-const parsedDates = Array.isArray(rawDates)
-  ? rawDates.map((d) =>
-      typeof d === "string"
-        ? d.replace(/-/g, "/")
-        : d
-    )
-  : rawDates;
-
-setEmployeeAvailability(parsedDates);
-
-// Services are date-dependent.
-// Do NOT use data.services/data.sherbimet here.
-setServices([]);
-setFiltered([]);
-
-  } catch (err) {
-    console.error("Gabim gjatë marrjes së të dhënave të punëtorit:", err);
-    // Clear state on error so previous services don't persist
-    setServices([]);
-    setFiltered([]);
-    setEmployeeAvailability(null);
-  } finally {
-    setLoading(false);
-  }
-};
-*/
 const fetchEmployeeDetails = async (employeeId) => {
     const client = stompClientRef.current;
 
