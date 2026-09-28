@@ -111,13 +111,15 @@ const availabilitySubscriptionRef = useRef(null);
   }, []);
 
   useEffect(() => {
-
     const client = new Client({
-
         webSocketFactory: () => {
-            return new WebSocket(
-                process.env.REACT_APP_WEBSOCKET_URL
-            );
+            const url = process.env.REACT_APP_WEBSOCKET_URL
+                .replace(/^wss:\/\//, "https://")
+                .replace(/^ws:\/\//, "http://");
+
+            console.log("Connecting SockJS:", url);
+
+            return new SockJS(url);
         },
 
         reconnectDelay: 5000,
@@ -136,12 +138,15 @@ const availabilitySubscriptionRef = useRef(null);
         },
 
         onStompError: (frame) => {
-            console.error("❌ STOMP error:", frame.headers);
+            console.error(
+                "❌ STOMP error:",
+                frame.headers
+            );
             console.error(frame.body);
         },
 
         onDisconnect: () => {
-            console.log("🔌 WebSocket disconnected");
+            console.log("🔌 STOMP disconnected");
         }
     });
 
@@ -160,8 +165,8 @@ const availabilitySubscriptionRef = useRef(null);
         client.deactivate();
         stompClientRef.current = null;
     };
-
 }, []);
+
 
   const handleEmployeeChange = async (e) => {
   const chosenId = Number(e.target.value);
