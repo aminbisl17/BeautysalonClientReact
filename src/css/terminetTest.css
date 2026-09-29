@@ -1,1099 +1,1733 @@
-/* ==========================================================================
-   LIGHT EDITORIAL LUXURY ARCHITECTURE ENGINE
-   ========================================================================== */
-:root {
-  --modal-bg: #ffffff;            /* Pure crisp white for card surfaces */
-  --modal-overlay: rgba(28, 26, 23, 0.4); /* Elegant warm frosted overlay */
-  --primary-color: #b3977d;       /* High-contrast luxury gold accent */
-  --primary-hover: #9c8269;       /* Deepened gold tone for rich interactions */
-  --text-main: #1c1a17;           /* True deep charcoal for premium legibility */
-  --text-muted: #6e6a64;          /* Soft slate taupe for elegant micro-descriptions */
-  --border-color: rgba(0, 0, 0, 0.08); /* Clean, ultra-thin high-contrast borders */
-  --bg-surface: #f9f8f6;          /* Alabaster cream backdrop asset */
-  --radius-lg: 24px;              /* Organic mobile bottom-sheet cornering */
-  --radius-md: 16px;              /* Standard responsive layout cornering */
-  --radius-sm: 10px;              /* Tactile UI selection component cornering */
-  --shadow-xl: 0 12px 35px rgba(28, 26, 23, 0.06); /* Balanced soft shadow profile */
-  --font-serif: "Playfair Display", serif;
-}
-
-/* ==========================================================================
-   GLOBAL PAGE
-   ========================================================================== */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-input,
-select,
-textarea {
-  font-size: 16px !important;
-  line-height: 1.2;
-  -webkit-text-size-adjust: 100%;
-  touch-action: manipulation;
-}
+/* ================================================================
+   BOOKING (TERMINET) — EDITORIAL LUXURY UI
+   Consistent with Home, About and Navbar (bsn-* tokens).
+   CSS only: no JSX or class-name changes needed.
+   Everything is scoped under .termini-page so About/Login CSS
+   (.section-header, .spinner, .empty-state ...) can't clash.
+   Mobile-first.
+   ================================================================ */
 
 .termini-page {
-  background: var(--bg-surface);
+  --tm-black: var(--bsn-black, #111311);
+  --tm-green: var(--bsn-green, #24483a);
+  --tm-green-light: var(--bsn-green-light, #e8f0eb);
+  --tm-cream: var(--bsn-cream, #f7f5f0);
+  --tm-cream-dark: var(--bsn-cream-dark, #ece8df);
+  --tm-text: var(--bsn-text, #171916);
+  --tm-muted: var(--bsn-muted, #777a73);
+  --tm-light: var(--bsn-light-text, #a2a59e);
+  --tm-gold: var(--bsn-gold, #b69663);
+  --tm-gold-soft: #d7c29d;
+  --tm-red: var(--bsn-red, #b94e48);
+  --tm-border: var(--bsn-border, rgba(17, 19, 17, 0.09));
+  --tm-font: var(--bsn-font, -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif);
+  --tm-serif: Georgia, "Times New Roman", serif;
+
+  /* fixed navbar height (64px) + phone notch */
+  --tm-nav: calc(64px + env(safe-area-inset-top, 0px));
+
   min-height: 100vh;
-  color: var(--text-main);
-  padding: 24px 16px;
+  min-height: 100dvh;
+
+  /* room for the mobile bottom bar */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+
+  background: linear-gradient(180deg, #faf9f6 0%, var(--tm-cream) 45%, #f4f1eb 100%);
+
+  color: var(--tm-text);
+  font-family: var(--tm-font);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (min-width: 768px) {
-  .termini-page {
-    padding: 60px 20px;
-  }
-}
-
-.termini-container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.termini-header {
-  margin-bottom: 32px;
-}
-
-.termini-header h1 {
-  font-size: 28px;
-  font-weight: 300;
-  letter-spacing: 1px;
-  margin-bottom: 8px;
-}
-
-@media (min-width: 768px) {
-  .termini-header h1 {
-    font-size: 36px;
-    letter-spacing: 2px;
-  }
-}
-
-.title-serif {
-  font-family: var(--font-serif);
-  font-style: italic;
-}
-
-.termini-header p {
-  color: var(--text-muted);
-  line-height: 1.6;
-  font-size: 15px;
-}
-
-/* ==========================================================================
-   GRID
-   ========================================================================== */
-.termini-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-@media (min-width: 1024px) {
-  .termini-grid {
-    display: grid;
-    grid-template-columns: 7fr 4fr;
-    gap: 32px;
-  }
-}
-
-/* ==========================================================================
-   FORM CARDS
-   ========================================================================== */
-.form-section-card,
-.summary-widget {
-  background: var(--modal-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  box-shadow: var(--shadow-xl);
-}
-
-@media (min-width: 768px) {
-  .form-section-card,
-  .summary-widget {
-    padding: 24px;
-  }
-}
-
-.section-title {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--primary-color);
-  margin-bottom: 20px;
-}
-
-.input-group-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-@media (min-width: 640px) {
-  .input-group-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.input-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.input-box label {
-  font-size: 11px;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 1px;
-  font-weight: 600;
-}
-
-.input-box input,
-.input-box select,
-.input-box textarea {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  padding: 14px;
-  font-size: 16px; /* prevents iOS zoom */
-  width: 100%;
-  appearance: none;
-  -webkit-appearance: none;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@media (min-width: 768px) {
-  .input-box input,
-  .input-box select,
-  .input-box textarea {
-    font-size: 16px; /* keep 16px to prevent iOS zoom */
-  }
-}
-
-.input-box input:focus,
-.input-box select:focus,
-.input-box textarea:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background: var(--modal-bg);
-  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
-}
-
-/* ==========================================================================
-   PHONE INPUT OVERHAUL
-   ========================================================================== */
-.phone-input-wrapper {
-  display: flex;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.phone-input-wrapper:focus-within {
-  border-color: var(--primary-color);
-  background: var(--modal-bg);
-  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
-}
-
-.phone-prefix {
-  padding: 14px;
-  color: var(--text-muted);
-  border-right: 1px solid var(--border-color);
-  background: rgba(0, 0, 0, 0.02);
-  font-size: 16px;
-  font-weight: 500;
-}
-
-@media (min-width: 768px) {
-  .phone-prefix {
-    font-size: 14px;
-  }
-}
-
-.phone-input-wrapper input {
-  flex: 1;
-  border: none !important;
-  border-radius: 0;
-  background: transparent !important;
-}
-
-/* ==========================================================================
-   SERVICES
-   ========================================================================== */
-.services-section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.services-search {
-  width: 100%;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  padding: 14px;
-  font-size: 16px;
-  transition: all 0.2s ease;
-}
-
-.services-search:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background: var(--modal-bg);
-  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
-}
-
-@media (min-width: 768px) {
-  .services-search {
-    font-size: 14px;
-  }
-}
-
-.services-modern-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-}
-
-@media (min-width: 480px) {
-  .services-modern-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 20px;
-  }
-}
-
-.service-modern-card {
-  background: var(--modal-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 2px 8px rgba(28, 26, 23, 0.02);
-}
-
-.service-modern-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 20px rgba(28, 26, 23, 0.06);
-}
-
-.service-modern-card.selected {
-  border-color: var(--primary-color);
-  background: #fbf9f6;
-  box-shadow: 0 0 0 1px var(--primary-color);
-}
-
-.service-image-container {
-  height: 110px;
-  overflow: hidden;
-  position: relative;
-  background: var(--bg-surface);
-}
-
-@media (min-width: 480px) {
-  .service-image-container {
-    height: 130px;
-  }
-}
-
-.service-image-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.selected-indicator {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.selected-indicator span {
-  background: var(--text-main);
-  border-radius: var(--radius-sm);
-  padding: 6px 12px;
-  color: #ffffff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-}
-
-.service-details {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-
-.service-details h4 {
-  font-size: 15px;
-  margin: 0 0 8px;
-  font-weight: 600;
-}
-
-.service-meta {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  padding-top: 10px;
-  margin-top: auto;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.service-meta .price {
-  color: var(--text-main);
-  font-weight: 700;
-}
-
-/* ==========================================================================
-   SIDEBAR / SUMMARY
-   ========================================================================== */
-.termini-sidebar {
-  position: static;
-}
-
-@media (min-width: 1024px) {
-  .termini-sidebar {
-    position: sticky;
-    top: 30px;
-  }
-}
-
-.summary-widget h3 {
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 20px;
-  color: var(--text-main);
-  font-weight: 700;
-}
-
-.summary-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.summary-item span:last-child {
-  color: var(--text-main);
-  font-weight: 500;
-}
-
-.summary-divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 20px 0;
-}
-
-.summary-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.total-amount {
-  color: var(--text-main);
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.book-now-btn {
-  width: 100%;
-  margin-top: 20px;
-  background: var(--text-main);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  font-weight: 700;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.book-now-btn:hover {
-  background: var(--primary-hover);
-}
-
-/* ==========================================================================
-   CUSTOM MODAL & SHEET UX (THUMB OPTIMIZED MOBILE LAYOUTS)
-   ========================================================================== */
-.custom-modal-overlay,
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--modal-overlay);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-end; 
-  z-index: 1000;
-  padding: 0;
-}
-
-@media (min-width: 640px) {
-  .custom-modal-overlay,
-  .modal-overlay {
-    align-items: center;
-    padding: 20px;
-  }
-}
-
-.custom-modal-sheet {
-  width: 100%;
-  max-width: 550px;
-  max-height: 85vh;
-  background: var(--modal-bg);
-  border-top-left-radius: var(--radius-lg);
-  border-top-right-radius: var(--radius-lg);
-  border-bottom-left-radius: 0;
-  border-bottom-right-radius: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 -10px 30px rgba(28, 26, 23, 0.08);
-  animation: modalSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  padding-bottom: env(safe-area-inset-bottom, 14px);
-}
-
-@media (min-width: 640px) {
-  .custom-modal-sheet {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    max-height: 90vh;
-    padding-bottom: 0;
-    box-shadow: var(--shadow-xl);
-  }
-}
-
-.custom-modal-header {
-  padding: 18px 20px;
-  border-bottom: 1px solid var(--border-color);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-@media (min-width: 640px) {
-  .custom-modal-header {
-    padding: 20px 24px;
-  }
-}
-
-.custom-modal-subtitle {
-  color: var(--primary-color);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 700;
-}
-
-.custom-modal-title {
-  color: var(--text-main);
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.custom-modal-close-btn {
-  background: var(--bg-surface);
-  border: none;
-  color: var(--text-main);
-  cursor: pointer;
-  padding: 8px; 
-  font-size: 14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.custom-modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-@media (min-width: 640px) {
-  .custom-modal-body {
-    padding: 24px;
-  }
-}
-
-.custom-modal-hero-wrapper {
-  height: 160px;
-  overflow: hidden;
-  margin-bottom: 16px;
-  border-radius: var(--radius-md);
-  background: var(--bg-surface);
-}
-
-@media (min-width: 480px) {
-  .custom-modal-hero-wrapper {
-    height: 220px;
-  }
-}
-
-.custom-modal-hero-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.custom-modal-description {
-  color: var(--text-muted);
-  margin-bottom: 20px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.custom-modal-metrics {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.custom-modal-metric-pill {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-}
-
-.custom-modal-metric-pill label {
-  color: var(--text-muted);
-  font-size: 11px;
-  display: block;
-  margin-bottom: 4px;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.custom-modal-metric-pill span {
-  color: var(--text-main);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-.custom-modal-section-title {
-  margin-top: 24px;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.custom-modal-searchbar {
-  margin: 16px 0;
-}
-
-.custom-modal-searchbar input {
-  width: 100%;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  padding: 14px;
-  font-size: 16px;
-}
-
-.custom-modal-searchbar input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  background: var(--modal-bg);
-}
-
-.custom-modal-attributes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.custom-modal-attr-card {
-  background: var(--modal-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  padding: 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-  font-size: 15px;
-  transition: all 0.2s ease;
-}
-
-.custom-modal-attr-card:hover {
-  border-color: var(--primary-color);
-  background: var(--bg-surface);
-}
-
-.custom-modal-attr-card.selected {
-  border-color: var(--text-main);
-  background: #f4f3f0;
-  font-weight: 600;
-}
-
-.custom-modal-attr-price {
-  color: var(--text-main);
-  font-weight: 700;
-}
-
-.custom-modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border-color);
-  background: var(--modal-bg);
-}
-
-@media (min-width: 640px) {
-  .custom-modal-footer {
-    padding: 20px;
-  }
-}
-
-.custom-modal-btn {
-  width: 100%;
-  padding: 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-.custom-modal-btn-primary {
-  background: var(--text-main);
-  color: #ffffff;
-}
-
-/* ==========================================================================
-   OTP MODAL
-   ========================================================================== */
-.modal-box {
-  width: 100%;
-  max-width: 420px;
-  background: var(--modal-bg);
-  border-top-left-radius: var(--radius-lg);
-  border-top-right-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: 0 -10px 30px rgba(28, 26, 23, 0.08);
-  animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  padding-bottom: env(safe-area-inset-bottom, 24px);
-}
-
-@media (min-width: 640px) {
-  .modal-box {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 32px;
-    box-shadow: var(--shadow-xl);
-  }
-}
-
-.modal-box h2 {
-  margin-bottom: 12px;
-  font-size: 22px;
-  font-weight: 600;
-}
-
-.modal-box p {
-  color: var(--text-muted);
-  margin-bottom: 24px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.cancel-btn {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  padding: 14px;
-  font-size: 16px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.2s ease;
-}
-
-.cancel-btn:hover {
-  background: var(--bg-surface);
-  border-color: var(--text-main);
-}
-
-/* ==========================================================================
-   EMPLOYEE CARD
-   ========================================================================== */
-.employee-profile-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 16px;
-  margin-top: 16px;
-  padding: 20px;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  background: var(--modal-bg);
-  box-shadow: 0 4px 12px rgba(28, 26, 23, 0.02);
-}
-
-@media (min-width: 480px) {
-  .employee-profile-preview {
-    flex-direction: row;
-    text-align: left;
-    align-items: flex-start;
-  }
-}
-
-.employee-avatar-badge {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary-color), #d5c3b1);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(179, 151, 125, 0.2);
-}
-
-.employee-details-block {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.employee-details-block h4 {
-  font-weight: 600;
-}
-
-.employee-role-tag {
-  color: var(--primary-color);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 700;
-}
-
-.employee-bio {
-  color: var(--text-muted);
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* ==========================================================================
-   TIME PICKER GRID ARCHITECTURE
-   ========================================================================== */
-.datetime-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-@media (max-width: 480px) {
-  .datetime-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.datetime-grid input {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  padding: 14px;
-  border-radius: var(--radius-sm);
-  color: var(--text-main);
-  font-size: 16px;
-  transition: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.datetime-grid input:focus {
-  border-color: var(--primary-color);
-  background: var(--modal-bg);
-  box-shadow: 0 0 0 3px rgba(179, 151, 125, 0.08);
-}
-
-/* ==========================================================================
-   ANIMATIONS
-   ========================================================================== */
-@keyframes modalSlideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@media (min-width: 640px) {
-  @keyframes modalSlideUp {
-    from {
-      opacity: 0;
-      transform: translateY(24px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-}
-
-/* ==========================================================================
-   BOOKING CONFIRMATION DIALOG
-   ========================================================================== */
-.confirm-dialog {
-  width: 100%;
-  max-width: 480px;
-  background: var(--modal-bg);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-xl);
-  animation: modalSlideUp .3s cubic-bezier(0.16,1,0.3,1);
-  overflow: hidden;
+.termini-page,
+.termini-page *,
+.termini-page *::before,
+.termini-page *::after {
   box-sizing: border-box;
 }
 
-/* HEADER */
-.confirm-dialog-header {
-  padding: 26px 30px 18px;
+.termini-page button,
+.termini-page input,
+.termini-page textarea {
+  font-family: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.termini-page .animate-fade-in {
+  animation: tmFade 0.45s ease both;
+}
+
+.termini-page .animate-slide-up {
+  animation: tmSheetIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+
+/* ================================================================
+   HEADER (dark editorial band, same family as About hero)
+   ================================================================ */
+
+.termini-page .termini-header {
+  position: relative;
+
+  padding: calc(var(--tm-nav) + 34px) 22px 74px;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(circle at 90% 0%, rgba(182, 150, 99, 0.16), transparent 55%),
+    linear-gradient(135deg, #111311 0%, #1c2e25 100%);
+
   text-align: center;
-  border-bottom: 1px solid var(--border-color);
 }
 
-.confirm-dialog-icon {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 18px;
-  border-radius: 50%;
-  background: rgba(179,151,125,.12);
-  color: var(--primary-color);
-  display: flex;
-  justify-content: center;
+.termini-page .badge-pill {
+  display: inline-flex;
   align-items: center;
-  font-size: 34px;
-}
 
-.confirm-dialog-subtitle {
+  margin-bottom: 20px;
+  padding: 7px 15px;
+
+  border: 1px solid rgba(182, 150, 99, 0.4);
+  border-radius: 100px;
+
+  color: var(--tm-gold-soft);
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 2.6px;
   text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 11px;
-  color: var(--primary-color);
-  font-weight: 700;
-  margin-bottom: 8px;
 }
 
-.confirm-dialog-title {
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--text-main);
-  margin-bottom: 10px;
+.termini-page .termini-header h1 {
+  max-width: 760px;
+  margin: 0 auto;
+
+  color: #f7f5ef;
+
+  font-size: clamp(42px, 11vw, 78px);
+  font-weight: 560;
+  letter-spacing: -0.06em;
+  line-height: 0.95;
+  text-transform: none;
 }
 
-.confirm-dialog-description {
-  color: var(--text-muted);
-  line-height: 1.7;
-  font-size: 15px;
+.termini-page .title-serif {
+  display: block;
+
+  color: var(--tm-gold-soft);
+
+  font-family: var(--tm-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.04em;
 }
 
-/* BODY */
-.confirm-dialog-body {
-  padding: 24px 30px;
-}
+.termini-page .termini-header p {
+  max-width: 420px;
+  margin: 22px auto 0;
 
-.confirm-summary {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 18px;
-}
+  color: rgba(255, 255, 255, 0.66);
 
-.confirm-summary-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  color: var(--text-muted);
   font-size: 14px;
+  line-height: 1.7;
 }
 
-.confirm-summary-row:last-child {
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+
+.termini-page .termini-container {
+  position: relative;
+
+  width: min(1180px, calc(100% - 24px));
+  margin: -34px auto 0;
+}
+
+.termini-page .termini-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.termini-page .termini-main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  min-width: 0;
+}
+
+.termini-page .termini-sidebar {
+  display: none;
+}
+
+
+/* ================================================================
+   STEP CARDS
+   ================================================================ */
+
+.termini-page .form-section-card {
+  padding: 22px 18px 24px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.94);
+
+  box-shadow: 0 14px 44px rgba(17, 19, 17, 0.07);
+}
+
+.termini-page .section-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  margin-bottom: 22px;
+}
+
+.termini-page .step-badge {
+  flex: 0 0 auto;
+
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--tm-green);
+  color: #e4cfaa;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  box-shadow: 0 0 0 5px rgba(36, 72, 58, 0.09);
+}
+
+.termini-page .section-title {
+  margin: 0;
+
+  color: var(--tm-text);
+
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.7px;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.termini-page .section-subtitle {
+  margin: 4px 0 0;
+
+  color: var(--tm-muted);
+
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.termini-page .empty-prompt-card {
+  padding: 32px 22px;
+
+  border-style: dashed;
+  border-color: rgba(36, 72, 58, 0.25);
+  background: rgba(255, 255, 255, 0.6);
+
+  box-shadow: none;
+  text-align: center;
+}
+
+.termini-page .empty-prompt-card p {
+  margin: 0;
+
+  color: var(--tm-muted);
+
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.6;
+}
+
+
+/* ================================================================
+   FORM FIELDS
+   ================================================================ */
+
+.termini-page .input-group-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0 14px;
+}
+
+.termini-page .input-box {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  margin-bottom: 16px;
+}
+
+.termini-page .input-box:last-child {
   margin-bottom: 0;
 }
 
-.confirm-summary strong {
-  color: var(--text-main);
+.termini-page .input-box label {
+  margin: 0;
+
+  color: var(--tm-muted);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+
+.termini-page .optional-tag {
+  color: var(--tm-light);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: none;
+}
+
+.termini-page .input-box input,
+.termini-page .input-box textarea {
+  width: 100%;
+  min-height: 52px;
+
+  padding: 0 16px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 16px;
+  outline: none;
+
+  background: #fff;
+  color: var(--tm-text);
+
+  font-size: 16px;
+  font-weight: 550;
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.termini-page .input-box textarea {
+  min-height: 92px;
+
+  padding: 14px 16px;
+
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.termini-page .input-box input::placeholder,
+.termini-page .input-box textarea::placeholder {
+  color: #b8bab3;
+  font-weight: 450;
+}
+
+.termini-page .input-box input:focus,
+.termini-page .input-box textarea:focus {
+  border-color: rgba(36, 72, 58, 0.45);
+  box-shadow: 0 0 0 4px rgba(36, 72, 58, 0.08);
+}
+
+.termini-page .input-box .input-error {
+  border-color: rgba(185, 78, 72, 0.55);
+  background: rgba(185, 78, 72, 0.04);
+}
+
+.termini-page .error-text {
+  display: block;
+
+  width: 100%;
+  margin-top: 2px;
+
+  color: var(--tm-red);
+
+  font-size: 11px;
   font-weight: 600;
 }
 
-.confirm-total {
-  margin-top: 18px;
-  padding-top: 18px;
-  border-top: 1px solid var(--border-color);
+/* phone: prefix + input joined, error underneath */
+
+.termini-page .phone-input-wrapper {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.termini-page .phone-prefix {
+  display: flex;
   align-items: center;
+
+  min-height: 52px;
+  padding: 0 14px;
+
+  border: 1px solid var(--tm-border);
+  border-right: 0;
+  border-radius: 16px 0 0 16px;
+
+  background: var(--tm-green-light);
+  color: var(--tm-green);
+
+  font-size: 14px;
+  font-weight: 750;
 }
 
-.confirm-total span:first-child {
-  font-size: 13px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.termini-page .input-box .phone-input-wrapper input {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+
+  border-radius: 0 16px 16px 0;
+
+  letter-spacing: 0.5px;
 }
 
-.confirm-total span:last-child {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-main);
-}
 
-/* FOOTER */
-.confirm-dialog-footer {
+/* ================================================================
+   STAFF SELECTOR
+   ================================================================ */
+
+.termini-page .staff-tiles-scroll {
   display: flex;
-  gap: 14px;
-  padding: 24px 30px 30px;
+  gap: 10px;
+
+  margin: 0 -18px;
+  padding: 4px 18px 12px;
+
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scroll-padding: 0 18px;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: none;
 }
 
-.confirm-dialog-footer button {
+.termini-page .staff-tiles-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.termini-page .staff-tile-card {
+  position: relative;
+
+  flex: 0 0 112px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  padding: 18px 10px 16px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 22px;
+
+  background: #fff;
+  color: var(--tm-text);
+
+  text-align: center;
+  cursor: pointer;
+
+  scroll-snap-align: start;
+
+  transition: transform 0.2s ease, background 0.25s ease, border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.termini-page .staff-tile-card:active {
+  transform: scale(0.96);
+}
+
+.termini-page .staff-avatar {
+  width: 54px;
+  height: 54px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 6px;
+
+  border-radius: 50%;
+
+  background: var(--tm-green-light);
+  color: var(--tm-green);
+
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.termini-page .staff-name {
+  max-width: 100%;
+
+  overflow: hidden;
+
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.termini-page .staff-role {
+  color: var(--tm-light);
+
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.termini-page .staff-tile-card.selected {
+  border-color: var(--tm-green);
+  background: var(--tm-green);
+  color: #fff;
+
+  box-shadow: 0 12px 30px rgba(36, 72, 58, 0.24);
+}
+
+.termini-page .staff-tile-card.selected .staff-avatar {
+  background: rgba(255, 255, 255, 0.12);
+  color: #e4cfaa;
+}
+
+.termini-page .staff-tile-card.selected .staff-role {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.termini-page .staff-check {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+
+  width: 20px;
+  height: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--tm-gold);
+  color: var(--tm-black);
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.termini-page .employee-profile-preview {
+  margin-top: 6px;
+  padding: 16px 18px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 18px;
+  background: var(--tm-cream);
+}
+
+.termini-page .employee-bio {
+  margin: 0;
+
+  color: var(--tm-muted);
+
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.termini-page .employee-contact-meta {
+  margin-top: 10px;
+
+  color: var(--tm-green);
+
+  font-size: 12px;
+  font-weight: 650;
+}
+
+
+/* ================================================================
+   SERVICES
+   ================================================================ */
+
+.termini-page .services-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  margin-bottom: 20px;
+}
+
+.termini-page .services-section-header .section-title-wrapper {
+  margin-bottom: 0;
+}
+
+.termini-page .search-wrapper {
+  width: 100%;
+}
+
+.termini-page .services-search {
+  width: 100%;
+  min-height: 48px;
+
+  padding: 0 18px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 100px;
+  outline: none;
+
+  background: #fff;
+  color: var(--tm-text);
+
+  font-size: 16px;
+  font-weight: 550;
+
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.termini-page .services-search:focus {
+  border-color: rgba(36, 72, 58, 0.45);
+  box-shadow: 0 0 0 4px rgba(36, 72, 58, 0.08);
+}
+
+.termini-page .spinner-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+
+  min-height: 200px;
+
+  color: var(--tm-muted);
+
+  font-size: 12px;
+}
+
+.termini-page .spinner-wrapper p {
+  margin: 0;
+}
+
+.termini-page .spinner {
+  width: 28px;
+  height: 28px;
+
+  border: 2px solid #dddcd6;
+  border-top-color: var(--tm-green);
+  border-radius: 50%;
+
+  animation: tmSpin 0.8s linear infinite;
+}
+
+.termini-page .empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 150px;
+  padding: 24px;
+
+  border: 1px dashed rgba(36, 72, 58, 0.22);
+  border-radius: 20px;
+  background: var(--tm-cream);
+
+  text-align: center;
+}
+
+.termini-page .empty-state p {
+  margin: 0;
+
+  color: var(--tm-muted);
+
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.termini-page .services-modern-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.termini-page .service-modern-card {
+  position: relative;
+
+  display: grid;
+  grid-template-columns: 38% 62%;
+
+  overflow: hidden;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 22px;
+  background: #fff;
+
+  cursor: pointer;
+
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.termini-page .service-modern-card:active {
+  transform: scale(0.985);
+}
+
+.termini-page .service-image-container {
+  position: relative;
+
+  min-height: 136px;
+
+  overflow: hidden;
+
+  background: var(--tm-cream-dark);
+}
+
+.termini-page .service-image-container img {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+.termini-page .selected-indicator {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+
+  padding: 5px 9px;
+
+  border-radius: 100px;
+
+  background: var(--tm-green);
+  color: #fff;
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+}
+
+.termini-page .service-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+
+  min-width: 0;
+  padding: 15px 16px;
+}
+
+.termini-page .service-details h4 {
+  margin: 0;
+
+  color: var(--tm-text);
+
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.25;
+}
+
+.termini-page .service-meta {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+
+  padding-top: 11px;
+
+  border-top: 1px solid var(--tm-border);
+}
+
+.termini-page .service-meta .duration {
+  color: var(--tm-muted);
+
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.termini-page .service-meta .price {
+  color: var(--tm-green);
+
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+}
+
+.termini-page .service-modern-card.selected {
+  border-color: var(--tm-green);
+  background: var(--tm-green-light);
+
+  box-shadow: 0 0 0 1px var(--tm-green), 0 12px 30px rgba(36, 72, 58, 0.14);
+}
+
+
+/* ================================================================
+   SUMMARY SIDEBAR (desktop) — dark card like About contact block
+   ================================================================ */
+
+.termini-page .summary-widget {
+  padding: 26px 24px 24px;
+
+  border-radius: 28px;
+
+  background:
+    radial-gradient(circle at 100% 0%, rgba(182, 150, 99, 0.14), transparent 55%),
+    var(--tm-black);
+
+  color: #fff;
+
+  box-shadow: 0 24px 60px rgba(17, 19, 17, 0.22);
+}
+
+.termini-page .summary-widget h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 0 0 20px;
+
+  color: var(--tm-gold-soft);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2.4px;
+}
+
+.termini-page .summary-widget h3::before {
+  content: "";
+
+  width: 18px;
+  height: 1px;
+
+  background: var(--tm-gold);
+}
+
+.termini-page .empty-summary-text {
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.termini-page .summary-items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.termini-page .summary-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+
+  padding: 13px 0;
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.termini-page .summary-item-name {
+  color: rgba(255, 255, 255, 0.86);
+
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.termini-page .summary-item-price {
+  flex: 0 0 auto;
+
+  color: var(--tm-gold-soft);
+
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.termini-page .summary-divider {
+  height: 1px;
+  margin: 16px 0;
+
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.termini-page .summary-total {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+
+  margin-bottom: 22px;
+
+  color: rgba(255, 255, 255, 0.55);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.termini-page .total-amount {
+  color: #e4cfaa;
+
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -1.4px;
+  line-height: 1;
+}
+
+.termini-page .book-now-btn {
+  width: 100%;
+  min-height: 54px;
+
+  border: 0;
+  border-radius: 100px;
+
+  background: var(--tm-cream);
+  color: var(--tm-black);
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.termini-page .book-now-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+}
+
+.termini-page .book-now-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.termini-page .book-now-btn:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+
+/* ================================================================
+   MOBILE STICKY BAR
+   ================================================================ */
+
+.termini-page .mobile-sticky-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  z-index: 1020;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px 24px 0 0;
+
+  background: var(--tm-black);
+
+  box-shadow: 0 -14px 40px rgba(17, 19, 17, 0.22);
+}
+
+.termini-page .mobile-total-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.termini-page .mobile-total-price {
+  color: #e4cfaa;
+
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.termini-page .mobile-item-count {
+  color: rgba(255, 255, 255, 0.5);
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.termini-page .mobile-book-btn {
+  flex: 0 0 auto;
+
+  min-width: 148px;
+  min-height: 50px;
+
+  padding: 0 26px;
+
+  border: 0;
+  border-radius: 100px;
+
+  background: var(--tm-cream);
+  color: var(--tm-black);
+
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.termini-page .mobile-book-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.termini-page .mobile-book-btn:disabled {
+  opacity: 0.32;
+  cursor: not-allowed;
+}
+
+
+/* ================================================================
+   MODALS / SHEETS (shared)
+   ================================================================ */
+
+.termini-page .modal-overlay,
+.termini-page .custom-modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  z-index: 9999;
+
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+
+  background: rgba(9, 11, 10, 0.58);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.termini-page .confirm-dialog,
+.termini-page .modal-box,
+.termini-page .custom-modal-sheet {
+  position: relative;
+
+  width: 100%;
+  max-width: 520px;
+  max-height: 92dvh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-radius: 30px 30px 0 0;
+  background: #faf9f6;
+
+  box-shadow: 0 -25px 90px rgba(0, 0, 0, 0.22);
+
+  animation: tmSheetIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.termini-page .modal-drag-handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+
+  z-index: 5;
+
+  width: 40px;
+  height: 4px;
+
+  transform: translateX(-50%);
+
+  border-radius: 100px;
+  background: rgba(17, 19, 17, 0.16);
+}
+
+
+/* ---------- Confirmation dialog ---------- */
+
+.termini-page .confirm-dialog-header {
+  flex-shrink: 0;
+
+  padding: 34px 22px 18px;
+
+  text-align: center;
+}
+
+.termini-page .confirm-dialog-icon {
+  width: 58px;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 auto 16px;
+
+  border-radius: 50%;
+
+  background: var(--tm-green);
+  color: #e4cfaa;
+
+  font-size: 22px;
+
+  box-shadow: 0 0 0 7px rgba(36, 72, 58, 0.1);
+}
+
+.termini-page .confirm-dialog-title {
+  margin: 0 0 8px;
+
+  color: var(--tm-text);
+
+  font-size: 26px;
+  font-weight: 560;
+  letter-spacing: -1.2px;
+  line-height: 1.05;
+}
+
+.termini-page .confirm-dialog-description {
+  max-width: 320px;
+  margin: 0 auto;
+
+  color: var(--tm-muted);
+
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.termini-page .confirm-dialog-body {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+
+  padding: 6px 22px 18px;
+}
+
+.termini-page .confirm-summary {
+  overflow: hidden;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 20px;
+  background: #fff;
+}
+
+.termini-page .confirm-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  min-height: 54px;
+  padding: 12px 18px;
+
+  border-bottom: 1px solid var(--tm-border);
+
+  color: var(--tm-muted);
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.termini-page .confirm-summary-row strong {
+  color: var(--tm-text);
+
+  font-size: 13px;
+  font-weight: 700;
+  text-align: right;
+}
+
+.termini-page .confirm-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 16px 18px;
+
+  background: var(--tm-green-light);
+  color: var(--tm-green);
+
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.termini-page .confirm-total span:last-child {
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.9px;
+}
+
+.termini-page .confirm-dialog-footer,
+.termini-page .custom-modal-footer,
+.termini-page .otp-actions {
+  flex-shrink: 0;
+
+  display: flex;
+  gap: 10px;
+
+  padding: 12px 22px calc(14px + env(safe-area-inset-bottom, 0px));
+
+  border-top: 1px solid var(--tm-border);
+  background: rgba(250, 249, 246, 0.97);
+}
+
+.termini-page .confirm-btn-secondary,
+.termini-page .confirm-btn-primary,
+.termini-page .custom-modal-btn-primary,
+.termini-page .otp-cancel-btn {
+  min-height: 54px;
+
+  border: 0;
+  border-radius: 100px;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.termini-page .confirm-btn-secondary:active,
+.termini-page .confirm-btn-primary:active,
+.termini-page .custom-modal-btn-primary:active,
+.termini-page .otp-cancel-btn:active {
+  transform: scale(0.97);
+}
+
+.termini-page .confirm-btn-secondary,
+.termini-page .otp-cancel-btn {
+  flex: 0 0 34%;
+
+  background: #eae8e2;
+  color: var(--tm-text);
+}
+
+.termini-page .confirm-btn-primary,
+.termini-page .custom-modal-btn-primary {
+  flex: 1;
+
+  background: var(--tm-green);
+  color: #fff;
+
+  box-shadow: 0 10px 28px rgba(36, 72, 58, 0.22);
+}
+
+
+/* ---------- Service configurator sheet ---------- */
+
+.termini-page .custom-modal-header {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 30px 22px 16px;
+
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.termini-page .custom-modal-subtitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  color: var(--tm-gold);
+
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.termini-page .custom-modal-subtitle::before {
+  content: "";
+
+  width: 16px;
+  height: 1px;
+
+  background: var(--tm-gold);
+}
+
+.termini-page .custom-modal-title {
+  margin: 8px 0 0;
+
+  color: var(--tm-text);
+
+  font-size: 24px;
+  font-weight: 560;
+  letter-spacing: -1px;
+  line-height: 1.1;
+}
+
+.termini-page .custom-modal-close-btn {
+  flex: 0 0 auto;
+
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 50%;
+
+  background: #eae8e2;
+  color: var(--tm-black);
+
+  font-size: 15px;
+
+  cursor: pointer;
+}
+
+.termini-page .custom-modal-close-btn:active {
+  transform: scale(0.9);
+}
+
+.termini-page .custom-modal-body {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 18px 22px 24px;
+}
+
+.termini-page .custom-modal-hero-img {
+  width: 100%;
+  height: 190px;
+
+  display: block;
+
+  margin-bottom: 16px;
+
+  border-radius: 22px;
+
+  object-fit: cover;
+}
+
+.termini-page .custom-modal-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+
+  margin-bottom: 26px;
+}
+
+.termini-page .custom-modal-metric-pill {
+  padding: 15px 16px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 18px;
+  background: #fff;
+}
+
+.termini-page .custom-modal-metric-pill label {
+  display: block;
+
+  margin: 0 0 6px;
+
+  color: var(--tm-light);
+
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 1.2px;
+}
+
+.termini-page .custom-modal-metric-pill span {
+  color: var(--tm-green);
+
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.termini-page .custom-modal-section-title {
+  margin: 0 0 12px;
+
+  color: var(--tm-text);
+
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.4px;
+}
+
+.termini-page .custom-modal-attributes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.termini-page .custom-modal-attr-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  min-height: 58px;
+  padding: 12px 16px;
+
+  border: 1px solid var(--tm-border);
+  border-radius: 17px;
+  background: #fff;
+
+  cursor: pointer;
+
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.termini-page .custom-modal-attr-card::before {
+  content: "";
+
+  flex: 0 0 auto;
+
+  width: 22px;
+  height: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1.5px solid #cfd1ca;
+  border-radius: 50%;
+
+  color: #fff;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.termini-page .custom-modal-attr-card:active {
+  transform: scale(0.985);
+}
+
+.termini-page .custom-modal-attr-card.selected {
+  border-color: var(--tm-green);
+  background: var(--tm-green-light);
+}
+
+.termini-page .custom-modal-attr-card.selected::before {
+  content: "✓";
+
+  border-color: var(--tm-green);
+  background: var(--tm-green);
+}
+
+.termini-page .custom-modal-attr-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.termini-page .custom-modal-attr-left h5 {
+  margin: 0;
+
+  color: var(--tm-text);
+
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.termini-page .custom-modal-attr-price {
+  color: var(--tm-green);
+
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.3px;
+}
+
+
+/* ---------- OTP dialog ---------- */
+
+.termini-page .otp-header {
+  padding: 36px 24px 8px;
+
+  text-align: center;
+}
+
+.termini-page .otp-icon {
+  width: 58px;
+  height: 58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 auto 16px;
+
+  border-radius: 50%;
+
+  background: var(--tm-green-light);
+
+  font-size: 22px;
+
+  box-shadow: 0 0 0 7px rgba(36, 72, 58, 0.06);
+}
+
+.termini-page .otp-header h2 {
+  margin: 0 0 8px;
+
+  color: var(--tm-text);
+
+  font-size: 26px;
+  font-weight: 560;
+  letter-spacing: -1.2px;
+}
+
+.termini-page .otp-header p {
+  max-width: 300px;
+  margin: 0 auto;
+
+  color: var(--tm-muted);
+
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.termini-page .otp-container-slot {
+  display: flex;
+  justify-content: center;
+
+  padding: 20px 22px 14px;
+}
+
+.termini-page .otp-actions .otp-cancel-btn {
   flex: 1;
 }
 
-/* BUTTONS */
-.confirm-btn-secondary {
-  background: transparent;
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 15px;
-  transition: .2s;
-}
 
-.confirm-btn-secondary:hover {
-  background: var(--bg-surface);
-  border-color: var(--text-main);
-}
+/* ================================================================
+   SMALL PHONES
+   ================================================================ */
 
-.confirm-btn-primary {
-  background: var(--text-main);
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-weight: 700;
-  cursor: pointer;
-  padding: 15px;
-  transition: .2s;
-}
+@media (max-width: 380px) {
 
-.confirm-btn-primary:hover {
-  background: var(--primary-hover);
-}
-
-/* =========================
-   MOBILE OPTIMIZATION
-========================= */
-
-@media (max-width: 640px) {
-
-  .confirm-dialog {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    animation: slideUpMobile .25s ease-out;
+  .termini-page .termini-container {
+    width: calc(100% - 16px);
   }
 
-  /* HEADER */
-  .confirm-dialog-header {
-    padding: 18px 20px 12px;
+  .termini-page .form-section-card {
+    padding: 20px 14px 22px;
+    border-radius: 24px;
   }
 
-  .confirm-dialog-icon {
-    width: 56px;
-    height: 56px;
-    font-size: 26px;
-    margin-bottom: 12px;
+  .termini-page .staff-tiles-scroll {
+    margin: 0 -14px;
+    padding-left: 14px;
+    padding-right: 14px;
   }
 
-  .confirm-dialog-title {
-    font-size: 20px;
-    margin-bottom: 6px;
+  .termini-page .section-title {
+    font-size: 18px;
   }
 
-  .confirm-dialog-subtitle {
-    font-size: 10px;
-    letter-spacing: 1.5px;
+  .termini-page .mobile-book-btn {
+    min-width: 120px;
+    padding: 0 20px;
   }
 
-  .confirm-dialog-description {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  /* BODY */
-  .confirm-dialog-body {
-    padding: 18px 20px;
-  }
-
-  .confirm-summary {
-    padding: 14px;
-  }
-
-  .confirm-summary-row {
-    font-size: 13px;
-  }
-
-  .confirm-total span:last-child {
-    font-size: 20px;
-  }
-
-  /* FOOTER */
-  .confirm-dialog-footer {
-    flex-direction: column-reverse;
-    gap: 10px;
-    padding: 18px 20px calc(22px + env(safe-area-inset-bottom));
-  }
-
-  .confirm-dialog-footer button {
-    width: 100%;
-    min-height: 44px;
-    padding: 14px;
-    font-size: 15px;
+  .termini-page .service-modern-card {
+    grid-template-columns: 36% 64%;
   }
 }
 
-/* MOBILE ANIMATION */
-@keyframes slideUpMobile {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
+
+/* ================================================================
+   TABLET (640px+)
+   ================================================================ */
+
+@media (min-width: 640px) {
+
+  .termini-page .termini-container {
+    width: min(1180px, calc(100% - 48px));
   }
-  to {
-    transform: translateY(0);
-    opacity: 1;
+
+  .termini-page .form-section-card {
+    padding: 30px 30px 32px;
+  }
+
+  .termini-page .staff-tiles-scroll {
+    margin: 0 -30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    scroll-padding: 0 30px;
+  }
+
+  .termini-page .input-group-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .termini-page .services-section-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .termini-page .search-wrapper {
+    width: 260px;
+  }
+
+  .termini-page .services-modern-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .termini-page .service-modern-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .termini-page .service-image-container {
+    height: 190px;
+    min-height: 0;
+  }
+
+  .termini-page .service-details {
+    flex: 1;
+    padding: 18px;
+  }
+
+  .termini-page .modal-overlay,
+  .termini-page .custom-modal-overlay {
+    align-items: center;
+    padding: 25px;
+  }
+
+  .termini-page .confirm-dialog,
+  .termini-page .modal-box,
+  .termini-page .custom-modal-sheet {
+    max-height: 88vh;
+
+    border-radius: 28px;
+
+    animation: tmModalIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .termini-page .modal-drag-handle {
+    display: none;
+  }
+
+  .termini-page .confirm-dialog-header,
+  .termini-page .otp-header {
+    padding-top: 30px;
+  }
+
+  .termini-page .custom-modal-header {
+    padding-top: 26px;
+  }
+}
+
+
+/* ================================================================
+   DESKTOP (992px+): form left, sticky summary right
+   ================================================================ */
+
+@media (min-width: 992px) {
+
+  .termini-page {
+    padding-bottom: 90px;
+  }
+
+  .termini-page .termini-header {
+    padding: calc(var(--tm-nav) + 56px) 30px 96px;
+  }
+
+  .termini-page .termini-container {
+    margin-top: -44px;
+  }
+
+  .termini-page .termini-grid {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 26px;
+    align-items: start;
+  }
+
+  .termini-page .termini-main-content {
+    gap: 20px;
+  }
+
+  .termini-page .termini-sidebar {
+    display: block;
+
+    position: sticky;
+    top: calc(var(--tm-nav) + 20px);
+  }
+
+  .termini-page .mobile-sticky-bar {
+    display: none;
+  }
+
+  .termini-page .form-section-card {
+    padding: 34px 34px 36px;
+  }
+
+  .termini-page .staff-tiles-scroll {
+    margin: 0 -34px;
+    padding-left: 34px;
+    padding-right: 34px;
+    scroll-padding: 0 34px;
+  }
+
+  .termini-page .staff-tile-card {
+    flex-basis: 124px;
+  }
+}
+
+
+/* ================================================================
+   ANIMATIONS
+   ================================================================ */
+
+@keyframes tmSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes tmFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tmSheetIn {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes tmModalIn {
+  from { opacity: 0; transform: translateY(15px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .termini-page,
+  .termini-page *,
+  .termini-page *::before,
+  .termini-page *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

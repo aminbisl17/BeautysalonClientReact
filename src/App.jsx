@@ -15,9 +15,9 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="app-shell">
       <Navigation onNavClick={handleNavClick} />
-      <div>
+      <div className="app-main">
         {view === "home" && <Home setView={setView} />}
         {view === "about" && <About />}
         {view === "login" && <LoginView />}

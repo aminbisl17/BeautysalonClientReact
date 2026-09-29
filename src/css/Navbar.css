@@ -1,138 +1,124 @@
-/* ==========================================================================
-   BEAUTY SALON — CLEAN & STABLE BRAND NAVBAR
-   ========================================================================== */
+/* ================================================================
+   BEAUTYSALON NAVBAR — EDITORIAL LUXURY UI
+   CSS only. Works with your existing Navigation JSX and Bootstrap.
+   Solid brand color #111311 so index.html theme-color matches exactly.
+   Height: 64px (+ phone notch inset).
+   ================================================================ */
 
 nav.navbar.bsn-navbar {
-  background: rgba(17, 19, 17, 0.92) !important;
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  padding: 12px 0 !important;
+  --nb-bg: var(--bsn-black, #111311);
+  --nb-gold: var(--bsn-gold, #b69663);
+  --nb-cream: var(--bsn-cream, #f7f5f0);
+  --nb-line: rgba(255, 255, 255, 0.09);
+  --nb-text-dim: rgba(247, 245, 240, 0.62);
+
+  padding: env(safe-area-inset-top, 0px) 0 0;
+
+  background: var(--nb-bg);
+  border-bottom: 1px solid var(--nb-line);
+  box-shadow: 0 10px 30px rgba(17, 19, 17, 0.12);
+
   z-index: 1030;
 }
 
-/* BRAND LOGO */
+nav.navbar.bsn-navbar > .container {
+  min-height: 64px;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+nav.navbar.bsn-navbar,
+nav.navbar.bsn-navbar * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+nav.navbar.bsn-navbar a:focus-visible,
+nav.navbar.bsn-navbar button:focus-visible {
+  outline: 2px solid var(--nb-gold);
+  outline-offset: 3px;
+}
+
+
+/* ================================================================
+   BRAND
+   ================================================================ */
+
 nav.navbar.bsn-navbar .bsn-brand {
-  color: #ffffff !important;
-  font-size: 18px !important;
-  font-weight: 800 !important;
-  letter-spacing: 2px !important;
-  text-transform: uppercase;
-  text-decoration: none !important;
   display: inline-flex;
   align-items: center;
-  margin: 0 !important;
+
+  margin: 0;
+  padding: 0;
+
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 750;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  text-decoration: none;
+  line-height: 1;
 }
 
 nav.navbar.bsn-navbar .bsn-brand-serif {
+  margin-left: 7px;
+
+  color: #d7c29d;
   font-family: Georgia, "Times New Roman", serif;
+  font-size: 20px;
   font-style: italic;
   font-weight: 400;
+  letter-spacing: -0.3px;
   text-transform: none;
-  color: var(--bsn-gold, #b69663);
-  margin-left: 5px;
 }
 
-/* DESKTOP NAV LINKS */
-nav.navbar.bsn-navbar .bsn-nav-list {
-  gap: 4px !important;
-}
 
-/* Base inactive link style */
-nav.navbar.bsn-navbar .bsn-nav-link {
-  color: rgba(255, 255, 255, 0.6) !important;
-  background: transparent !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  letter-spacing: 0.5px !important;
-  padding: 8px 14px !important;
-  border-radius: 8px;
-  transition: all 0.2s ease !important;
-}
+/* ================================================================
+   TOGGLER (mobile)
+   ================================================================ */
 
-/* Hover state */
-nav.navbar.bsn-navbar .bsn-nav-link:hover {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-}
-
-/* Active state (ONLY current active page) */
-nav.navbar.bsn-navbar .bsn-nav-link.active {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.14) !important;
-  font-weight: 700 !important;
-}
-
-/* PROFILE BUTTON */
-nav.navbar.bsn-navbar .bsn-profile-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-left: 8px !important;
-  padding: 8px 18px !important;
-  border: 1px solid var(--bsn-gold, #b69663) !important;
-  background: transparent !important;
-  color: var(--bsn-gold, #b69663) !important;
-  border-radius: 100px !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-  letter-spacing: 1.2px !important;
-  text-decoration: none !important;
-  transition: all 0.2s ease !important;
-}
-
-.bsn-profile-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--bsn-gold, #b69663);
-}
-
-nav.navbar.bsn-navbar .bsn-profile-link:hover,
-nav.navbar.bsn-navbar .bsn-profile-link.active {
-  background: var(--bsn-gold, #b69663) !important;
-  color: var(--bsn-black, #111311) !important;
-}
-
-nav.navbar.bsn-navbar .bsn-profile-link:hover .bsn-profile-dot,
-nav.navbar.bsn-navbar .bsn-profile-link.active .bsn-profile-dot {
-  background: var(--bsn-black, #111311);
-}
-
-/* TOGGLER BUTTON */
 nav.navbar.bsn-navbar .bsn-toggler {
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
-
-  background: rgba(255, 255, 255, 0.05) !important;
-
-  padding: 0 !important;
-
   display: none;
-
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-
+  justify-content: center;
   gap: 4px;
 
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
 
-  border-radius: 8px !important;
+  padding: 0;
 
-  box-shadow: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: none;
+
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+nav.navbar.bsn-navbar .bsn-toggler:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+nav.navbar.bsn-navbar .bsn-toggler:not(.collapsed) {
+  border-color: rgba(182, 150, 99, 0.6);
 }
 
 nav.navbar.bsn-navbar .bsn-toggler span {
   display: block;
+
   width: 17px;
   height: 1.5px;
-  background-color: var(--bsn-cream, #f7f5f0);
-  transition: transform 0.25s ease, opacity 0.2s ease;
+
+  border-radius: 2px;
+  background: var(--nb-cream);
+
+  transition: transform 0.28s ease, opacity 0.2s ease;
 }
 
-/* HAMBURGER TO X ANIMATION */
 nav.navbar.bsn-navbar .bsn-toggler:not(.collapsed) span:nth-child(1) {
   transform: translateY(5.5px) rotate(45deg);
 }
@@ -145,45 +131,249 @@ nav.navbar.bsn-navbar .bsn-toggler:not(.collapsed) span:nth-child(3) {
   transform: translateY(-5.5px) rotate(-45deg);
 }
 
-/* ==========================================================================
-   MOBILE DROPDOWN
-   ========================================================================== */
+
+/* ================================================================
+   DESKTOP LINKS (992px+)
+   ================================================================ */
+
+nav.navbar.bsn-navbar .bsn-nav-list {
+  gap: 6px;
+  margin: 0;
+}
+
+nav.navbar.bsn-navbar .bsn-nav-link {
+  position: relative;
+
+  padding: 10px 14px;
+
+  border-radius: 100px;
+
+  background: transparent;
+  color: var(--nb-text-dim);
+
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+nav.navbar.bsn-navbar .bsn-nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+/* active: white text + short gold line, same motif as the home eyebrows */
+nav.navbar.bsn-navbar .bsn-nav-link.active {
+  background: transparent;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+nav.navbar.bsn-navbar .bsn-nav-link.active::after {
+  content: "";
+
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+
+  width: 16px;
+  height: 1.5px;
+
+  transform: translateX(-50%);
+
+  border-radius: 2px;
+  background: var(--nb-gold);
+}
+
+
+/* PROFILE PILL */
+
+nav.navbar.bsn-navbar .bsn-profile-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  margin-left: 10px;
+  padding: 10px 20px;
+
+  border: 1px solid rgba(182, 150, 99, 0.7);
+  border-radius: 100px;
+
+  background: transparent;
+  color: #d7c29d;
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-decoration: none;
+
+  transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease,
+    transform 0.2s ease;
+}
+
+nav.navbar.bsn-navbar .bsn-profile-dot {
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+  background: var(--nb-gold);
+
+  box-shadow: 0 0 0 3px rgba(182, 150, 99, 0.18);
+
+  transition: background 0.25s ease, box-shadow 0.25s ease;
+}
+
+nav.navbar.bsn-navbar .bsn-profile-link:hover,
+nav.navbar.bsn-navbar .bsn-profile-link.active {
+  border-color: var(--nb-gold);
+  background: var(--nb-gold);
+  color: var(--nb-bg);
+}
+
+nav.navbar.bsn-navbar .bsn-profile-link:hover .bsn-profile-dot,
+nav.navbar.bsn-navbar .bsn-profile-link.active .bsn-profile-dot {
+  background: var(--nb-bg);
+  box-shadow: 0 0 0 3px rgba(17, 19, 17, 0.14);
+}
+
+nav.navbar.bsn-navbar .bsn-profile-link:active {
+  transform: scale(0.97);
+}
+
+
+/* ================================================================
+   MOBILE & TABLET MENU (below 992px)
+   Full-width panel under the bar, big thumb-friendly rows.
+   ================================================================ */
 
 @media (max-width: 991.98px) {
 
   nav.navbar.bsn-navbar .bsn-toggler {
-    display: flex !important;
+    display: flex;
   }
 
   nav.navbar.bsn-navbar .bsn-collapse {
-    background: var(--bsn-black, #111311) !important;
-    margin-top: 10px !important;
-    padding: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 14px !important;
+    width: 100%;
+
+    margin: 0;
+    padding: 4px 0 18px;
+
+    border-top: 1px solid var(--nb-line);
+    background: var(--nb-bg);
   }
 
-  
-  nav.navbar.bsn-navbar .bsn-collapse {
-    background: var(--bsn-black, #111311) !important;
-    margin-top: 10px !important;
-    padding: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    border-radius: 14px !important;
+  nav.navbar.bsn-navbar .bsn-collapse.show {
+    animation: bsnMenuIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  nav.navbar.bsn-navbar .bsn-nav-list {
+    gap: 0;
   }
 
   nav.navbar.bsn-navbar .bsn-nav-link {
-    width: 100% !important;
-    padding: 10px 12px !important;
-    font-size: 14px !important;
-    text-align: left !important;
+    width: 100%;
+    min-height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 4px;
+
+    border-radius: 0;
+    border-bottom: 1px solid var(--nb-line);
+
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-align: left;
+  }
+
+  nav.navbar.bsn-navbar .bsn-nav-link:hover {
+    background: transparent;
+  }
+
+  nav.navbar.bsn-navbar .bsn-nav-link::before {
+    content: "";
+    order: 2;
+
+    width: 7px;
+    height: 7px;
+
+    border-top: 1.5px solid rgba(255, 255, 255, 0.28);
+    border-right: 1.5px solid rgba(255, 255, 255, 0.28);
+
+    transform: rotate(45deg);
+  }
+
+  /* active: gold bar on the left instead of the desktop underline */
+  nav.navbar.bsn-navbar .bsn-nav-link.active {
+    padding-left: 14px;
+
+    color: #ffffff;
+    box-shadow: inset 2px 0 0 var(--nb-gold);
+  }
+
+  nav.navbar.bsn-navbar .bsn-nav-link.active::after {
+    display: none;
+  }
+
+  nav.navbar.bsn-navbar .bsn-nav-link.active::before {
+    border-color: var(--nb-gold);
   }
 
   nav.navbar.bsn-navbar .bsn-profile-link {
-    width: 100% !important;
-    margin-left: 0 !important;
-    padding: 11px !important;
-    text-align: center;
-    border-radius: 10px !important;
+    width: 100%;
+    min-height: 54px;
+
+    margin: 16px 0 0;
+    padding: 0 20px;
+
+    font-size: 12px;
+  }
+}
+
+
+/* ================================================================
+   SMALL PHONES
+   ================================================================ */
+
+@media (max-width: 380px) {
+
+  nav.navbar.bsn-navbar .bsn-brand {
+    font-size: 15px;
+    letter-spacing: 2.4px;
+  }
+
+  nav.navbar.bsn-navbar .bsn-brand-serif {
+    font-size: 18px;
+  }
+}
+
+
+/* ================================================================
+   ANIMATION
+   ================================================================ */
+
+@keyframes bsnMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  nav.navbar.bsn-navbar *,
+  nav.navbar.bsn-navbar .bsn-collapse.show {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }

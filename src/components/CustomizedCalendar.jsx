@@ -99,51 +99,51 @@ export default function AppointmentDateTimePicker({
 
 
   const availableSlots = useMemo(() => {
-  if (!selectedDateStr) return [];
+    if (!selectedDateStr) return [];
 
-  const dateObj = new Date(`${selectedDateStr}T00:00:00`);
-  const rule = getRuleForDate(dateObj);
+    const dateObj = new Date(`${selectedDateStr}T00:00:00`);
+    const rule = getRuleForDate(dateObj);
 
-  if (!rule) return [];
+    if (!rule) return [];
 
-  const startMin = timeToMinutes(rule.start_time);
-  const endMin = timeToMinutes(rule.end_time);
-  const pauseStartMin = timeToMinutes(rule.pause_start);
-  const pauseEndMin = timeToMinutes(rule.pause_end);
+    const startMin = timeToMinutes(rule.start_time);
+    const endMin = timeToMinutes(rule.end_time);
+    const pauseStartMin = timeToMinutes(rule.pause_start);
+    const pauseEndMin = timeToMinutes(rule.pause_end);
 
-  const slots = [];
+    const slots = [];
 
-  for (
-    let current = startMin;
-    current + slotDuration <= endMin;
-    current += 5
-  ) {
-    const slotEnd = current + slotDuration;
+    for (
+      let current = startMin;
+      current + slotDuration <= endMin;
+      current += 5
+    ) {
+      const slotEnd = current + slotDuration;
 
-    const overlapsPause =
-      !(slotEnd <= pauseStartMin || current >= pauseEndMin);
+      const overlapsPause =
+        !(slotEnd <= pauseStartMin || current >= pauseEndMin);
 
-    if (!overlapsPause) {
-      const time = minutesToTime(current);
+      if (!overlapsPause) {
+        const time = minutesToTime(current);
 
-      const isUnavailable = unavailableDates.some((unavailable) => {
-        return unavailable === `${selectedDateStr}T${time}`;
-      });
+        const isUnavailable = unavailableDates.some((unavailable) => {
+          return unavailable === `${selectedDateStr}T${time}`;
+        });
 
-      slots.push({
-        time,
-        unavailable: isUnavailable
-      });
+        slots.push({
+          time,
+          unavailable: isUnavailable
+        });
+      }
     }
-  }
 
-  return slots;
-}, [
-  selectedDateStr,
-  availabilityData,
-  unavailableDates,
-  slotDuration
-]);
+    return slots;
+  }, [
+    selectedDateStr,
+    availabilityData,
+    unavailableDates,
+    slotDuration
+  ]);
 
   // Handlers
   const handleDateSelect = (dateStr) => {
@@ -172,97 +172,165 @@ export default function AppointmentDateTimePicker({
 
   const monthYearLabel = currentMonth.toLocaleString('sq-AL', { month: 'long', year: 'numeric' });
 
+  // --- Display-only helpers (UI) ---
+  const monthName = currentMonth.toLocaleString('sq-AL', { month: 'long' });
+  const yearNumber = currentMonth.getFullYear();
+  const todayStr = formatDateString(new Date());
+
+  const selectedDateLabel = selectedDateStr
+    ? new Date(`${selectedDateStr}T00:00:00`).toLocaleDateString('sq-AL', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      })
+    : '';
+
+  const slotGroups = [
+    { key: 'morning', label: 'Paradite', slots: [] },
+    { key: 'afternoon', label: 'Pasdite', slots: [] },
+    { key: 'evening', label: 'Mbrëmje', slots: [] }
+  ];
+  availableSlots.forEach((slot) => {
+    const hour = parseInt(slot.time.substring(0, 2), 10);
+    if (hour < 12) slotGroups[0].slots.push(slot);
+    else if (hour < 17) slotGroups[1].slots.push(slot);
+    else slotGroups[2].slots.push(slot);
+  });
+
   return (
-    <div className="picker-card">
-      {/* Left Column: Calendar */}
-      <div className="calendar-section">
-        {/* Date Header & Month Switcher */}
-        <div className="calendar-header">
-          <button type="button" className="nav-btn" onClick={handlePrevMonth} aria-label="Previous Month">‹</button>
-          <span className="month-title">{monthYearLabel}</span>
-          <button type="button" className="nav-btn" onClick={handleNextMonth} aria-label="Next Month">›</button>
+    <div className="pk-card">
+      <div className="picker-body">
+
+        {/* Calendar */}
+        <div className="pk-calendar-section">
+          <div className="picker-eyebrow">
+            <i />
+            <span>ZGJIDHNI DATËN</span>
+          </div>
+
+          <div className="pk-calendar-header">
+            <button type="button" className="pk-nav-btn" onClick={handlePrevMonth} aria-label="Muaji i kaluar">‹</button>
+            <span className="pk-month-title" aria-live="polite" aria-label={monthYearLabel}>
+              {monthName} <em>{yearNumber}</em>
+            </span>
+            <button type="button" className="pk-nav-btn" onClick={handleNextMonth} aria-label="Muaji tjetër">›</button>
+          </div>
+
+          <div className="pk-weekdays-grid">
+            <span>Hën</span><span>Mar</span><span>Mër</span><span>Enj</span><span>Pre</span><span>Sht</span><span>Die</span>
+          </div>
+
+          <div className="pk-days-grid">
+            {calendarDays.map((day, idx) => {
+              if (!day) return <div key={`empty-${idx}`} />;
+              const isSelected = selectedDateStr === day.dateStr;
+              const isToday = day.dateStr === todayStr;
+
+              return (
+                <button
+                  key={day.dateStr}
+                  type="button"
+                  disabled={!day.isAvailable}
+                  onClick={() => handleDateSelect(day.dateStr)}
+                  aria-pressed={isSelected}
+                  className={`pk-day-cell ${day.isAvailable ? 'available' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                >
+                  {day.dayNumber}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="calendar-legend">
+            <span><i className="legend-dot available" />I lirë</span>
+            <span><i className="legend-dot selected" />I zgjedhur</span>
+          </div>
         </div>
 
-        {/* Days Header */}
-        <div className="weekdays-grid">
-          <span>Hën</span><span>Mar</span><span>Mër</span><span>Enj</span><span>Prem</span><span>Sht</span><span>Di</span>
-        </div>
+        {/* Time slots */}
+        <div className="pk-time-section">
+          <div className="picker-eyebrow">
+            <i />
+            <span>ZGJIDHNI ORARIN</span>
+          </div>
 
-        {/* Calendar Grid */}
-        <div className="days-grid">
-          {calendarDays.map((day, idx) => {
-            if (!day) return <div key={`empty-${idx}`} />;
-            const isSelected = selectedDateStr === day.dateStr;
+          <div className="pk-section-header">
+            <span className="pk-section-title">Termini i <em>lirë</em></span>
+            <span className="pk-section-subtitle">
+              {selectedDateStr ? selectedDateLabel : 'Zgjidhni një datë në fillim'}
+            </span>
+          </div>
 
-            return (
-              <button
-                key={day.dateStr}
-                type="button"
-                disabled={!day.isAvailable}
-                onClick={() => handleDateSelect(day.dateStr)}
-                className={`day-cell ${day.isAvailable ? 'available' : ''} ${isSelected ? 'selected' : ''}`}
-              >
-                {day.dayNumber}
-              </button>
-            );
-          })}
+          {selectedDateStr ? (
+            availableSlots.length > 0 ? (
+              <div className="pk-time-vertical-scroll">
+                {slotGroups
+                  .filter((group) => group.slots.length > 0)
+                  .map((group) => (
+                    <div className="time-group" key={group.key}>
+                      <span className="time-group-label">{group.label}</span>
+                      <div className="time-grid">
+                        {group.slots.map(({ time, unavailable }) => {
+                          const displayTime = time.substring(0, 5);
+                          const isSelected = selectedTimeStr === time;
+
+                          return (
+                            <button
+                              key={time}
+                              type="button"
+                              disabled={unavailable}
+                              aria-pressed={isSelected}
+                              className={`pk-time-slot-btn ${isSelected ? 'selected' : ''} ${unavailable ? 'unavailable' : ''}`}
+                              onClick={() => {
+                                if (!unavailable) {
+                                  handleTimeSelect(time);
+                                }
+                              }}
+                            >
+                              <span className="time-text">{displayTime}</span>
+
+                              {unavailable && (
+                                <span className="pk-unavailable-label">Zënë</span>
+                              )}
+
+                              {isSelected && !unavailable && (
+                                <span className="pk-check-icon">✓</span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="pk-empty-state">
+                <span className="empty-symbol">◌</span>
+                S'ka termine të lira për këtë datë.
+              </div>
+            )
+          ) : (
+            <div className="pk-select-date-prompt">
+              <span className="empty-symbol">◇</span>
+              Klikoni një datë në kalendar për të parë oraret e lira.
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Right Column: Vertical Time Slot Scroll */}
-      <div className="time-section">
-        <div className="section-header">
-          <span className="section-title">Termini i Lirë</span>
-          <span className="section-subtitle">
-            {selectedDateStr ? 'Zgjidhni orarin tuaj' : 'Zgjidhni një datë në fillim'}
-          </span>
-        </div>
-
-        {selectedDateStr ? (
-          availableSlots.length > 0 ? (
-            <div className="time-vertical-scroll">
-            {availableSlots.map(({ time, unavailable }) => {
-  const displayTime = time.substring(0, 5);
-  const isSelected = selectedTimeStr === time;
-
-  return (
-    <button
-      key={time}
-      type="button"
-      disabled={unavailable}
-      className={`time-slot-btn
-        ${isSelected ? 'selected' : ''}
-        ${unavailable ? 'unavailable' : ''}
-      `}
-      onClick={() => {
-        if (!unavailable) {
-          handleTimeSelect(time);
-        }
-      }}
-    >
-      <span>{displayTime}</span>
-
-      {unavailable && (
-        <span className="unavailable-label">Zënë</span>
-      )}
-
-      {isSelected && !unavailable && (
-        <span className="check-icon">✓</span>
-      )}
-    </button>
-  );
-})}
-            </div>
+      {/* Summary */}
+      <div className={`picker-summary ${selectedDateStr && selectedTimeStr ? 'ready' : ''}`}>
+        <div className="summary-icon">{selectedDateStr && selectedTimeStr ? '✓' : '◇'}</div>
+        <div className="summary-text">
+          <span className="summary-label">Termini juaj</span>
+          {selectedDateStr && selectedTimeStr ? (
+            <strong>
+              {selectedDateLabel}, ora {selectedTimeStr.substring(0, 5)}
+            </strong>
           ) : (
-            <div className="empty-state">
-              S'ka termine të lira për këtë datë.
-            </div>
-          )
-        ) : (
-          <div className="select-date-prompt">
-            Klikoni një datë në kalendar për të parë oraret e lira.
-          </div>
-        )}
+            <strong className="muted">Zgjidhni datën dhe orarin</strong>
+          )}
+        </div>
       </div>
     </div>
   );

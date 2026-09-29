@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Client } from "@stomp/stompjs";
-import "../css/terminet.css";
+import "../css/terminetTest.css";
 import {
   fetchServices,
   fetchServiceAtributes,
@@ -129,10 +129,16 @@ const availabilitySubscriptionRef = useRef(null);
             console.log("[STOMP]", message);
         },
 
-        onConnect: () => {
-            console.log("✅ STOMP CONNECTED");
-            stompClientRef.current = client;
-        },
+      onConnect: () => {
+  console.log("✅ STOMP CONNECTED");
+  stompClientRef.current = client;
+
+  const empId = currentEmployeeIdRef.current;
+  if (empId) {
+    subscribeToAvailability(empId);              // restore lost subscription
+    fetchAvailabilitySnapshot(empId).catch(console.error); // catch missed updates
+  }
+},
 
         onWebSocketError: (error) => {
             console.error("❌ WebSocket error:", error);
@@ -247,82 +253,72 @@ if (Object.values(errors).some(Boolean)) {
     setLoading(false);
   }
 };
-const fetchEmployeeDetails = async (employeeId) => {
-    const client = stompClientRef.current;
+// add near your other refs
+const currentEmployeeIdRef = useRef(null);
 
-    if (!client || !client.connected) {
-        throw new Error("WebSocket is not connected");
-    }
-
-    setLoading(true);
-
-    if (availabilitySubscriptionRef.current) {
-        availabilitySubscriptionRef.current.unsubscribe();
-    }
-
-    availabilitySubscriptionRef.current = client.subscribe(
-        `/topic/availability/${employeeId}`,
-        (message) => {
-            try {
-                console.log("📨 Availability update:");
-
-                const data = JSON.parse(message.body);
-const rawDates = data.dates || [];
-
-const parsedDates = rawDates.map((d) =>
-    typeof d === "string"
-        ? d.replace(/-/g, "/")
-        : d
-);
-
-setEmployeeAvailability(parsedDates);
-setUnavailableDates(data.unavailableDates || []);
-setLoading(false);
-
-            } catch (err) {
-                console.error("Error processing availability:", err);
-                setLoading(false);
-            }
-        }
-    );
-
-    // Initial HTTP fetch
-    try {
-        const response = await fetch(
-           `${process.env.REACT_APP_TERMINET_EMPLOYEE_DETAILS}/${employeeId}`,
-            {
-                headers: {
-                    Authorization:
-                        `Bearer ${sessionStorage.getItem("accessToken")}`
-                }
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-       const rawDates = data.dates || [];
-
-const parsedDates = rawDates.map((d) =>
-    typeof d === "string"
-        ? d.replace(/-/g, "/")
-        : d
-);
-
-setEmployeeAvailability(parsedDates);
-setUnavailableDates(data.unavailableDates || []);
-setLoading(false);
-        return data;
-
-    } catch (error) {
-        setLoading(false);
-        console.error("Failed to fetch employee availability:", error);
-        throw error;
-    }
+// --- shared helpers (only use refs + setState, so they are safe inside the STOMP effect) ---
+const applyAvailability = (data) => {
+  // Only update the fields that were actually sent
+  if (Array.isArray(data.dates)) setEmployeeAvailability(data.dates);
+  if (Array.isArray(data.unavailableDates)) setUnavailableDates(data.unavailableDates);
 };
+
+const subscribeToAvailability = (employeeId) => {
+  const client = stompClientRef.current;
+  if (!client || !client.connected) return;
+
+  try {
+    availabilitySubscriptionRef.current?.unsubscribe();
+  } catch (e) {
+    /* old subscription already dead after a reconnect */
+  }
+
+  availabilitySubscriptionRef.current = client.subscribe(
+    `/topic/availability/${employeeId}`,
+    (message) => {
+      try {
+        console.log("📨 Availability update:", message.body);
+        applyAvailability(JSON.parse(message.body));
+        setLoading(false);
+      } catch (err) {
+        console.error("Error processing availability:", err);
+        setLoading(false);
+      }
+    }
+  );
+};
+
+const fetchAvailabilitySnapshot = async (employeeId) => {
+  const response = await fetch(
+    `${process.env.REACT_APP_TERMINET_EMPLOYEE_DETAILS}/${employeeId}`,
+    { headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` } }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const data = await response.json();
+
+  // ignore the snapshot if the user already switched to another employee
+  if (currentEmployeeIdRef.current === employeeId) applyAvailability(data);
+  return data;
+};
+
+const fetchEmployeeDetails = async (employeeId) => {
+  const client = stompClientRef.current;
+  if (!client || !client.connected) throw new Error("WebSocket is not connected");
+
+  currentEmployeeIdRef.current = employeeId;
+  setLoading(true);
+  subscribeToAvailability(employeeId);
+
+  try {
+    return await fetchAvailabilitySnapshot(employeeId);
+  } catch (error) {
+    console.error("Failed to fetch employee availability:", error);
+    throw error;
+  } finally {
+    setLoading(false);
+  }
+};
+
   async function loadEmployees() {
     try {
       const data = await fetchEmployees();
@@ -591,13 +587,6 @@ const generateTimes = (start, end) => {
     return result;
 };
 
-const availableTimes = selectedAvailability
-    ? generateTimes(
-        selectedAvailability.start_time,
-        selectedAvailability.end_time
-      )
-    : [];
-
   const handleTerminetSubmit = async () => {
     try {
       if (!formData.employeeId) return alert("Zgjidhni punëtorin!");
@@ -632,20 +621,25 @@ const availableTimes = selectedAvailability
           alert(data || "Dështoi krijimi i terminit.");
           return;
         }
+alert("Termini u krijua me sukses!");
 
-        alert("Termini u krijua me sukses!");
-        setFormData({
-          clientId: null,
-          emri: "",
-          mbiemri: "",
-          numri_telefonit: "",
-          email: "",
-          employeeId: "",
-          pershkrimi: "",
-          dataCaktimit: "",
-          detajetTermineve: [],
-        });
-        return;
+// Keep personal details + staff, clear only the booking itself
+setFormData((prev) => ({
+  ...prev,
+  pershkrimi: "",
+  data: "",
+  ora: "",
+  dataCaktimit: "",
+  detajetTermineve: [],
+}));
+
+tempDateRef.current = "";
+tempTimeRef.current = "";
+setSelectedAvailability(null);
+setServices([]);
+setFiltered([]);
+setSearch("");
+return;
       }
 
       const registerRes = await fetch(

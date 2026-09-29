@@ -1,11 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="sq">
   <head>
     <meta charset="utf-8" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
 
-    <meta name="theme-color" content="#000000" />
+    <!-- Browser bar / status bar color on phones = navbar color -->
+    <meta name="theme-color" content="#111311" />
+
+    <!-- Tells the browser this is a light site, so it does not auto-darken it -->
+    <meta name="color-scheme" content="light" />
 
     <meta
       name="description"
@@ -17,6 +24,19 @@
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
     <title>BeautySalon test</title>
+
+    <!-- Paints the page cream immediately, before any JS/CSS loads,
+         so there is no black or white flash while the app starts -->
+    <style>
+      html,
+      body,
+      #root {
+        background: #f7f5f0;
+      }
+      html {
+        color-scheme: light;
+      }
+    </style>
   </head>
 
   <body>
