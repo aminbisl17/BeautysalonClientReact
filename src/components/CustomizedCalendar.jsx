@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import '../css/CustomizedCalendar.css';
 
-// --- Time Helpers ---
 const timeToMinutes = (timeStr) => {
   if (!timeStr) return 0;
   const [h, m] = timeStr.split(':').map(Number);
@@ -30,9 +29,15 @@ export default function AppointmentDateTimePicker({
   slotDuration = 30
 }) {
 
+ 
   const [currentMonth, setCurrentMonth] = useState(() => {
-    return valueData ? new Date(`${valueData}T00:00:00`) : new Date();
-  });
+  const now = new Date();
+  const minM = new Date(now.getFullYear(), now.getMonth(), 1);
+  if (!valueData) return minM;
+  const initial = new Date(`${valueData}T00:00:00`);
+  return initial < minM ? minM : initial;
+});
+
   const [selectedDateStr, setSelectedDateStr] = useState(valueData);
   const [selectedTimeStr, setSelectedTimeStr] = useState(
     valueOra ? `${valueOra}:00` : ''
@@ -146,6 +151,15 @@ export default function AppointmentDateTimePicker({
   ]);
 
   // Handlers
+
+  
+const today = new Date();
+const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+const isAtMinMonth =
+  currentMonth.getFullYear() === minMonth.getFullYear() &&
+  currentMonth.getMonth() === minMonth.getMonth();
+
+
   const handleDateSelect = (dateStr) => {
     setSelectedDateStr(dateStr);
     setSelectedTimeStr('');
@@ -209,13 +223,18 @@ export default function AppointmentDateTimePicker({
           </div>
 
           <div className="pk-calendar-header">
-            <button type="button" className="pk-nav-btn" onClick={handlePrevMonth} aria-label="Muaji i kaluar">‹</button>
-            <span className="pk-month-title" aria-live="polite" aria-label={monthYearLabel}>
-              {monthName} <em>{yearNumber}</em>
-            </span>
-            <button type="button" className="pk-nav-btn" onClick={handleNextMonth} aria-label="Muaji tjetër">›</button>
-          </div>
-
+  <button
+    type="button"
+    className="pk-nav-btn"
+    onClick={handlePrevMonth}
+    disabled={isAtMinMonth}
+    aria-label="Muaji i kaluar"
+  >‹</button>
+  <span className="pk-month-title" aria-live="polite" aria-label={monthYearLabel}>
+    {monthName} <em>{yearNumber}</em>
+  </span>
+  <button type="button" className="pk-nav-btn" onClick={handleNextMonth} aria-label="Muaji tjetër">›</button>
+</div>
           <div className="pk-weekdays-grid">
             <span>Hën</span><span>Mar</span><span>Mër</span><span>Enj</span><span>Pre</span><span>Sht</span><span>Die</span>
           </div>
