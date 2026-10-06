@@ -1,15 +1,51 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 import "../css/terminetTest.css";
-import {
-  fetchServices,
-  fetchServiceAtributes,
-} from "../javascript/APIs/ServicesAPI";
+import { fetchServiceAtributes } from "../javascript/APIs/ServicesAPI";
 import { fetchEmployees } from "../javascript/APIs/EmployeesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
 import AppointmentDateTimePicker from "./CustomizedCalendar";
 import SockJS from "sockjs-client";
+
+/* ------------------------------------------------------------------ */
+/* Pure helpers (module level -> no hook dependencies needed)          */
+/* ------------------------------------------------------------------ */
+
+// Backend: Monday = 1 ... Sunday = 7 (parsed in UTC to avoid timezone shifts)
+const getBackendDay = (dateStr) => {
+  const d = new Date(`${dateStr}T00:00:00Z`).getUTCDay(); // 0 = Sunday
+  return d === 0 ? 7 : d;
+};
+
+const findPeriod = (availability, date) =>
+  (availability || []).find(
+    (p) => date >= p.start_date && date <= p.end_date
+  ) || null;
+
+const findDayDetail = (availability, date) => {
+  const period = findPeriod(availability, date);
+  return (
+    period?.availabilityDetails.find(
+      (d) => d.day_of_week === getBackendDay(date)
+    ) || null
+  );
+};
+
+const getServicesForPeriod = (period) =>
+  (period?.sherbimetDisplay || []).filter(
+    (s) =>
+      s.is_active &&
+      (!period.availableSkills?.length ||
+        period.availableSkills.includes(s.avaSkillId))
+  );
+
+const normalizePhone = (value) => {
+  let p = String(value || "").replace(/\D/g, "");
+  if (p.startsWith("383")) p = p.substring(3);
+  if (p.startsWith("0")) p = p.substring(1);
+  return p;
+};
 
 export default function Termini({ setView }) {
   const [services, setServices] = useState([]);
@@ -18,13 +54,13 @@ export default function Termini({ setView }) {
   const [pendingEmployeeId, setPendingEmployeeId] = useState(null);
   const [employeesList, setEmployeesList] = useState([]);
   const [selectedEmployeeData, setSelectedEmployeeData] = useState(null);
-  const [selectedAvailability, setSelectedAvailability] = useState(null);
-const [fieldErrors, setFieldErrors] = useState({
-  emri: false,
-  mbiemri: false,
-  numri_telefonit: false,
-});
-  // Ruajmë të dhënat e disponueshmërisë të kthyeshme nga API
+  const [fieldErrors, setFieldErrors] = useState({
+    emri: false,
+    mbiemri: false,
+    numri_telefonit: false,
+  });
+
+  // Availability returned by REST snapshot / WebSocket
   const [employeeAvailability, setEmployeeAvailability] = useState(null);
   const [unavailableDates, setUnavailableDates] = useState([]);
 
@@ -33,19 +69,16 @@ const [fieldErrors, setFieldErrors] = useState({
   const [showOtp, setShowOtp] = useState(false);
   const [otpCode, setOtpCode] = useState("");
 
-  // Configurator Drawer States
+  // Configurator drawer states
   const [selectedService, setSelectedService] = useState(null);
-  const [selectedAttribute, setSelecedAttribute] = useState(null);
   const [attributeSearch, setAttributeSearch] = useState("");
   const [loadingAttributes, setLoadingAttributes] = useState(false);
   const [selectedAttributes, setSelectedAttributes] = useState([]);
   const [attributesList, setAttributesList] = useState([]);
-  
-  const tempDateRef = useRef("");
-  const tempTimeRef = useRef("");
 
   const stompClientRef = useRef(null);
-const availabilitySubscriptionRef = useRef(null);
+  const availabilitySubscriptionRef = useRef(null);
+  const currentEmployeeIdRef = useRef(null);
 
   const [formData, setFormData] = useState({
     clientId: null,
@@ -55,6 +88,8 @@ const availabilitySubscriptionRef = useRef(null);
     email: "",
     employeeId: "",
     pershkrimi: "",
+    data: "",
+    ora: "",
     dataCaktimit: "",
     detajetTermineve: [],
   });
@@ -80,23 +115,93 @@ const availabilitySubscriptionRef = useRef(null);
     })),
   });
 
-  useEffect(() => {
+  /* ---------------------------------------------------------------- */
+  /* Availability helpers (stable references, safe inside STOMP effect) */
+  /* ---------------------------------------------------------------- */
 
+  const applyAvailability = useCallback((data) => {
+    if (Array.isArray(data.dates)) setEmployeeAvailability(data.dates);
+    if (Array.isArray(data.unavailableDates))
+      setUnavailableDates(data.unavailableDates);
+  }, []);
+
+  const subscribeToAvailability = useCallback(
+    (employeeId) => {
+      const client = stompClientRef.current;
+      if (!client || !client.connected) return;
+
+      try {
+        availabilitySubscriptionRef.current?.unsubscribe();
+      } catch (e) {
+        /* old subscription already dead after a reconnect */
+      }
+
+      availabilitySubscriptionRef.current = client.subscribe(
+        `/topic/availability/${employeeId}`,
+        (message) => {
+          try {
+            applyAvailability(JSON.parse(message.body));
+          } catch (err) {
+            console.error("Error processing availability:", err);
+          } finally {
+            setLoading(false);
+          }
+        }
+      );
+    },
+    [applyAvailability]
+  );
+
+  const fetchAvailabilitySnapshot = useCallback(
+    async (employeeId) => {
+      const response = await fetch(
+        `${process.env.REACT_APP_TERMINET_EMPLOYEE_DETAILS}/${employeeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      // ignore the snapshot if the user already switched to another employee
+      if (currentEmployeeIdRef.current === employeeId) applyAvailability(data);
+      return data;
+    },
+    [applyAvailability]
+  );
+
+  const fetchEmployeeDetails = async (employeeId) => {
+    const client = stompClientRef.current;
+    if (!client || !client.connected)
+      throw new Error("WebSocket is not connected");
+
+    currentEmployeeIdRef.current = employeeId;
+    setLoading(true);
+    subscribeToAvailability(employeeId);
+
+    try {
+      return await fetchAvailabilitySnapshot(employeeId);
+    } catch (error) {
+      console.error("Failed to fetch employee availability:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ---------------------------------------------------------------- */
+  /* Effects                                                           */
+  /* ---------------------------------------------------------------- */
+
+  // Initial load: stored user + employees
+  useEffect(() => {
     const storedUser = sessionStorage.getItem("userDetails");
- console.log("stored user " + JSON.parse(storedUser));
     if (storedUser) {
       const user = JSON.parse(storedUser);
-      let rawPhone = user.numri_telefonit || user.numriTelefonit || "";
-
-      if (rawPhone.startsWith("+383")) {
-        rawPhone = rawPhone.replace("+383", "");
-      } else if (rawPhone.startsWith("383")) {
-        rawPhone = rawPhone.substring(3);
-      }
-
-      if (rawPhone.startsWith("0")) {
-        rawPhone = rawPhone.substring(1);
-      }
+      const rawPhone = normalizePhone(
+        user.numri_telefonit || user.numriTelefonit || ""
+      );
 
       setFormData((prev) => ({
         ...prev,
@@ -104,288 +209,242 @@ const availabilitySubscriptionRef = useRef(null);
         emri: user.emri || "",
         mbiemri: user.mbiemri || "",
         email: user.email || "",
-        numri_telefonit: rawPhone.trim(),
+        numri_telefonit: rawPhone,
       }));
     }
 
-    loadEmployees();
+    (async () => {
+      try {
+        const data = await fetchEmployees();
+        setEmployeesList(data || []);
+      } catch (err) {
+        ExceptionHandler.handle(err);
+      }
+    })();
   }, []);
 
+  // STOMP connection
   useEffect(() => {
     const client = new Client({
-        webSocketFactory: () => {
-            const url = process.env.REACT_APP_WEBSOCKET_URL
-                .replace(/^wss:\/\//, "https://")
-                .replace(/^ws:\/\//, "http://");
-
-            console.log("Connecting SockJS:", url);
-
-            return new SockJS(url);
-        },
-
-        reconnectDelay: 5000,
-
-        debug: (message) => {
-            console.log("[STOMP]", message);
-        },
-
+      webSocketFactory: () => {
+        const url = process.env.REACT_APP_WEBSOCKET_URL
+          .replace(/^wss:\/\//, "https://")
+          .replace(/^ws:\/\//, "http://");
+        return new SockJS(url);
+      },
+      reconnectDelay: 5000,
       onConnect: () => {
-  console.log("✅ STOMP CONNECTED");
-  stompClientRef.current = client;
+        console.log("✅ STOMP CONNECTED");
+        stompClientRef.current = client;
 
-  const empId = currentEmployeeIdRef.current;
-  if (empId) {
-    subscribeToAvailability(empId);              // restore lost subscription
-    fetchAvailabilitySnapshot(empId).catch(console.error); // catch missed updates
-  }
-},
-
-        onWebSocketError: (error) => {
-            console.error("❌ WebSocket error:", error);
-        },
-
-        onStompError: (frame) => {
-            console.error(
-                "❌ STOMP error:",
-                frame.headers
-            );
-            console.error(frame.body);
-        },
-
-        onDisconnect: () => {
-            console.log("🔌 STOMP disconnected");
+        const empId = currentEmployeeIdRef.current;
+        if (empId) {
+          subscribeToAvailability(empId); // restore lost subscription
+          fetchAvailabilitySnapshot(empId).catch(console.error); // catch missed updates
         }
+      },
+      onWebSocketError: (error) => {
+        console.error("❌ WebSocket error:", error);
+      },
+      onStompError: (frame) => {
+        console.error("❌ STOMP error:", frame.headers);
+        console.error(frame.body);
+      },
+      onDisconnect: () => {
+        console.log("🔌 STOMP disconnected");
+      },
     });
 
     stompClientRef.current = client;
-
     client.activate();
 
     return () => {
-        console.log("🔌 Closing STOMP connection");
-
-        if (availabilitySubscriptionRef.current) {
-            availabilitySubscriptionRef.current.unsubscribe();
-            availabilitySubscriptionRef.current = null;
-        }
-
-        client.deactivate();
-        stompClientRef.current = null;
+      if (availabilitySubscriptionRef.current) {
+        availabilitySubscriptionRef.current.unsubscribe();
+        availabilitySubscriptionRef.current = null;
+      }
+      client.deactivate();
+      stompClientRef.current = null;
     };
-}, []);
+  }, [subscribeToAvailability, fetchAvailabilitySnapshot]);
 
+  // Services for the selected date: refreshed on every availability update
+  useEffect(() => {
+    const date = formData.data;
 
-  const handleEmployeeChange = async (e) => {
-  const chosenId = Number(e.target.value);
-
-  // Clear services immediately so old employee data vanishes instantly
-setServices([]);
-setFiltered([]);
-setEmployeeAvailability(null);
-setUnavailableDates([]);
-
-  if (!chosenId) {
-    setFormData((prev) => ({ ...prev, employeeId: "", detajetTermineve: [] }));
-    setSelectedEmployeeData(null);
-    return;
-  }
-
-  const token = sessionStorage.getItem("accessToken");
-
-  // If already authenticated, proceed as usual
-  if (token) {
-    setFormData((prev) => ({ ...prev, employeeId: chosenId, detajetTermineve: [] }));
-    const matchedStaff = employeesList.find((emp) => Number(emp.ID) === chosenId || Number(emp.id) === chosenId);
-    setSelectedEmployeeData(matchedStaff || null);
-  try {
-    await fetchEmployeeDetails(chosenId, token);
-
-      } catch (err) {
-  console.error("Employee WebSocket failed:", err);
-}
-    return;
-  }
-
-  // --- UNAUTHENTICATED FLOW ---
-  // Validate required personal details before triggering OTP
-const errors = {
-  emri: !formData.emri.trim(),
-  mbiemri: !formData.mbiemri.trim(),
-  numri_telefonit: !formData.numri_telefonit.trim(),
-};
-
-setFieldErrors(errors);
-
-if (Object.values(errors).some(Boolean)) {
-  return;
-}
-  // Save the intended employee choice temporarily
-  setPendingEmployeeId(chosenId);
-
-  try {
-    setLoading(true);
-    const registerRes = await fetch(
-     process.env.REACT_APP_CLIENT_FAST_LOGIN_REGISTER,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          emri: formData.emri,
-          mbiemri: formData.mbiemri,
-          numri_telefonit: `+383${formData.numri_telefonit}`,
-          email: formData.email || "",
-          gjinia: "m",
-        }),
-      }
-    );
-
-    if (registerRes.ok) {
-      setShowOtp(true);
-    } else {
-      alert("Dështoi regjistrimi i shpejtë. Ju lutemi kontrolloni të dhënat.");
-      setPendingEmployeeId(null);
-    }
-  } catch (err) {
-    console.error("Gabim gjatë fast-login:", err);
-    alert("Ndodhi një gabim gjatë lidhjes me serverin.");
-    setPendingEmployeeId(null);
-  } finally {
-    setLoading(false);
-  }
-};
-// add near your other refs
-const currentEmployeeIdRef = useRef(null);
-
-// --- shared helpers (only use refs + setState, so they are safe inside the STOMP effect) ---
-const applyAvailability = (data) => {
-  // Only update the fields that were actually sent
-  if (Array.isArray(data.dates)) setEmployeeAvailability(data.dates);
-  if (Array.isArray(data.unavailableDates)) setUnavailableDates(data.unavailableDates);
-};
-
-const subscribeToAvailability = (employeeId) => {
-  const client = stompClientRef.current;
-  if (!client || !client.connected) return;
-
-  try {
-    availabilitySubscriptionRef.current?.unsubscribe();
-  } catch (e) {
-    /* old subscription already dead after a reconnect */
-  }
-
-  availabilitySubscriptionRef.current = client.subscribe(
-    `/topic/availability/${employeeId}`,
-    (message) => {
-      try {
-        console.log("📨 Availability update:", message.body);
-        applyAvailability(JSON.parse(message.body));
-        setLoading(false);
-      } catch (err) {
-        console.error("Error processing availability:", err);
-        setLoading(false);
-      }
-    }
-  );
-};
-
-const fetchAvailabilitySnapshot = async (employeeId) => {
-  const response = await fetch(
-    `${process.env.REACT_APP_TERMINET_EMPLOYEE_DETAILS}/${employeeId}`,
-    { headers: { Authorization: `Bearer ${sessionStorage.getItem("accessToken")}` } }
-  );
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const data = await response.json();
-
-  // ignore the snapshot if the user already switched to another employee
-  if (currentEmployeeIdRef.current === employeeId) applyAvailability(data);
-  return data;
-};
-
-const fetchEmployeeDetails = async (employeeId) => {
-  const client = stompClientRef.current;
-  if (!client || !client.connected) throw new Error("WebSocket is not connected");
-
-  currentEmployeeIdRef.current = employeeId;
-  setLoading(true);
-  subscribeToAvailability(employeeId);
-
-  try {
-    return await fetchAvailabilitySnapshot(employeeId);
-  } catch (error) {
-    console.error("Failed to fetch employee availability:", error);
-    throw error;
-  } finally {
-    setLoading(false);
-  }
-};
-
-  async function loadEmployees() {
-    try {
-      const data = await fetchEmployees();
-      console.log(data);
-      setEmployeesList(data || []);
-    } catch (err) {
-      ExceptionHandler.handle(err);
-    }
-  }
-
-const handleChange = (e) => {
-  
-    const { name, value } = e.target;
-
-  if (fieldErrors[name]) {
-    setFieldErrors((prev) => ({
-      ...prev,
-      [name]: false,
-    }));
-  }
-
-  if (name === "data") {
-    tempDateRef.current = value;
-
-    const availability = getAvailabilityForDate(value);
-    setSelectedAvailability(availability);
-  }
-
-  if (name === "ora") {
-    tempTimeRef.current = value;
-  }
-
-  setFormData((prev) => {
-    const updatedDate = name === "data" ? value : tempDateRef.current;
-    const updatedTime = name === "ora" ? value : tempTimeRef.current;
-
-    let combinedDataCaktimit = "";
-
-    if (updatedDate && updatedTime) {
-      combinedDataCaktimit = `${updatedDate}T${
-        updatedTime.length === 5 ? updatedTime + ":00" : updatedTime
-      }`;
-    }
-
-      return {
-        ...prev,
-        [name]: value,
-        dataCaktimit: combinedDataCaktimit,
-      };
-    });
-  };
-
-  const handleSearch = (e) => {
-    const value = e.target.value;
-    setSearch(value);
-
-    if (!value.trim()) {
-      setFiltered(services);
+    if (!date || !employeeAvailability) {
+      setServices([]);
       return;
     }
 
-    setFiltered(
-      services.filter((s) =>
-        s.emri_sherbimit?.toLowerCase().includes(value.toLowerCase()),
-      ),
+    const dateServices = getServicesForPeriod(
+      findPeriod(employeeAvailability, date)
     );
+    setServices(dateServices);
+
+    // Drop selected services that are no longer offered on that date
+    const validIds = new Set(dateServices.map((s) => s.ID));
+    setFormData((prev) => {
+      const kept = prev.detajetTermineve.filter((d) =>
+        validIds.has(d.sherbimetId)
+      );
+      return kept.length === prev.detajetTermineve.length
+        ? prev
+        : { ...prev, detajetTermineve: kept };
+    });
+  }, [employeeAvailability, formData.data]);
+
+  // Apply the search box on top of the services list
+  useEffect(() => {
+    const q = search.trim().toLowerCase();
+    setFiltered(
+      q
+        ? services.filter((s) => s.emri_sherbimit?.toLowerCase().includes(q))
+        : services
+    );
+  }, [services, search]);
+
+  // Invalidate the chosen date/time if a live update made it unavailable
+  useEffect(() => {
+    if (!employeeAvailability || !formData.data) return;
+
+    const date = formData.data;
+    const time = (formData.ora || "").slice(0, 5); // "HH:MM"
+    const detail = findDayDetail(employeeAvailability, date);
+
+    let message = null;
+    let clearDate = false;
+
+    if (!detail) {
+      message = "Data e zgjedhur nuk është më e disponueshme.";
+      clearDate = true;
+    } else if (time) {
+      const start = detail.start_time.slice(0, 5);
+      const end = detail.end_time.slice(0, 5);
+      const pStart = detail.pause_start?.slice(0, 5);
+      const pEnd = detail.pause_end?.slice(0, 5);
+
+      const outside = time < start || time >= end;
+      const inPause = pStart && pEnd && time >= pStart && time < pEnd;
+      const taken = unavailableDates.some(
+        (u) => u.slice(0, 16) === `${date}T${time}`
+      );
+
+      if (outside || inPause || taken) {
+        message = "Ora e zgjedhur nuk është më e lirë. Zgjidhni një orë tjetër.";
+      }
+    }
+
+    if (message) {
+      setFormData((prev) => ({
+        ...prev,
+        ora: "",
+        dataCaktimit: "",
+        ...(clearDate ? { data: "" } : {}),
+      }));
+      alert(message);
+    }
+  }, [employeeAvailability, unavailableDates, formData.data, formData.ora]);
+
+
+  /* ---------------------------------------------------------------- */
+  /* Handlers                                                          */
+  /* ---------------------------------------------------------------- */
+
+  const handleEmployeeChange = async (e) => {
+    const chosenId = Number(e.target.value);
+
+    // Reset everything that belongs to the previous employee
+    setServices([]);
+    setFiltered([]);
+    setEmployeeAvailability(null);
+    setUnavailableDates([]);
+    setFormData((prev) => ({
+      ...prev,
+      data: "",
+      ora: "",
+      dataCaktimit: "",
+      detajetTermineve: [],
+    }));
+
+    if (!chosenId) {
+      currentEmployeeIdRef.current = null;
+      setFormData((prev) => ({ ...prev, employeeId: "" }));
+      setSelectedEmployeeData(null);
+      return;
+    }
+
+    const token = sessionStorage.getItem("accessToken");
+
+    // Already authenticated
+    if (token) {
+      setFormData((prev) => ({ ...prev, employeeId: chosenId }));
+      const matchedStaff = employeesList.find(
+        (emp) => Number(emp.ID) === chosenId || Number(emp.id) === chosenId
+      );
+      setSelectedEmployeeData(matchedStaff || null);
+      try {
+        await fetchEmployeeDetails(chosenId);
+      } catch (err) {
+        console.error("Employee WebSocket failed:", err);
+      }
+      return;
+    }
+
+    // --- UNAUTHENTICATED FLOW ---
+    const errors = {
+      emri: !formData.emri.trim(),
+      mbiemri: !formData.mbiemri.trim(),
+      numri_telefonit: !formData.numri_telefonit.trim(),
+    };
+    setFieldErrors(errors);
+    if (Object.values(errors).some(Boolean)) return;
+
+    setPendingEmployeeId(chosenId);
+
+    try {
+      setLoading(true);
+      const registerRes = await fetch(
+        process.env.REACT_APP_CLIENT_FAST_LOGIN_REGISTER,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            emri: formData.emri,
+            mbiemri: formData.mbiemri,
+            numri_telefonit: `+383${formData.numri_telefonit}`,
+            email: formData.email || "",
+            gjinia: "m",
+          }),
+        }
+      );
+
+      if (registerRes.ok) {
+        setShowOtp(true);
+      } else {
+        alert("Dështoi regjistrimi i shpejtë. Ju lutemi kontrolloni të dhënat.");
+        setPendingEmployeeId(null);
+      }
+    } catch (err) {
+      console.error("Gabim gjatë fast-login:", err);
+      alert("Ndodhi një gabim gjatë lidhjes me serverin.");
+      setPendingEmployeeId(null);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    if (fieldErrors[name]) {
+      setFieldErrors((prev) => ({ ...prev, [name]: false }));
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSearch = (e) => setSearch(e.target.value);
 
   const getPrice = (service) => {
     const base = service.qmimi_baze || 0;
@@ -395,14 +454,14 @@ const handleChange = (e) => {
 
   const handleServiceCardClick = async (service) => {
     const exists = formData.detajetTermineve.find(
-      (s) => s.sherbimetId === service.ID,
+      (s) => s.sherbimetId === service.ID
     );
 
     if (exists) {
       setFormData((prev) => ({
         ...prev,
         detajetTermineve: prev.detajetTermineve.filter(
-          (s) => s.sherbimetId !== service.ID,
+          (s) => s.sherbimetId !== service.ID
         ),
       }));
     } else {
@@ -424,7 +483,6 @@ const handleChange = (e) => {
     }
   };
 
-
   const formatDuration = (mins) => {
     const hours = Math.floor(mins / 60);
     const minutes = mins % 60;
@@ -439,153 +497,23 @@ const handleChange = (e) => {
     setSelectedService(null);
   };
 
-  const closeDialog = () => {
-    setSelectedService(null);
-  };
+  const closeDialog = () => setSelectedService(null);
 
   const totalPrice = formData.detajetTermineve.reduce(
     (sum, item) => sum + item.pagesa,
-    0,
+    0
   );
 
-  const getAvailabilityForDate = (selectedDate) => {
-  if (!employeeAvailability) return null;
-
-  const date = new Date(selectedDate);
-
-  // JS: Sunday=0 ... Saturday=6
-  const jsDay = date.getDay();
-
-  // Backend: Monday=1 ... Sunday=7
-  const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-
-  for (const period of employeeAvailability) {
-    if (
-      selectedDate >= period.start_date &&
-      selectedDate <= period.end_date
-    ) {
-      const detail = period.availabilityDetails.find(
-        d => d.day_of_week === dayOfWeek
-      );
-
-      if (detail) {
-        return detail;
-      }
-    }
-  }
-
-  return null;
-};
-
-const getAvailabilityPeriodForDate = (selectedDate) => {
-  if (!selectedDate || !employeeAvailability) return null;
-
-  return employeeAvailability.find((period) => {
-    return (
-      selectedDate >= period.start_date &&
-      selectedDate <= period.end_date
-    );
-  }) || null;
-};
-
-const filterServicesForDate = (selectedDate) => {
-  if (!selectedDate || !employeeAvailability) {
-    setServices([]);
-    setFiltered([]);
-    return;
-  }
-
-  const period = getAvailabilityPeriodForDate(selectedDate);
-
-  if (!period) {
-    setServices([]);
-    setFiltered([]);
-    return;
-  }
-
-  const dateServices = period.sherbimetDisplay || [];
-
-  setServices(dateServices);
-
-  // Apply existing search as well
-  if (search.trim()) {
-    setFiltered(
-      dateServices.filter((service) =>
-        service.emri_sherbimit
-          ?.toLowerCase()
-          .includes(search.toLowerCase())
-      )
-    );
-  } else {
-    setFiltered(dateServices);
-  }
-};
-
-const availableDates = [];
-
-if (employeeAvailability) {
-  employeeAvailability.forEach((period) => {
-    let current = new Date(period.start_date);
-    const end = new Date(period.end_date);
-
-    while (current <= end) {
-      const jsDay = current.getDay();
-      const day = jsDay === 0 ? 7 : jsDay;
-
-      const exists = period.availabilityDetails.some(
-        (d) => d.day_of_week === day
-      );
-
-      if (exists) {
-        availableDates.push(current.toISOString().split("T")[0]);
-      }
-
-      current.setDate(current.getDate() + 1);
-    }
-  });
-}
-
-const handleDateTimeChange = ({ data, ora, dataCaktimit }) => {
-  // Find availability for the newly selected date
-  const availability = getAvailabilityForDate(data);
-
-  setSelectedAvailability(availability);
-
-  // Filter services belonging to that date's availability period
-  filterServicesForDate(data);
-
-  setFormData((prev) => ({
-    ...prev,
-    data,
-    ora,
-    dataCaktimit,
-    // Clear previously selected services because they may
-    // not be available on the new date
-    detajetTermineve: []
-  }));
-};
-
-
-const generateTimes = (start, end) => {
-    const result = [];
-
-    let current = new Date(`1970-01-01T${start}`);
-    const finish = new Date(`1970-01-01T${end}`);
-
-    while (current < finish) {
-        result.push(
-            current.toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: false
-            })
-        );
-
-        current.setMinutes(current.getMinutes() + 15);
-    }
-
-    return result;
-};
+  const handleDateTimeChange = ({ data, ora, dataCaktimit }) => {
+    setFormData((prev) => ({
+      ...prev,
+      data,
+      ora,
+      dataCaktimit,
+      // only clear services if the date actually changed
+      detajetTermineve: prev.data !== data ? [] : prev.detajetTermineve,
+    }));
+  };
 
   const handleTerminetSubmit = async () => {
     try {
@@ -597,49 +525,43 @@ const generateTimes = (start, end) => {
       const stored = sessionStorage.getItem("userDetails");
       const user = stored ? JSON.parse(stored) : null;
       const isLoggedIn = Boolean(user?.id);
-      if (
-        isLoggedIn &&
-        `+383${formData.numri_telefonit}` == user.numriTelefonit
-      ) {
+      const userPhone = normalizePhone(
+        user?.numriTelefonit || user?.numri_telefonit
+      );
+
+      if (isLoggedIn && formData.numri_telefonit === userPhone) {
         const booking = buildBookingPayload(user.id || formData.clientId);
         const token = sessionStorage.getItem("accessToken");
 
-        const res = await fetch(
-          process.env.REACT_APP_TERMINET_CREATE,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: JSON.stringify(booking),
+        const res = await fetch(process.env.REACT_APP_TERMINET_CREATE, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
           },
-        );
+          body: JSON.stringify(booking),
+        });
 
         const data = await res.text();
         if (!res.ok) {
           alert(data || "Dështoi krijimi i terminit.");
           return;
         }
-alert("Termini u krijua me sukses!");
+        alert("Termini u krijua me sukses!");
 
-// Keep personal details + staff, clear only the booking itself
-setFormData((prev) => ({
-  ...prev,
-  pershkrimi: "",
-  data: "",
-  ora: "",
-  dataCaktimit: "",
-  detajetTermineve: [],
-}));
-
-tempDateRef.current = "";
-tempTimeRef.current = "";
-setSelectedAvailability(null);
-setServices([]);
-setFiltered([]);
-setSearch("");
-return;
+        // Keep personal details + staff, clear only the booking itself
+        setFormData((prev) => ({
+          ...prev,
+          pershkrimi: "",
+          data: "",
+          ora: "",
+          dataCaktimit: "",
+          detajetTermineve: [],
+        }));
+        setServices([]);
+        setFiltered([]);
+        setSearch("");
+        return;
       }
 
       const registerRes = await fetch(
@@ -654,7 +576,7 @@ return;
             email: "",
             gjinia: "m",
           }),
-        },
+        }
       );
 
       if (registerRes.ok) {
@@ -668,82 +590,78 @@ return;
   };
 
   const verifyOtp = async (otp) => {
-  try {
-    const payload = {
-      otpcode: otp,
-      numri_telefonit: `+383${formData.numri_telefonit}`,
-    };
+    try {
+      const payload = {
+        otpcode: otp,
+        numri_telefonit: `+383${formData.numri_telefonit}`,
+      };
 
-    const res = await fetch(
-      process.env.REACT_APP_CLIENT_FAST_LOGIN_VERIFY,
-      {
+      const res = await fetch(process.env.REACT_APP_CLIENT_FAST_LOGIN_VERIFY, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         credentials: "include",
+      });
+
+      if (!res.ok) {
+        alert("Kodi OTP është gabim!");
+        return;
       }
-    );
 
-    if (!res.ok) {
-      alert("Kodi OTP është gabim!");
-      return;
+      const data = await res.json().catch(() => ({}));
+
+      sessionStorage.setItem("accessToken", data.token);
+      if (data.refreshToken) {
+        sessionStorage.setItem("refreshToken", data.refreshToken);
+      }
+
+      const userRes = await fetch(process.env.REACT_APP_CLIENT_GET_DATA, {
+        headers: { Authorization: `Bearer ${data.token}` },
+        credentials: "include",
+      });
+
+      const userInfo = await userRes.json();
+      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+
+      setShowOtp(false);
+      setOtpCode("");
+
+      // Automatically set the selected employee after OTP succeeds
+      const targetEmpId = pendingEmployeeId || formData.employeeId;
+      if (targetEmpId) {
+        setFormData((prev) => ({ ...prev, employeeId: targetEmpId }));
+        const matchedStaff = employeesList.find(
+          (emp) =>
+            Number(emp.ID) === targetEmpId || Number(emp.id) === targetEmpId
+        );
+        setSelectedEmployeeData(matchedStaff || null);
+
+        try {
+          await fetchEmployeeDetails(targetEmpId);
+        } catch (err) {
+          console.error("Employee WebSocket failed:", err);
+        }
+
+        setPendingEmployeeId(null);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Gabim gjatë verifikimit të OTP-së.");
     }
-
-    const data = await res.json().catch(() => ({}));
-
-    // Save tokens in sessionStorage
-    sessionStorage.setItem("accessToken", data.token);
-    if (data.refreshToken) {
-      sessionStorage.setItem("refreshToken", data.refreshToken);
-    }
-
-    // Get user info
-    const userRes = await fetch(process.env.REACT_APP_CLIENT_GET_DATA, {
-      headers: { Authorization: `Bearer ${data.token}` },
-      credentials: "include",
-    });
-
-    const userInfo = await userRes.json();
-    sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
-    setShowOtp(false);
-    setOtpCode("");
-
-    // Automatically set the selected employee after OTP succeeds
-    const targetEmpId = pendingEmployeeId || formData.employeeId;
-    if (targetEmpId) {
-      setFormData((prev) => ({ ...prev, employeeId: targetEmpId }));
-      const matchedStaff = employeesList.find(
-        (emp) => Number(emp.ID) === targetEmpId || Number(emp.id) === targetEmpId
-      );
-      setSelectedEmployeeData(matchedStaff || null);
-      
-
-      try {
-  
-      await fetchEmployeeDetails(targetEmpId, data.token);
-} catch (err) {
-  console.error("Employee WebSocket failed:", err);
-}
-
-      setPendingEmployeeId(null);
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Gabim gjatë verifikimit të OTP-së.");
-  }
-};
+  };
 
   const toggleAttribute = (id) => {
     setSelectedAttributes((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
-  
- return (
+  /* ---------------------------------------------------------------- */
+  /* Render                                                            */
+  /* ---------------------------------------------------------------- */
+
+  return (
     <div className="termini-page">
-      {/* Mobile-Optimized Top Header */}
       <header className="termini-header">
         <span className="badge-pill">Sallon Bukurie</span>
         <h1>
@@ -754,53 +672,51 @@ return;
 
       <main className="termini-container">
         <div className="termini-grid">
-          {/* MAIN FORM COLUMN */}
           <div className="termini-main-content">
-            
             {/* STEP 01: Detajet Personale */}
             <section className="form-section-card">
               <div className="section-title-wrapper">
                 <span className="step-badge">1</span>
                 <div>
                   <h2 className="section-title">Detajet Personale</h2>
-                  <p className="section-subtitle">Ju lutemi plotësoni të dhënat tuaja</p>
+                  <p className="section-subtitle">
+                    Ju lutemi plotësoni të dhënat tuaja
+                  </p>
                 </div>
               </div>
 
               <div className="input-group-grid">
                 <div className="input-box">
                   <label>Emri</label>
-               <input
-  type="text"
-  name="emri"
-  value={formData.emri}
-  onChange={handleChange}
-  placeholder="Emri"
-  className={fieldErrors.emri ? "input-error" : ""}
-/>
-
-{fieldErrors.emri && (
-  <small className="error-text">
-    Ju lutemi shkruani emrin.
-  </small>
-)}
+                  <input
+                    type="text"
+                    name="emri"
+                    value={formData.emri}
+                    onChange={handleChange}
+                    placeholder="Emri"
+                    className={fieldErrors.emri ? "input-error" : ""}
+                  />
+                  {fieldErrors.emri && (
+                    <small className="error-text">
+                      Ju lutemi shkruani emrin.
+                    </small>
+                  )}
                 </div>
                 <div className="input-box">
                   <label>Mbiemri</label>
                   <input
-  type="text"
-  name="mbiemri"
-  value={formData.mbiemri}
-  onChange={handleChange}
-  placeholder="Mbiemri"
-  className={fieldErrors.mbiemri ? "input-error" : ""}
-/>
-
-{fieldErrors.mbiemri && (
-  <small className="error-text">
-    Ju lutemi shkruani mbiemrin.
-  </small>
-)}
+                    type="text"
+                    name="mbiemri"
+                    value={formData.mbiemri}
+                    onChange={handleChange}
+                    placeholder="Mbiemri"
+                    className={fieldErrors.mbiemri ? "input-error" : ""}
+                  />
+                  {fieldErrors.mbiemri && (
+                    <small className="error-text">
+                      Ju lutemi shkruani mbiemrin.
+                    </small>
+                  )}
                 </div>
               </div>
 
@@ -808,38 +724,37 @@ return;
                 <label>Numri i telefonit *</label>
                 <div className="phone-input-wrapper">
                   <span className="phone-prefix">+383</span>
-                <input
-  type="tel"
-  inputMode="numeric"
-  name="numri_telefonit"
-  value={formData.numri_telefonit}
-  className={fieldErrors.numri_telefonit ? "input-error" : ""}
-                  
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    name="numri_telefonit"
+                    value={formData.numri_telefonit}
+                    className={fieldErrors.numri_telefonit ? "input-error" : ""}
                     onChange={(e) => {
-  let value = e.target.value.replace(/\D/g, "");
-  if (value.startsWith("0")) value = value.substring(1);
-  value = value.slice(0, 8);
+                      let value = e.target.value.replace(/\D/g, "");
+                      if (value.startsWith("0")) value = value.substring(1);
+                      value = value.slice(0, 8);
 
-  setFormData((prev) => ({
-    ...prev,
-    numri_telefonit: value,
-  }));
+                      setFormData((prev) => ({
+                        ...prev,
+                        numri_telefonit: value,
+                      }));
 
-  if (fieldErrors.numri_telefonit) {
-    setFieldErrors((prev) => ({
-      ...prev,
-      numri_telefonit: false,
-    }));
-  }
-}}
+                      if (fieldErrors.numri_telefonit) {
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          numri_telefonit: false,
+                        }));
+                      }
+                    }}
                     placeholder="4XXXXXXX"
                     required
                   />
                   {fieldErrors.numri_telefonit && (
-  <small className="error-text">
-    Ju lutemi shkruani numrin e telefonit.
-  </small>
-)}
+                    <small className="error-text">
+                      Ju lutemi shkruani numrin e telefonit.
+                    </small>
+                  )}
                 </div>
               </div>
 
@@ -863,11 +778,12 @@ return;
                 <span className="step-badge">2</span>
                 <div>
                   <h2 className="section-title">Zgjedh Stafin</h2>
-                  <p className="section-subtitle">Përzgjidhni profesionistin tuaj</p>
+                  <p className="section-subtitle">
+                    Përzgjidhni profesionistin tuaj
+                  </p>
                 </div>
               </div>
 
-              {/* Mobile-Friendly Horizontal Staff Selector */}
               <div className="staff-tiles-scroll">
                 {employeesList.map((emp) => {
                   const isEmpSelected = formData.employeeId === emp.ID;
@@ -875,13 +791,13 @@ return;
                     <div
                       key={emp.ID}
                       className={`staff-tile-card ${isEmpSelected ? "selected" : ""}`}
-                      onClick={() => {
-                        // Trigger synthetic change or custom function
-                        handleEmployeeChange({ target: { value: emp.ID } });
-                      }}
+                      onClick={() =>
+                        handleEmployeeChange({ target: { value: emp.ID } })
+                      }
                     >
                       <div className="staff-avatar">
-                        {emp.emri?.charAt(0)}{emp.mbiemri?.charAt(0)}
+                        {emp.emri?.charAt(0)}
+                        {emp.mbiemri?.charAt(0)}
                       </div>
                       <span className="staff-name">{emp.emri}</span>
                       <span className="staff-role">Specialist</span>
@@ -891,12 +807,12 @@ return;
                 })}
               </div>
 
-              {/* Selected Staff Info Card */}
               {selectedEmployeeData && (
                 <div className="employee-profile-preview animate-fade-in">
                   <div className="employee-profile-info">
                     <p className="employee-bio">
-                      {selectedEmployeeData.pershkrimi || "Staf i kualifikuar për shërbimet e bukurisë."}
+                      {selectedEmployeeData.pershkrimi ||
+                        "Staf i kualifikuar për shërbimet e bukurisë."}
                     </p>
                     <div className="employee-contact-meta">
                       {selectedEmployeeData.numri_telefonit && (
@@ -908,40 +824,40 @@ return;
               )}
             </section>
 
-            {/* CONDITIONAL STEPS: Visible after choosing staff */}
             {formData.employeeId ? (
               <>
                 {/* STEP 03: Data & Ora */}
-            <section className="form-section-card animate-fade-in">
-  <div className="section-title-wrapper">
-    <span className="step-badge">3</span>
-    <div>
-      <h2 className="section-title">Data dhe Ora</h2>
-      <p className="section-subtitle">Zgjidhni kohën e përshtatshme</p>
-    </div>
-  </div>
+                <section className="form-section-card animate-fade-in">
+                  <div className="section-title-wrapper">
+                    <span className="step-badge">3</span>
+                    <div>
+                      <h2 className="section-title">Data dhe Ora</h2>
+                      <p className="section-subtitle">
+                        Zgjidhni kohën e përshtatshme
+                      </p>
+                    </div>
+                  </div>
 
-  {/* Replaced <div className="datetime-grid"> with component */}
- <AppointmentDateTimePicker
-  availabilityData={{ dates: employeeAvailability }}
-  unavailableDates={unavailableDates}
-  valueData={formData.data}
-  valueOra={formData.ora}
-  onChange={handleDateTimeChange}
-  slotDuration={15}
-/>
+                  <AppointmentDateTimePicker
+                    availabilityData={{ dates: employeeAvailability }}
+                    unavailableDates={unavailableDates}
+                    valueData={formData.data}
+                    valueOra={formData.ora}
+                    onChange={handleDateTimeChange}
+                    slotDuration={15}
+                  />
 
-  <div className="input-box" style={{ marginTop: '1rem' }}>
-    <label>Shënime Specifike</label>
-    <textarea
-      name="pershkrimi"
-      rows={2}
-      value={formData.pershkrimi}
-      onChange={handleChange}
-      placeholder="Preferenca ose kërkesa të veçanta..."
-    />
-  </div>
-</section>
+                  <div className="input-box" style={{ marginTop: "1rem" }}>
+                    <label>Shënime Specifike</label>
+                    <textarea
+                      name="pershkrimi"
+                      rows={2}
+                      value={formData.pershkrimi}
+                      onChange={handleChange}
+                      placeholder="Preferenca ose kërkesa të veçanta..."
+                    />
+                  </div>
+                </section>
 
                 {/* STEP 04: Shërbimet */}
                 <section className="form-section-card animate-fade-in">
@@ -950,7 +866,9 @@ return;
                       <span className="step-badge">4</span>
                       <div>
                         <h2 className="section-title">Shërbimet</h2>
-                        <p className="section-subtitle">Zgjidhni një apo më shumë shërbime</p>
+                        <p className="section-subtitle">
+                          Zgjidhni një apo më shumë shërbime
+                        </p>
                       </div>
                     </div>
 
@@ -970,9 +888,13 @@ return;
                       <div className="spinner"></div>
                       <p>Duke ngarkuar shërbimet...</p>
                     </div>
+                  ) : !formData.data ? (
+                    <div className="empty-state">
+                      <p>Zgjidhni datën për të parë shërbimet e disponueshme.</p>
+                    </div>
                   ) : filtered.length === 0 ? (
                     <div className="empty-state">
-                      <p>Nuk u gjet asnjë shërbim me këtë kërkim.</p>
+                      <p>Nuk u gjet asnjë shërbim për këtë datë ose kërkim.</p>
                     </div>
                   ) : (
                     <div className="services-modern-grid">
@@ -987,21 +909,22 @@ return;
                             onClick={() => handleServiceCardClick(s)}
                           >
                             <div className="service-image-container">
-                            <img
-  src={
-    s.imagePath
-      ? s.imagePath.startsWith("data:") || s.imagePath.startsWith("http")
-        ? s.imagePath
-        : `data:image/png;base64,${s.imagePath}`
-      : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
-  }
-  alt={s.emri_sherbimit || "Sherbimi"}
-  onError={(e) => {
-    e.currentTarget.onerror = null; // Prevents infinite loops if fallback fails
-    e.currentTarget.src =
-      "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
-  }}
-/>
+                              <img
+                                src={
+                                  s.imagePath
+                                    ? s.imagePath.startsWith("data:") ||
+                                      s.imagePath.startsWith("http")
+                                      ? s.imagePath
+                                      : `data:image/png;base64,${s.imagePath}`
+                                    : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
+                                }
+                                alt={s.emri_sherbimit || "Sherbimi"}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src =
+                                    "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
+                                }}
+                              />
                               {isSelected && (
                                 <div className="selected-indicator">
                                   <span>✓ ZGJEDHUR</span>
@@ -1028,7 +951,10 @@ return;
               </>
             ) : (
               <div className="form-section-card empty-prompt-card">
-                <p>👈 Zgjidhni më sipër punëtorin për të parë orarin dhe shërbimet.</p>
+                <p>
+                  👈 Zgjidhni më sipër punëtorin për të parë orarin dhe
+                  shërbimet.
+                </p>
               </div>
             )}
           </div>
@@ -1057,9 +983,7 @@ return;
               <div className="summary-divider"></div>
               <div className="summary-total">
                 <span>TOTALI</span>
-                <span className="total-amount">
-                  €{totalPrice.toFixed(2)}
-                </span>
+                <span className="total-amount">€{totalPrice.toFixed(2)}</span>
               </div>
 
               <button
@@ -1079,7 +1003,8 @@ return;
         <div className="mobile-total-info">
           <span className="mobile-total-price">€{totalPrice.toFixed(2)}</span>
           <span className="mobile-item-count">
-            {formData.detajetTermineve.length} {formData.detajetTermineve.length === 1 ? 'shërbim' : 'shërbime'}
+            {formData.detajetTermineve.length}{" "}
+            {formData.detajetTermineve.length === 1 ? "shërbim" : "shërbime"}
           </span>
         </div>
         <button
@@ -1093,7 +1018,10 @@ return;
 
       {/* CONFIRMATION DIALOG MODAL */}
       {showConfirmation && (
-        <div className="modal-overlay" onClick={() => setShowConfirmation(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowConfirmation(false)}
+        >
           <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="modal-drag-handle"></div>
             <div className="confirm-dialog-header">
@@ -1123,7 +1051,7 @@ return;
                 <div className="confirm-summary-row">
                   <span>Data & Ora:</span>
                   <strong>
-                    {tempDateRef.current || formData.data || "-"} @ {tempTimeRef.current || formData.ora || "-"}
+                    {formData.data || "-"} @ {formData.ora || "-"}
                   </strong>
                 </div>
 
@@ -1202,6 +1130,8 @@ return;
 
               <h4 className="custom-modal-section-title">Variantet / Opsionet</h4>
 
+              {loadingAttributes && <p>Duke ngarkuar opsionet...</p>}
+
               <div className="custom-modal-attributes-list">
                 {attributesList
                   .filter((attr) =>
@@ -1213,7 +1143,9 @@ return;
                     const basePrice = Number(attr.qmimi || 0);
                     const discount = Number(attr.zbritja || 0);
                     const activePrice = basePrice - (basePrice * discount) / 100;
-                    const isSelected = selectedAttributes.includes(attr.id_atributit);
+                    const isSelected = selectedAttributes.includes(
+                      attr.id_atributit
+                    );
 
                     return (
                       <div
@@ -1252,11 +1184,14 @@ return;
                   }
 
                   selectedAttributes.forEach((attrId) => {
-                    const attr = attributesList.find((a) => a.id_atributit === attrId);
+                    const attr = attributesList.find(
+                      (a) => a.id_atributit === attrId
+                    );
                     if (attr) {
                       const basePrice = Number(attr.qmimi || 0);
                       const discount = Number(attr.zbritja || 0);
-                      const activePrice = basePrice - (basePrice * discount) / 100;
+                      const activePrice =
+                        basePrice - (basePrice * discount) / 100;
 
                       handleConfirmSelection({
                         sherbimetId: selectedService.ID,
@@ -1279,41 +1214,44 @@ return;
         </div>
       )}
 
-     {/* OTP AUTHENTICATION DIALOGUE MODAL */}
-{showOtp && (
-  <div className="modal-overlay otp-modal-overlay">
-    <div className="modal-box otp-dialog-box animate-slide-up">
-      <div className="modal-drag-handle"></div>
-      
-      <div className="otp-header">
-        <div className="otp-icon">🔒</div>
-        <h2>VERIFIKIMI</h2>
-        <p>Kodi i sigurisë është dërguar me SMS në numrin tuaj të telefonit.</p>
-      </div>
+      {/* OTP AUTHENTICATION DIALOGUE MODAL */}
+      {showOtp && (
+        <div className="modal-overlay otp-modal-overlay">
+          <div className="modal-box otp-dialog-box animate-slide-up">
+            <div className="modal-drag-handle"></div>
 
-      <div className="otp-container-slot">
-        <OtpInput
-          value={otpCode}
-          onChange={setOtpCode}
-          onComplete={verifyOtp}
-        />
-      </div>
+            <div className="otp-header">
+              <div className="otp-icon">🔒</div>
+              <h2>VERIFIKIMI</h2>
+              <p>
+                Kodi i sigurisë është dërguar me SMS në numrin tuaj të
+                telefonit.
+              </p>
+            </div>
 
-      <div className="otp-actions">
-        <button
-          type="button"
-          className="otp-cancel-btn"
-          onClick={() => {
-            setShowOtp(false);
-            setOtpCode("");
-          }}
-        >
-          ANULO
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            <div className="otp-container-slot">
+              <OtpInput
+                value={otpCode}
+                onChange={setOtpCode}
+                onComplete={verifyOtp}
+              />
+            </div>
+
+            <div className="otp-actions">
+              <button
+                type="button"
+                className="otp-cancel-btn"
+                onClick={() => {
+                  setShowOtp(false);
+                  setOtpCode("");
+                }}
+              >
+                ANULO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
