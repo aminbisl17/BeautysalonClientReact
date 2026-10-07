@@ -6,7 +6,8 @@ export async function fetchServices() {
     const response = await fetch(
       process.env.REACT_APP_SERVICES_GET_ALL,
       {
-        method: "GET"
+        method: "GET",
+        headers: { "X-Tenant-ID": "beautysalonclient"}
       }
     );
 
