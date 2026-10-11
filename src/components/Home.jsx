@@ -371,7 +371,7 @@ useEffect(() => {
   ref={sliderRef}
   >
 
-                {[...discountedServices, ...discountedServices].map(
+               {discountedServices.map(
                   (ser, index) => {
                     const base = Number(ser.qmimi_baze || 0);
                     const discount = Number(ser.zbritja || 0);
