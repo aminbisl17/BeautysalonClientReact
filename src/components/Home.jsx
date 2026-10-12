@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
+import { getUserData } from "../javascript/APIs/Login";
 import {
   fetchServices,
   fetchServiceAtributes
 } from "../javascript/APIs/ServicesAPI";
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import "../css/home.css";
-import { fetchRefreshToken } from "../javascript/APIs/Login";
 
 function Home({ setView }) {
   const [services, setServices] = useState([]);
@@ -34,59 +34,10 @@ function Home({ setView }) {
     }
   }
 
-  async function loadUserData() {
-    try {
-      const res = await fetchRefreshToken();
-
-      console.log("REFRESH STATUS:", res?.status);
-      console.log("REFRESH OK:", res?.ok);
-
-      if (!res || !res.ok) return;
-
-      const accessToken = sessionStorage.getItem("accessToken");
-
-      console.log("ACCESS TOKEN EXISTS:", !!accessToken);
-      console.log("ACCESS TOKEN:", accessToken);
-
-      if (!accessToken) return;
-
-      const url = process.env.REACT_APP_CLIENT_GET_DATA;
-
-      console.log("CLIENT DATA URL:", url);
-
-      const userRes = await fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-      });
-
-      console.log("CLIENT DATA STATUS:", userRes.status);
-
-      if (!userRes.ok) {
-        console.log("CLIENT DATA ERROR:", await userRes.text());
-        return;
-      }
-
-      const userInfo = await userRes.json();
-
-      console.log("CLIENT DATA:", userInfo);
-
-      sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
-
-      if (!userRes.ok) return;
-    } catch (err) {
-      console.error(err);
-      ExceptionHandler.handle(err);
-    }
-  }
-
   useEffect(() => {
-    loadUserData();
-    loadServices();
-},[]);
+  getUserData().catch((err) => console.error(err));
+  loadServices();
+}, []);
 
 useEffect(() => {
   if (discountedServices.length === 0) {

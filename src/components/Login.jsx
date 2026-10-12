@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import "../css/login.css";
-import { jwtDecode } from "jwt-decode";
 import OtpInput from "../components/OTPVerificationDialogue";
 import { fetchRefreshToken } from "../javascript/APIs/Login";
 

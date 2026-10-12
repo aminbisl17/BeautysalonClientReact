@@ -7,7 +7,7 @@ import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import OtpInput from "../components/OTPVerificationDialogue";
 import AppointmentDateTimePicker from "./CustomizedCalendar";
 import SockJS from "sockjs-client";
-
+import { getUserData } from "../javascript/APIs/Login";
 /* ------------------------------------------------------------------ */
 /* Pure helpers (module level -> no hook dependencies needed)          */
 /* ------------------------------------------------------------------ */
@@ -47,7 +47,7 @@ const normalizePhone = (value) => {
   return p;
 };
 
-export default function Termini({ setView }) {
+export default function Termini() {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -373,6 +373,8 @@ export default function Termini({ setView }) {
       setSelectedEmployeeData(null);
       return;
     }
+
+    await getUserData().catch(() => null);
 
     const token = sessionStorage.getItem("accessToken");
 
