@@ -508,9 +508,6 @@
 .bsn-offer-track:active {
   cursor: grabbing;
 }
-.bsn-offer-track::-webkit-scrollbar {
-  display: none;
-}
 
 
 /* OFFER CARD */
@@ -804,6 +801,127 @@
 
 
 /* ================================================================
+   SERVICE SEARCH
+   ================================================================ */
+
+.bsn-search {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  margin-bottom: 12px;
+}
+
+.bsn-search-icon {
+  position: absolute;
+
+  left: 17px;
+
+  width: 17px;
+  height: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--bsn-gold);
+
+  pointer-events: none;
+}
+
+.bsn-search-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.bsn-search input {
+  width: 100%;
+  min-height: 52px;
+
+  padding: 0 52px 0 46px;
+
+  border:
+    1px solid var(--bsn-border);
+
+  border-radius: 100px;
+
+  outline: none;
+
+  background:
+    rgba(255,255,255,0.86);
+
+  color: var(--bsn-text);
+
+  font-size: 13px;
+  font-weight: 500;
+
+  box-shadow:
+    0 8px 30px rgba(17,19,17,0.045);
+
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+
+.bsn-search input::placeholder {
+  color: var(--bsn-light-text);
+
+  font-weight: 500;
+}
+
+.bsn-search input:focus {
+  border-color:
+    rgba(36,72,58,0.35);
+
+  background: var(--bsn-white);
+
+  box-shadow:
+    0 0 0 3px rgba(36,72,58,0.07),
+    0 8px 30px rgba(17,19,17,0.06);
+}
+
+/* removes the native clear "x" in WebKit, we use our own */
+.bsn-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.bsn-search-clear {
+  position: absolute;
+
+  right: 9px;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+
+  border-radius: 50%;
+
+  background: #eae8e2;
+
+  color: var(--bsn-black);
+
+  font-size: 19px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease;
+}
+
+.bsn-search-clear:active {
+  transform: scale(0.9);
+}
+
+
+/* ================================================================
    SERVICE CATALOG
    ================================================================ */
 
@@ -815,6 +933,7 @@
 
   gap: 22px;
 }
+
 .bsn-treatment-card {
   overflow: hidden;
 
@@ -851,6 +970,7 @@
   box-shadow:
     0 22px 55px rgba(17,19,17,0.11);
 }
+
 .bsn-treatment-image {
   position: relative;
 
@@ -1026,6 +1146,8 @@
 
   letter-spacing: -0.4px;
 }
+
+
 /* ================================================================
    LOADING
    ================================================================ */
@@ -1910,6 +2032,10 @@
   .bsn-section-top h2,
   .bsn-discovery-heading h2 {
     font-size: 25px;
+  }
+
+  .bsn-search input {
+    min-height: 48px;
   }
 
   .bsn-service-list {

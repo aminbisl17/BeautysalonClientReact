@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
+
 import { getUserData } from "../javascript/APIs/Login";
 import {
   fetchServices,
@@ -7,9 +8,68 @@ import {
 import { ExceptionHandler } from "../javascript/Exceptions/ExceptionHandler";
 import "../css/home.css";
 
+const normalize = (str = "") =>
+  String(str)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+const CATEGORIES = [
+  { id: "all", label: "Të gjitha", icon: "✦" },
+  { id: "floket", label: "Flokët", icon: "◌" },
+  { id: "lekura", label: "Lëkura", icon: "○" },
+  { id: "thonjet", label: "Thonjët", icon: "◇" },
+  { id: "tjera", label: "Shërbimet tjera", icon: "＋" }
+];
+
+// Order matters: first match wins
+const CATEGORY_KEYWORDS = [
+  {
+    id: "thonjet",
+    words: ["thonj", "thua", "nail", "manicur", "pedicur", "gel", "acrylic", "akril", "shellac"]
+  },
+  {
+    id: "floket",
+    words: ["flok", "hair", "haircut", "shampo", "balayage", "highlight", "keratin", "brushing", "blow dry", "blowdry", "prerje", "ngjyros", "tharje", "styling"]
+  },
+  {
+    id: "lekura",
+    words: ["lekur", "skin", "facial", "face", "fytyr", "massage", "masazh", "peeling", "hydra", "dermapen", "wax", "depilim", "laser", "pastrim", "cleanse"]
+  }
+];
+
+const matchByKeywords = (text) => {
+  const t = normalize(text);
+  if (!t) return null;
+  const found = CATEGORY_KEYWORDS.find((c) =>
+    c.words.some((w) => t.includes(w))
+  );
+  return found ? found.id : null;
+};
+
+const getServiceCategory = (service) => {
+  // 1. Use backend Category if it ever comes filled in
+  if (service.Category) {
+    const fromBackend =
+      matchByKeywords(
+        typeof service.Category === "string"
+          ? service.Category
+          : service.Category.emri || service.Category.name || ""
+      );
+    if (fromBackend) return fromBackend;
+  }
+
+  // 2. Try the name first, then the description
+  return (
+    matchByKeywords(service.emri_sherbimit) ||
+    matchByKeywords(service.pershkrimi) ||
+    "tjera"
+  );
+};
+
 function Home({ setView }) {
   const [services, setServices] = useState([]);
-  const [filtered, setFiltered] = useState([]);
+ const [serviceSearch, setServiceSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedAttribute, setSelectedAttribute] = useState(null);
@@ -26,7 +86,7 @@ function Home({ setView }) {
       setLoading(true);
       const data = await fetchServices();
       setServices(data);
-      setFiltered(data);
+
     } catch (err) {
       ExceptionHandler(err);
     } finally {
@@ -143,21 +203,6 @@ useEffect(() => {
     return () => clearInterval(interval);
   }, [discountedServices, selectedService]);
 */
-  const filterServices = (type) => {
-    setActiveFilter(type);
-
-    if (type === "all") {
-      setFiltered(services);
-    } else {
-      setFiltered(
-        services.filter((s) =>
-          (s.emri_sherbimit || "")
-            .toLowerCase()
-            .includes(type.toLowerCase())
-        )
-      );
-    }
-  };
 
   const handleServiceClick = async (service) => {
     setSelectedService(service);
@@ -201,6 +246,21 @@ useEffect(() => {
     ).padStart(2, "0")}h`;
   };
 
+  const filtered = useMemo(() => {
+  const q = normalize(serviceSearch.trim());
+
+  return services.filter((s) => {
+    const matchesCategory =
+      activeFilter === "all" || getServiceCategory(s) === activeFilter;
+
+    const matchesSearch =
+      !q ||
+      normalize(s.emri_sherbimit).includes(q) ||
+      normalize(s.pershkrimi).includes(q);
+
+    return matchesCategory && matchesSearch;
+  });
+}, [services, activeFilter, serviceSearch]);
 
   return (
     <div className="bsn-home">
@@ -406,77 +466,68 @@ useEffect(() => {
             FILTER / DISCOVERY
         ========================================================= */}
 
-        <section className="bsn-discovery">
+      <section className="bsn-discovery">
+  <div className="bsn-discovery-heading">
+    <div>
+      <div className="bsn-eyebrow">
+        <span />
+        EXPLORE
+      </div>
+      <h2>Gjej trajtimin tënd.</h2>
+    </div>
 
-          <div className="bsn-discovery-heading">
+    <span className="bsn-result-count">{filtered.length} shërbime</span>
+  </div>
 
-            <div>
-              <div className="bsn-eyebrow">
-                <span />
-                EXPLORE
-              </div>
+  {/* SEARCH */}
+ <div className="bsn-search">
+  <span className="bsn-search-icon">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  </span>
 
-              <h2>Gjej trajtimin tënd.</h2>
-            </div>
+  <input
+    type="search"
+    placeholder="Kërko shërbime..."
+    value={serviceSearch}
+    onChange={(e) => setServiceSearch(e.target.value)}
+  />
 
-            <span className="bsn-result-count">
-              {filtered.length} shërbime
-            </span>
+  {serviceSearch && (
+    <button
+      type="button"
+      className="bsn-search-clear"
+      onClick={() => setServiceSearch("")}
+      aria-label="Pastro kërkimin"
+    >
+      ×
+    </button>
+  )}
+</div>
 
-          </div>
-
-
-          <div className="bsn-category-nav bsn-hide-scrollbar">
-
-            {[
-              {
-                id: "all",
-                label: "Të gjitha",
-                icon: "✦"
-              },
-              {
-                id: "Flokët",
-                label: "Flokët",
-                icon: "◌"
-              },
-              {
-                id: "Thonjët",
-                label: "Thonjët",
-                icon: "◇"
-              },
-              {
-                id: "Lëkura",
-                label: "Lëkura",
-                icon: "○"
-              }
-            ].map((category) => (
-
-              <button
-                key={category.id}
-                className={`bsn-category ${
-                  activeFilter === category.id
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  filterServices(category.id)
-                }
-              >
-
-                <span className="bsn-category-icon">
-                  {category.icon}
-                </span>
-
-                {category.label}
-
-              </button>
-
-            ))}
-
-          </div>
-
-        </section>
-
+  {/* CATEGORIES */}
+  <div className="bsn-category-nav bsn-hide-scrollbar">
+    {CATEGORIES.map((category) => (
+      <button
+        key={category.id}
+        className={`bsn-category ${activeFilter === category.id ? "active" : ""}`}
+        onClick={() => setActiveFilter(category.id)}
+      >
+        <span className="bsn-category-icon">{category.icon}</span>
+        {category.label}
+      </button>
+    ))}
+  </div>
+</section>
 
         {/* =========================================================
             SERVICES
