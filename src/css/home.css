@@ -2202,3 +2202,10 @@
       scale(1);
   }
 }
+
+@media (max-width: 650px) {
+  .bsn-search input,
+  .bsn-option-search input {
+    font-size: 16px;
+  }
+}
