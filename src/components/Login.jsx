@@ -1,27 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "../css/login.css";
 import OtpInput from "../components/OTPVerificationDialogue";
-import { fetchRefreshToken } from "../javascript/APIs/Login";
 
 function LoginView() {
-  const [view, setView] = useState(() => {
-    const storedUser = sessionStorage.getItem("userDetails");
-    const token = sessionStorage.getItem("accessToken");
-    if (storedUser && token) return "profile";
-    return "checking";
+  const [view, setView] = useState(() =>
+    sessionStorage.getItem("userDetails") && sessionStorage.getItem("accessToken")
+      ? "profile"
+      : "login"
+  );
+
+  const [userData, setUserData] = useState(() => {
+    const stored = sessionStorage.getItem("userDetails");
+    return stored
+      ? JSON.parse(stored)
+      : { emri: "", mbiemri: "", numri_telefonit: "", email: "", emailVerified: false, clientHistory: [] };
   });
 
   const [error, setError] = useState("");
   const [numriTelefonit, setNumriTelefonit] = useState("");
   const [expandedRow, setExpandedRow] = useState(null);
-  const [userData, setUserData] = useState({
-    emri: "",
-    mbiemri: "",
-    numri_telefonit: "",
-    email: "",
-    emailVerified: false,
-    clientHistory: [],
-  });
+  // ... rest of your useState lines unchanged, except userData (already defined above)
 
   const [regData, setRegData] = useState({
     emri: "",
@@ -42,6 +40,7 @@ function LoginView() {
   const [verificationCode, setVerificationCode] = useState("");
   const [showHistoria, setShowHistoria] = useState(false);
 
+  /*
   useEffect(() => {
     const autoLogin = async () => {
       try {
@@ -80,7 +79,7 @@ function LoginView() {
       }
     };
     autoLogin();
-  }, []);
+  }, []); */
 
   const handleLogin = async (e) => {
     e.preventDefault();

@@ -88,14 +88,14 @@ function Home({ setView }) {
       setServices(data);
 
     } catch (err) {
-      ExceptionHandler(err);
+      ExceptionHandler.handle(err);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-  getUserData().catch((err) => console.error(err));
+ // getUserData().catch((err) => console.error(err));
   loadServices();
 }, []);
 
