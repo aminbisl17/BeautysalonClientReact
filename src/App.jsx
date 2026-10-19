@@ -25,7 +25,9 @@ const setView = useCallback((next) => {
   setViewState(next);
   window.scrollTo(0, 0);
 }, []);
-  // Back / Forward buttons
+  
+
+
   useEffect(() => {
     const onPop = () => setViewState(getViewFromHash());
     window.addEventListener("popstate", onPop);
