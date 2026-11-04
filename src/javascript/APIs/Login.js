@@ -1,6 +1,3 @@
-
-import { ExceptionHandler } from "../Exceptions/ExceptionHandler";
-
 export async function fetchRefreshToken() {
   try {
     const res = await fetch(process.env.REACT_APP_REFRESH_TOKEN, {
@@ -8,20 +5,27 @@ export async function fetchRefreshToken() {
       credentials: "include",
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      sessionStorage.setItem("accessToken", data.accessToken);
+    console.log("[refresh] status:", res.status);
+
+    if (!res.ok) return res;
+
+    const data = await res.json();
+    console.log("[refresh] response keys:", Object.keys(data));
+
+    const token = data.accessToken || data.token || data.access_token;
+    if (!token) {
+      console.warn("[refresh] no token in response:", data);
+      return { ok: false };
     }
-    
-    return res; 
+
+    sessionStorage.setItem("accessToken", token);
+    return res;
   } catch (err) {
+    console.error("[refresh] network/CORS error:", err);
     ExceptionHandler.handle(err);
-    // Return a fake failed response object or null so the calling function doesn't crash
-    return { ok: false }; 
+    return { ok: false };
   }
 }
-
-let userPromise = null;
 
 export function getUserData(force = false) {
   const cached = sessionStorage.getItem("userDetails");
@@ -36,7 +40,7 @@ export function getUserData(force = false) {
       }
 
       const accessToken = sessionStorage.getItem("accessToken");
-      if (!accessToken) return null;
+      if (!accessToken || accessToken === "undefined") return null;
 
       const userRes = await fetch(process.env.REACT_APP_CLIENT_GET_DATA, {
         method: "GET",
@@ -46,9 +50,12 @@ export function getUserData(force = false) {
         },
         credentials: "include",
       });
+
+      console.log("[userData] status:", userRes.status);
       if (!userRes.ok) return null;
 
       const userInfo = await userRes.json();
+      console.log("[userData] keys:", Object.keys(userInfo));
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
       return userInfo;
     })().finally(() => {
