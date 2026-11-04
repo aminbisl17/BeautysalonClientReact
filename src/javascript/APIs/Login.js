@@ -1,3 +1,7 @@
+import { ExceptionHandler } from "../Exceptions/ExceptionHandler";
+
+let userPromise = null;
+
 export async function fetchRefreshToken() {
   try {
     const res = await fetch(process.env.REACT_APP_REFRESH_TOKEN, {
