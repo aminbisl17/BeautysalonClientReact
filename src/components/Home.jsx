@@ -95,7 +95,7 @@ function Home({ setView }) {
   }
 
   useEffect(() => {
- // getUserData().catch((err) => console.error(err));
+  getUserData().catch((err) => console.error(err));
   loadServices();
 }, []);
 
