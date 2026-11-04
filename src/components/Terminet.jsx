@@ -195,33 +195,44 @@ export default function Termini() {
   /* ---------------------------------------------------------------- */
 
   // Initial load: stored user + employees
-  useEffect(() => {
-    const storedUser = sessionStorage.getItem("userDetails");
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      const rawPhone = normalizePhone(
-        user.numri_telefonit || user.numriTelefonit || ""
-      );
+  // Initial load: user data + employees
+useEffect(() => {
+  let cancelled = false;
 
-      setFormData((prev) => ({
-        ...prev,
-        clientId: user.id || null,
-        emri: user.emri || "",
-        mbiemri: user.mbiemri || "",
-        email: user.email || "",
-        numri_telefonit: rawPhone,
-      }));
+  const fillFromUser = (user) => {
+    if (!user || cancelled) return;
+    const rawPhone = normalizePhone(
+      user.numri_telefonit || user.numriTelefonit || ""
+    );
+
+    // Only fill empty fields so we never overwrite what the user already typed
+    setFormData((prev) => ({
+      ...prev,
+      clientId: user.id ?? prev.clientId,
+      emri: prev.emri || user.emri || "",
+      mbiemri: prev.mbiemri || user.mbiemri || "",
+      email: prev.email || user.email || "",
+      numri_telefonit: prev.numri_telefonit || rawPhone,
+    }));
+  };
+
+  getUserData()
+    .then(fillFromUser)
+    .catch((err) => console.error("getUserData failed:", err));
+
+  (async () => {
+    try {
+      const data = await fetchEmployees();
+      if (!cancelled) setEmployeesList(data || []);
+    } catch (err) {
+      ExceptionHandler.handle(err);
     }
+  })();
 
-    (async () => {
-      try {
-        const data = await fetchEmployees();
-        setEmployeesList(data || []);
-      } catch (err) {
-        ExceptionHandler.handle(err);
-      }
-    })();
-  }, []);
+  return () => {
+    cancelled = true;
+  };
+}, []);
 
   // STOMP connection
   useEffect(() => {
