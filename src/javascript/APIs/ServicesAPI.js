@@ -7,7 +7,7 @@ export async function fetchServices() {
       process.env.REACT_APP_SERVICES_GET_ALL,
       {
         method: "GET",
-        headers: { "X-Tenant-ID": "beautysalonclient"}
+       // headers: { "X-Tenant-ID": "beautysalonclient"}
       }
     );
 
