@@ -55,28 +55,72 @@ const toMin = (t) => {
   return h * 60 + m;
 };
 
-// Busy ranges from the backend look like { start, end }.
-// true if [time, time + duration) overlaps any busy range.
-const overlapsBusy = (date, time, durationMin, busy) => {
-  const start = new Date(`${date}T${time.slice(0, 5)}:00`);
-  const end = new Date(start.getTime() + durationMin * 60000);
-  return (busy || []).some(
-    (r) => start < new Date(r.end) && end > new Date(r.start)
-  );
+const minutesToTime = (minutes) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(
+    minutes % 60
+  ).padStart(2, "0")}:00`;
+
+const calculateAppointmentIntervals = (detail, time, durationMin) => {
+  if (!detail) return null;
+
+  const start = toMin(time);
+  const workStart = toMin(detail.start_time);
+  const workEnd = toMin(detail.end_time);
+
+  if (start < workStart || start >= workEnd) return null;
+
+  let current = start;
+  let remaining = durationMin;
+  const intervals = [];
+
+  if (detail.pause_start && detail.pause_end) {
+    const pauseStart = toMin(detail.pause_start);
+    const pauseEnd = toMin(detail.pause_end);
+
+    if (current < pauseStart && current + remaining > pauseStart) {
+      const beforePause = pauseStart - current;
+
+      intervals.push([current, pauseStart]);
+
+      remaining -= beforePause;
+      current = pauseEnd;
+    }
+  }
+
+  if (remaining > 0) {
+    intervals.push([current, current + remaining]);
+  }
+
+  const finalEnd = intervals[intervals.length - 1]?.[1] ?? start;
+
+  if (finalEnd > workEnd) return null;
+
+  return intervals;
 };
 
-// true if the service fits inside working hours and doesn't run into the pause
-const fitsInDay = (detail, time, durationMin) => {
-  if (!detail) return false;
-  const s = toMin(time);
-  const e = s + durationMin;
-  if (s < toMin(detail.start_time) || e > toMin(detail.end_time)) return false;
-  if (detail.pause_start && detail.pause_end) {
-    const ps = toMin(detail.pause_start);
-    const pe = toMin(detail.pause_end);
-    if (s < pe && e > ps) return false;
-  }
-  return true;
+const fitsInDay = (detail, time, durationMin) =>
+  calculateAppointmentIntervals(detail, time, durationMin) !== null;
+
+const overlapsBusy = (date, time, durationMin, busy, detail) => {
+  const intervals = calculateAppointmentIntervals(
+    detail,
+    time,
+    durationMin
+  );
+
+  if (!intervals) return false;
+
+  return (busy || []).some((r) => {
+    const busyStart = new Date(r.start);
+    const busyEnd = new Date(r.end);
+
+    return intervals.some(([start, end]) => {
+      const intervalStart = new Date(`${date}T${minutesToTime(start)}`);
+      const intervalEnd = new Date(`${date}T${minutesToTime(end)}`);
+
+      return intervalStart < busyEnd && intervalEnd > busyStart;
+    });
+  });
 };
 
 // kohezgjatja is an integer number of minutes (e.g. 150 = 2h 30min)
@@ -253,7 +297,16 @@ export default function Termini() {
       alert("Shërbimet e zgjedhura nuk futen në orarin e punës në këtë orë.");
       return false;
     }
-    if (overlapsBusy(formData.data, formData.ora, total, unavailableDates)) {
+   
+    if (
+  overlapsBusy(
+    formData.data,
+    formData.ora,
+    total,
+    unavailableDates,
+    detail
+  )
+) {
       alert(
         "Shërbimet e zgjedhura përplasen me një termin tjetër. Zgjidhni një orë tjetër ose më pak shërbime."
       );
@@ -402,18 +455,20 @@ export default function Termini() {
       message = "Data e zgjedhur nuk është më e disponueshme.";
       clearDate = true;
     } else if (time) {
-      const start = detail.start_time.slice(0, 5);
-      const end = detail.end_time.slice(0, 5);
-      const pStart = detail.pause_start?.slice(0, 5);
-      const pEnd = detail.pause_end?.slice(0, 5);
+     
+     const dur = Math.max(SLOT_MIN, totalMinutes);
 
-      const outside = time < start || time >= end;
-      const inPause = pStart && pEnd && time >= pStart && time < pEnd;
+const doesNotFit = !fitsInDay(detail, time, dur);
 
-      const dur = Math.max(SLOT_MIN, totalMinutes);
-      const taken = overlapsBusy(date, time, dur, unavailableDates);
+const taken = overlapsBusy(
+  date,
+  time,
+  dur,
+  unavailableDates,
+  detail
+);
 
-      if (outside || inPause || taken) {
+if (doesNotFit || taken) {
         message = "Ora e zgjedhur nuk është më e lirë. Zgjidhni një orë tjetër.";
       }
     }
