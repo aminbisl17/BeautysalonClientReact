@@ -8,6 +8,7 @@ import OtpInput from "../components/OTPVerificationDialogue";
 import AppointmentDateTimePicker from "./CustomizedCalendar";
 import SockJS from "sockjs-client";
 import { getUserData } from "../javascript/APIs/Login";
+
 /* ------------------------------------------------------------------ */
 /* Pure helpers (module level -> no hook dependencies needed)          */
 /* ------------------------------------------------------------------ */
@@ -47,6 +48,45 @@ const normalizePhone = (value) => {
   return p;
 };
 
+const SLOT_MIN = 15;
+
+const toMin = (t) => {
+  const [h, m] = t.slice(0, 5).split(":").map(Number);
+  return h * 60 + m;
+};
+
+// Busy ranges from the backend look like { start, end }.
+// true if [time, time + duration) overlaps any busy range.
+const overlapsBusy = (date, time, durationMin, busy) => {
+  const start = new Date(`${date}T${time.slice(0, 5)}:00`);
+  const end = new Date(start.getTime() + durationMin * 60000);
+  return (busy || []).some(
+    (r) => start < new Date(r.end) && end > new Date(r.start)
+  );
+};
+
+// true if the service fits inside working hours and doesn't run into the pause
+const fitsInDay = (detail, time, durationMin) => {
+  if (!detail) return false;
+  const s = toMin(time);
+  const e = s + durationMin;
+  if (s < toMin(detail.start_time) || e > toMin(detail.end_time)) return false;
+  if (detail.pause_start && detail.pause_end) {
+    const ps = toMin(detail.pause_start);
+    const pe = toMin(detail.pause_end);
+    if (s < pe && e > ps) return false;
+  }
+  return true;
+};
+
+// kohezgjatja is an integer number of minutes (e.g. 150 = 2h 30min)
+const formatDuration = (mins) => {
+  const total = Number(mins) || 0;
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}h`;
+};
+
 export default function Termini() {
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -62,6 +102,7 @@ export default function Termini() {
 
   // Availability returned by REST snapshot / WebSocket
   const [employeeAvailability, setEmployeeAvailability] = useState(null);
+  // Array of { start, end } busy ranges
   const [unavailableDates, setUnavailableDates] = useState([]);
 
   const [loading, setLoading] = useState(false);
@@ -93,6 +134,12 @@ export default function Termini() {
     dataCaktimit: "",
     detajetTermineve: [],
   });
+
+  // Total minutes of the services currently selected
+  const totalMinutes = formData.detajetTermineve.reduce(
+    (sum, d) => sum + Number(d.kohezgjatja),
+    0
+  );
 
   const formatDate = (value) => {
     if (!value) return null;
@@ -191,48 +238,72 @@ export default function Termini() {
   };
 
   /* ---------------------------------------------------------------- */
+  /* Fit validation                                                    */
+  /* ---------------------------------------------------------------- */
+
+  // Checks that the selected time + all selected services (+ extraMinutes)
+  // fit inside working hours and don't collide with another appointment.
+  const validateFit = (extraMinutes = 0) => {
+    if (!formData.data || !formData.ora) return true; // nothing to check yet
+
+    const total = totalMinutes + extraMinutes;
+    const detail = findDayDetail(employeeAvailability, formData.data);
+
+    if (!fitsInDay(detail, formData.ora, total)) {
+      alert("Shërbimet e zgjedhura nuk futen në orarin e punës në këtë orë.");
+      return false;
+    }
+    if (overlapsBusy(formData.data, formData.ora, total, unavailableDates)) {
+      alert(
+        "Shërbimet e zgjedhura përplasen me një termin tjetër. Zgjidhni një orë tjetër ose më pak shërbime."
+      );
+      return false;
+    }
+    return true;
+  };
+
+  /* ---------------------------------------------------------------- */
   /* Effects                                                           */
   /* ---------------------------------------------------------------- */
 
-  // Initial load: stored user + employees
   // Initial load: user data + employees
-useEffect(() => {
-  let cancelled = false;
+  useEffect(() => {
+    let cancelled = false;
 
-  const fillFromUser = (user) => {
-    if (!user || cancelled) return;
-    const rawPhone = normalizePhone(
-      user.numri_telefonit || user.numriTelefonit || ""
-    );
+    const fillFromUser = (user) => {
+      if (!user || cancelled) return;
+      const rawPhone = normalizePhone(
+        user.numri_telefonit || user.numriTelefonit || ""
+      );
 
-    // Only fill empty fields so we never overwrite what the user already typed
-    setFormData((prev) => ({
-      ...prev,
-      clientId: user.id ?? prev.clientId,
-      emri: prev.emri || user.emri || "",
-      mbiemri: prev.mbiemri || user.mbiemri || "",
-      email: prev.email || user.email || "",
-      numri_telefonit: prev.numri_telefonit || rawPhone,
-    }));
-  };
+      // Only fill empty fields so we never overwrite what the user already typed
+      setFormData((prev) => ({
+        ...prev,
+        clientId: user.id ?? prev.clientId,
+        emri: prev.emri || user.emri || "",
+        mbiemri: prev.mbiemri || user.mbiemri || "",
+        email: prev.email || user.email || "",
+        numri_telefonit: prev.numri_telefonit || rawPhone,
+      }));
+    };
 
-  getUserData()
-    .then(fillFromUser)
-    .catch((err) => console.error("getUserData failed:", err));
+    getUserData()
+      .then(fillFromUser)
+      .catch((err) => console.error("getUserData failed:", err));
 
-  (async () => {
-    try {
-      const data = await fetchEmployees();
-      if (!cancelled) setEmployeesList(data || []);
-    } catch (err) {
-      ExceptionHandler.handle(err);
-    }
-  })();
+    (async () => {
+      try {
+        const data = await fetchEmployees();
+        if (!cancelled) setEmployeesList(data || []);
+      } catch (err) {
+        ExceptionHandler.handle(err);
+      }
+    })();
 
-  return () => {
-    cancelled = true;
-  };
-}, []);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // STOMP connection
   useEffect(() => {
@@ -315,7 +386,8 @@ useEffect(() => {
     );
   }, [services, search]);
 
-  // Invalidate the chosen date/time if a live update made it unavailable
+  // Invalidate the chosen date/time if a live update made it unavailable.
+  // Uses the real total duration of the selected services (at least one slot).
   useEffect(() => {
     if (!employeeAvailability || !formData.data) return;
 
@@ -337,9 +409,9 @@ useEffect(() => {
 
       const outside = time < start || time >= end;
       const inPause = pStart && pEnd && time >= pStart && time < pEnd;
-      const taken = unavailableDates.some(
-        (u) => u.slice(0, 16) === `${date}T${time}`
-      );
+
+      const dur = Math.max(SLOT_MIN, totalMinutes);
+      const taken = overlapsBusy(date, time, dur, unavailableDates);
 
       if (outside || inPause || taken) {
         message = "Ora e zgjedhur nuk është më e lirë. Zgjidhni një orë tjetër.";
@@ -355,8 +427,13 @@ useEffect(() => {
       }));
       alert(message);
     }
-  }, [employeeAvailability, unavailableDates, formData.data, formData.ora]);
-
+  }, [
+    employeeAvailability,
+    unavailableDates,
+    formData.data,
+    formData.ora,
+    totalMinutes,
+  ]);
 
   /* ---------------------------------------------------------------- */
   /* Handlers                                                          */
@@ -496,16 +573,50 @@ useEffect(() => {
     }
   };
 
-  const formatDuration = (mins) => {
-    const hours = Math.floor(mins / 60);
-    const minutes = mins % 60;
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}h`;
-  };
+  // Builds the item(s) from the open service sheet, validates the TOTAL
+  // duration once, then adds everything in a single state update.
+  const handleAddToBooking = () => {
+    if (!selectedService) return;
 
-  const handleConfirmSelection = (item) => {
+    const items =
+      selectedAttributes.length === 0
+        ? [
+            {
+              sherbimetId: selectedService.ID,
+              atributetId: null,
+              kohezgjatja: Number(selectedService.kohezgjatja) || 30,
+              pagesa: getPrice(selectedService),
+              name: selectedService.emri_sherbimit,
+            },
+          ]
+        : selectedAttributes
+            .map((attrId) =>
+              attributesList.find((a) => a.id_atributit === attrId)
+            )
+            .filter(Boolean)
+            .map((attr) => {
+              const base = Number(attr.qmimi || 0);
+              const disc = Number(attr.zbritja || 0);
+              return {
+                sherbimetId: selectedService.ID,
+                atributetId: attr.id_atributit,
+                kohezgjatja:
+                  Number(attr.kohezgjatja) ||
+                  Number(selectedService.kohezgjatja) ||
+                  30,
+                pagesa: base - (base * disc) / 100,
+                name: `${selectedService.emri_sherbimit} - ${attr.opsioni}`,
+              };
+            });
+
+    if (items.length === 0) return;
+
+    const addedMinutes = items.reduce((s, i) => s + Number(i.kohezgjatja), 0);
+    if (!validateFit(addedMinutes)) return;
+
     setFormData((prev) => ({
       ...prev,
-      detajetTermineve: [...prev.detajetTermineve, item],
+      detajetTermineve: [...prev.detajetTermineve, ...items],
     }));
     setSelectedService(null);
   };
@@ -534,6 +645,7 @@ useEffect(() => {
       if (!formData.dataCaktimit) return alert("Zgjidhni datën!");
       if (!formData.detajetTermineve.length)
         return alert("Zgjidhni të paktën një shërbim!");
+      if (!validateFit()) return;
 
       const stored = sessionStorage.getItem("userDetails");
       const user = stored ? JSON.parse(stored) : null;
@@ -858,6 +970,7 @@ useEffect(() => {
                     valueOra={formData.ora}
                     onChange={handleDateTimeChange}
                     slotDuration={15}
+                    durationMin={totalMinutes}
                   />
 
                   <div className="input-box" style={{ marginTop: "1rem" }}>
@@ -948,7 +1061,7 @@ useEffect(() => {
                               <h4>{s.emri_sherbimit}</h4>
                               <div className="service-meta">
                                 <span className="duration">
-                                  ⏱ {formatDuration(s.kohezgjatja) || 0} min
+                                  ⏱ {formatDuration(s.kohezgjatja)}
                                 </span>
                                 <span className="price">
                                   €{getPrice(s).toFixed(2)}
@@ -994,6 +1107,12 @@ useEffect(() => {
               )}
 
               <div className="summary-divider"></div>
+              <div className="summary-total">
+                <span>KOHËZGJATJA</span>
+                <span className="total-amount">
+                  {formatDuration(totalMinutes)}
+                </span>
+              </div>
               <div className="summary-total">
                 <span>TOTALI</span>
                 <span className="total-amount">€{totalPrice.toFixed(2)}</span>
@@ -1050,6 +1169,11 @@ useEffect(() => {
                 <div className="confirm-summary-row">
                   <span>Shërbimet:</span>
                   <strong>{formData.detajetTermineve.length} shërbim(e)</strong>
+                </div>
+
+                <div className="confirm-summary-row">
+                  <span>Kohëzgjatja:</span>
+                  <strong>{formatDuration(totalMinutes)}</strong>
                 </div>
 
                 <div className="confirm-summary-row">
@@ -1135,9 +1259,7 @@ useEffect(() => {
 
                 <div className="custom-modal-metric-pill">
                   <label>KOHËZGJATJA</label>
-                  <span>
-                    {formatDuration(selectedService.kohezgjatja) || 0} Min
-                  </span>
+                  <span>{formatDuration(selectedService.kohezgjatja)}</span>
                 </div>
               </div>
 
@@ -1184,41 +1306,7 @@ useEffect(() => {
             <div className="custom-modal-footer">
               <button
                 className="custom-modal-btn-primary"
-                onClick={() => {
-                  if (selectedAttributes.length === 0) {
-                    handleConfirmSelection({
-                      sherbimetId: selectedService.ID,
-                      atributetId: null,
-                      kohezgjatja: selectedService.kohezgjatja || 30,
-                      pagesa: getPrice(selectedService),
-                      name: selectedService.emri_sherbimit,
-                    });
-                    return;
-                  }
-
-                  selectedAttributes.forEach((attrId) => {
-                    const attr = attributesList.find(
-                      (a) => a.id_atributit === attrId
-                    );
-                    if (attr) {
-                      const basePrice = Number(attr.qmimi || 0);
-                      const discount = Number(attr.zbritja || 0);
-                      const activePrice =
-                        basePrice - (basePrice * discount) / 100;
-
-                      handleConfirmSelection({
-                        sherbimetId: selectedService.ID,
-                        atributetId: attr.id_atributit,
-                        kohezgjatja:
-                          Number(attr.kohezgjatja) ||
-                          Number(selectedService.kohezgjatja) ||
-                          30,
-                        pagesa: activePrice,
-                        name: `${selectedService.emri_sherbimit} - ${attr.opsioni}`,
-                      });
-                    }
-                  });
-                }}
+                onClick={handleAddToBooking}
               >
                 SHTO NË REZERVIM
               </button>
