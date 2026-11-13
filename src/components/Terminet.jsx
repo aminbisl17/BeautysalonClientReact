@@ -12,7 +12,14 @@ import { getUserData } from "../javascript/APIs/Login";
 /* ------------------------------------------------------------------ */
 /* Pure helpers (module level -> no hook dependencies needed)          */
 /* ------------------------------------------------------------------ */
+const FALLBACK_IMG =
+  "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
 
+const getServiceImage = (path) => {
+  if (!path) return FALLBACK_IMG;
+  if (path.startsWith("http")) return path;
+  return `${process.env.REACT_APP_IMAGES_BASE_URL}/${encodeURIComponent(path)}`;
+};
 // Backend: Monday = 1 ... Sunday = 7 (parsed in UTC to avoid timezone shifts)
 const getBackendDay = (dateStr) => {
   const d = new Date(`${dateStr}T00:00:00Z`).getUTCDay(); // 0 = Sunday
@@ -143,7 +150,7 @@ export default function Termini() {
     mbiemri: false,
     numri_telefonit: false,
   });
-
+const submittingRef = useRef(false);
   // Availability returned by REST snapshot / WebSocket
   const [employeeAvailability, setEmployeeAvailability] = useState(null);
   // Array of { start, end } busy ranges
@@ -231,8 +238,7 @@ export default function Termini() {
         `/topic/availability/${employeeId}`,
         (message) => {
           try {
-             const body = JSON.parse(message.body);
-  console.log("WS unavailableDates:", JSON.stringify(body.unavailableDates));
+          
             applyAvailability(JSON.parse(message.body));
           } catch (err) {
             console.error("Error processing availability:", err);
@@ -444,7 +450,9 @@ export default function Termini() {
   // Invalidate the chosen date/time if a live update made it unavailable.
   // Uses the real total duration of the selected services (at least one slot).
   useEffect(() => {
-    if (!employeeAvailability || !formData.data) return;
+   
+      if (submittingRef.current) return;
+  if (!employeeAvailability || !formData.data) return;
 
     const date = formData.data;
     const time = (formData.ora || "").slice(0, 5); // "HH:MM"
@@ -710,41 +718,46 @@ if (doesNotFit || taken) {
       const userPhone = normalizePhone(
         user?.numriTelefonit || user?.numri_telefonit
       );
+if (isLoggedIn && formData.numri_telefonit === userPhone) {
+  const booking = buildBookingPayload(user.id || formData.clientId);
+  const token = sessionStorage.getItem("accessToken");
 
-      if (isLoggedIn && formData.numri_telefonit === userPhone) {
-        const booking = buildBookingPayload(user.id || formData.clientId);
-        const token = sessionStorage.getItem("accessToken");
+  submittingRef.current = true;
+  try {
+    const res = await fetch(process.env.REACT_APP_TERMINET_CREATE, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+      body: JSON.stringify(booking),
+    });
 
-        const res = await fetch(process.env.REACT_APP_TERMINET_CREATE, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify(booking),
-        });
+    const data = await res.text();
+    if (!res.ok) {
+      alert(data || "Dështoi krijimi i terminit.");
+      return;
+    }
 
-        const data = await res.text();
-        if (!res.ok) {
-          alert(data || "Dështoi krijimi i terminit.");
-          return;
-        }
-        alert("Termini u krijua me sukses!");
+    // clear first, so nothing re-validates the old selection
+    setFormData((prev) => ({
+      ...prev,
+      pershkrimi: "",
+      data: "",
+      ora: "",
+      dataCaktimit: "",
+      detajetTermineve: [],
+    }));
+    setServices([]);
+    setFiltered([]);
+    setSearch("");
 
-        // Keep personal details + staff, clear only the booking itself
-        setFormData((prev) => ({
-          ...prev,
-          pershkrimi: "",
-          data: "",
-          ora: "",
-          dataCaktimit: "",
-          detajetTermineve: [],
-        }));
-        setServices([]);
-        setFiltered([]);
-        setSearch("");
-        return;
-      }
+    alert("Termini u krijua me sukses!");
+  } finally {
+    submittingRef.current = false;
+  }
+  return;
+}
 
       const registerRes = await fetch(
         process.env.REACT_APP_CLIENT_FAST_LOGIN_REGISTER,
@@ -1092,22 +1105,14 @@ if (doesNotFit || taken) {
                             onClick={() => handleServiceCardClick(s)}
                           >
                             <div className="service-image-container">
-                              <img
-                                src={
-                                  s.imagePath
-                                    ? s.imagePath.startsWith("data:") ||
-                                      s.imagePath.startsWith("http")
-                                      ? s.imagePath
-                                      : `data:image/png;base64,${s.imagePath}`
-                                    : "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop"
-                                }
-                                alt={s.emri_sherbimit || "Sherbimi"}
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  e.currentTarget.src =
-                                    "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600&auto=format&fit=crop";
-                                }}
-                              />
+                            <img
+  src={getServiceImage(s.imagePath)}
+  alt={s.emri_sherbimit || "Sherbimi"}
+  onError={(e) => {
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = FALLBACK_IMG;
+  }}
+/>
                               {isSelected && (
                                 <div className="selected-indicator">
                                   <span>✓ ZGJEDHUR</span>

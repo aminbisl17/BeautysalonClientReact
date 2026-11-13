@@ -107,72 +107,34 @@ export default function AppointmentDateTimePicker({
   const availableSlots = useMemo(() => {
   if (!selectedDateStr) return [];
 
-  const dateObj = new Date(`${selectedDateStr}T00:00:00`);
-  const rule = getRuleForDate(dateObj);
-
+  const rule = getRuleForDate(new Date(`${selectedDateStr}T00:00:00`));
   if (!rule) return [];
 
   const startMin = timeToMinutes(rule.start_time);
   const endMin = timeToMinutes(rule.end_time);
-  const pauseStartMin = timeToMinutes(rule.pause_start);
-  const pauseEndMin = timeToMinutes(rule.pause_end);
-
-  const duration = Math.max(1, Number(durationMin) || slotDuration);
+  const hasPause = rule.pause_start && rule.pause_end;
+  const pauseStartMin = hasPause ? timeToMinutes(rule.pause_start) : 0;
+  const pauseEndMin = hasPause ? timeToMinutes(rule.pause_end) : 0;
 
   const slots = [];
 
-  for (
-    let current = startMin;
-    current + duration <= endMin;
-    current += 5
-  ) {
-    const slotEnd = current + duration;
+  for (let current = startMin; current + slotDuration <= endMin; current += slotDuration) {
+    // start time inside the pause -> not offered
+    if (hasPause && current >= pauseStartMin && current < pauseEndMin) continue;
 
-    // Check whether the entire appointment overlaps the break.
-    const overlapsPause =
-      rule.pause_start &&
-      rule.pause_end &&
-      current < pauseEndMin &&
-      slotEnd > pauseStartMin;
+    const slotStart = new Date(`${selectedDateStr}T${minutesToTime(current)}`);
+    const slotEnd = new Date(slotStart.getTime() + slotDuration * 60000);
 
-    if (overlapsPause) continue;
-
-    // Convert candidate slot into a local date-time interval.
-    const slotStartDate = new Date(
-      `${selectedDateStr}T${minutesToTime(current)}`
-    );
-
-    const slotEndDate = new Date(
-      slotStartDate.getTime() + duration * 60000
-    );
-
-    // Check whether the appointment overlaps an existing appointment.
-    const isUnavailable = unavailableDates.some((unavailable) => {
-      if (!unavailable?.start || !unavailable?.end) return false;
-
-      const busyStart = new Date(unavailable.start);
-      const busyEnd = new Date(unavailable.end);
-
-      return (
-        slotStartDate < busyEnd &&
-        slotEndDate > busyStart
-      );
+    const isUnavailable = unavailableDates.some((u) => {
+      if (!u?.start || !u?.end) return false;
+      return slotStart < new Date(u.end) && slotEnd > new Date(u.start);
     });
 
-    slots.push({
-      time: minutesToTime(current),
-      unavailable: isUnavailable
-    });
+    slots.push({ time: minutesToTime(current), unavailable: isUnavailable });
   }
 
   return slots;
-}, [
-  selectedDateStr,
-  availabilityData,
-  unavailableDates,
-  slotDuration,
-  durationMin
-]);
+}, [selectedDateStr, availabilityData, unavailableDates, slotDuration]);
   // Handlers
 
   
