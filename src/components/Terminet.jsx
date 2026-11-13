@@ -231,6 +231,8 @@ export default function Termini() {
         `/topic/availability/${employeeId}`,
         (message) => {
           try {
+             const body = JSON.parse(message.body);
+  console.log("WS unavailableDates:", JSON.stringify(body.unavailableDates));
             applyAvailability(JSON.parse(message.body));
           } catch (err) {
             console.error("Error processing availability:", err);
