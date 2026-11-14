@@ -694,3 +694,8 @@
     animation-duration: 0.01ms !important;
   }
 }
+
+.pk-day-cell.past {
+  opacity: 0.35;
+  text-decoration: line-through;
+}

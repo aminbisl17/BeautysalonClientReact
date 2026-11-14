@@ -17,8 +17,7 @@ const FALLBACK_IMG =
 
 const getServiceImage = (path) => {
   if (!path) return FALLBACK_IMG;
-  if (path.startsWith("http")) return path;
-  return `${process.env.REACT_APP_IMAGES_BASE_URL}/${encodeURIComponent(path)}`;
+  return path;
 };
 // Backend: Monday = 1 ... Sunday = 7 (parsed in UTC to avoid timezone shifts)
 const getBackendDay = (dateStr) => {

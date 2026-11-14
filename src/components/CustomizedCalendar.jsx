@@ -31,14 +31,15 @@ export default function AppointmentDateTimePicker({
   durationMin = slotDuration
 }) {
 
- 
+  const todayStr = formatDateString(new Date());
+
   const [currentMonth, setCurrentMonth] = useState(() => {
-  const now = new Date();
-  const minM = new Date(now.getFullYear(), now.getMonth(), 1);
-  if (!valueData) return minM;
-  const initial = new Date(`${valueData}T00:00:00`);
-  return initial < minM ? minM : initial;
-});
+    const now = new Date();
+    const minM = new Date(now.getFullYear(), now.getMonth(), 1);
+    if (!valueData) return minM;
+    const initial = new Date(`${valueData}T00:00:00`);
+    return initial < minM ? minM : initial;
+  });
 
   const [selectedDateStr, setSelectedDateStr] = useState(valueData);
   const [selectedTimeStr, setSelectedTimeStr] = useState(
@@ -92,58 +93,67 @@ export default function AppointmentDateTimePicker({
 
     for (let day = 1; day <= lastDayOfMonth.getDate(); day++) {
       const d = new Date(year, month, day);
-      const isAvailable = !!getRuleForDate(d);
+      const dateStr = formatDateString(d);
+      const isPast = dateStr < todayStr;
+      const isAvailable = !isPast && !!getRuleForDate(d);
       days.push({
         dateObj: d,
-        dateStr: formatDateString(d),
+        dateStr,
         dayNumber: day,
-        isAvailable
+        isAvailable,
+        isPast
       });
     }
 
     return days;
-  }, [currentMonth, availabilityData]);
+  }, [currentMonth, availabilityData, todayStr]);
 
   const availableSlots = useMemo(() => {
-  if (!selectedDateStr) return [];
+    if (!selectedDateStr) return [];
+    if (selectedDateStr < todayStr) return [];
 
-  const rule = getRuleForDate(new Date(`${selectedDateStr}T00:00:00`));
-  if (!rule) return [];
+    const rule = getRuleForDate(new Date(`${selectedDateStr}T00:00:00`));
+    if (!rule) return [];
 
-  const startMin = timeToMinutes(rule.start_time);
-  const endMin = timeToMinutes(rule.end_time);
-  const hasPause = rule.pause_start && rule.pause_end;
-  const pauseStartMin = hasPause ? timeToMinutes(rule.pause_start) : 0;
-  const pauseEndMin = hasPause ? timeToMinutes(rule.pause_end) : 0;
+    const startMin = timeToMinutes(rule.start_time);
+    const endMin = timeToMinutes(rule.end_time);
+    const hasPause = rule.pause_start && rule.pause_end;
+    const pauseStartMin = hasPause ? timeToMinutes(rule.pause_start) : 0;
+    const pauseEndMin = hasPause ? timeToMinutes(rule.pause_end) : 0;
 
-  const slots = [];
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const isToday = selectedDateStr === todayStr;
 
-  for (let current = startMin; current + slotDuration <= endMin; current += slotDuration) {
-    // start time inside the pause -> not offered
-    if (hasPause && current >= pauseStartMin && current < pauseEndMin) continue;
+    const slots = [];
 
-    const slotStart = new Date(`${selectedDateStr}T${minutesToTime(current)}`);
-    const slotEnd = new Date(slotStart.getTime() + slotDuration * 60000);
+    for (let current = startMin; current + slotDuration <= endMin; current += slotDuration) {
+      // start time inside the pause -> not offered
+      if (hasPause && current >= pauseStartMin && current < pauseEndMin) continue;
 
-    const isUnavailable = unavailableDates.some((u) => {
-      if (!u?.start || !u?.end) return false;
-      return slotStart < new Date(u.end) && slotEnd > new Date(u.start);
-    });
+      // today: skip slots that have already started
+      if (isToday && current <= nowMin) continue;
 
-    slots.push({ time: minutesToTime(current), unavailable: isUnavailable });
-  }
+      const slotStart = new Date(`${selectedDateStr}T${minutesToTime(current)}`);
+      const slotEnd = new Date(slotStart.getTime() + slotDuration * 60000);
 
-  return slots;
-}, [selectedDateStr, availabilityData, unavailableDates, slotDuration]);
+      const isUnavailable = unavailableDates.some((u) => {
+        if (!u?.start || !u?.end) return false;
+        return slotStart < new Date(u.end) && slotEnd > new Date(u.start);
+      });
+
+      slots.push({ time: minutesToTime(current), unavailable: isUnavailable });
+    }
+
+    return slots;
+  }, [selectedDateStr, availabilityData, unavailableDates, slotDuration, todayStr]);
+
   // Handlers
-
-  
-const today = new Date();
-const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-const isAtMinMonth =
-  currentMonth.getFullYear() === minMonth.getFullYear() &&
-  currentMonth.getMonth() === minMonth.getMonth();
-
+  const today = new Date();
+  const minMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const isAtMinMonth =
+    currentMonth.getFullYear() === minMonth.getFullYear() &&
+    currentMonth.getMonth() === minMonth.getMonth();
 
   const handleDateSelect = (dateStr) => {
     setSelectedDateStr(dateStr);
@@ -174,7 +184,6 @@ const isAtMinMonth =
   // --- Display-only helpers (UI) ---
   const monthName = currentMonth.toLocaleString('sq-AL', { month: 'long' });
   const yearNumber = currentMonth.getFullYear();
-  const todayStr = formatDateString(new Date());
 
   const selectedDateLabel = selectedDateStr
     ? new Date(`${selectedDateStr}T00:00:00`).toLocaleDateString('sq-AL', {
@@ -208,18 +217,18 @@ const isAtMinMonth =
           </div>
 
           <div className="pk-calendar-header">
-  <button
-    type="button"
-    className="pk-nav-btn"
-    onClick={handlePrevMonth}
-    disabled={isAtMinMonth}
-    aria-label="Muaji i kaluar"
-  >‹</button>
-  <span className="pk-month-title" aria-live="polite" aria-label={monthYearLabel}>
-    {monthName} <em>{yearNumber}</em>
-  </span>
-  <button type="button" className="pk-nav-btn" onClick={handleNextMonth} aria-label="Muaji tjetër">›</button>
-</div>
+            <button
+              type="button"
+              className="pk-nav-btn"
+              onClick={handlePrevMonth}
+              disabled={isAtMinMonth}
+              aria-label="Muaji i kaluar"
+            >‹</button>
+            <span className="pk-month-title" aria-live="polite" aria-label={monthYearLabel}>
+              {monthName} <em>{yearNumber}</em>
+            </span>
+            <button type="button" className="pk-nav-btn" onClick={handleNextMonth} aria-label="Muaji tjetër">›</button>
+          </div>
           <div className="pk-weekdays-grid">
             <span>Hën</span><span>Mar</span><span>Mër</span><span>Enj</span><span>Pre</span><span>Sht</span><span>Die</span>
           </div>
@@ -237,7 +246,7 @@ const isAtMinMonth =
                   disabled={!day.isAvailable}
                   onClick={() => handleDateSelect(day.dateStr)}
                   aria-pressed={isSelected}
-                  className={`pk-day-cell ${day.isAvailable ? 'available' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''}`}
+                  className={`pk-day-cell ${day.isAvailable ? 'available' : ''} ${isSelected ? 'selected' : ''} ${isToday ? 'today' : ''} ${day.isPast ? 'past' : ''}`}
                 >
                   {day.dayNumber}
                 </button>
