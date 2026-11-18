@@ -967,3 +967,10 @@ body {
   font-size: 13px;
   font-weight: 500;
 }
+
+.staff-tile-card.employee-disabled {
+    pointer-events: none;
+    opacity: 0.55;
+    cursor: not-allowed;
+    transition: opacity 0.2s ease;
+}

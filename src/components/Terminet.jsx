@@ -138,6 +138,7 @@ const formatDuration = (mins) => {
 };
 
 export default function Termini() {
+  const employeeSelectionLockedRef = useRef(false);
   const [services, setServices] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -502,6 +503,9 @@ export default function Termini() {
   /* ---------------------------------------------------------------- */
 
   const handleEmployeeChange = async (e) => {
+    
+    if (employeeSelectionLockedRef.current) return;
+
     const chosenId = Number(e.target.value);
 
     // Reset everything that belongs to the previous employee
@@ -552,6 +556,7 @@ export default function Termini() {
     setFieldErrors(errors);
     if (Object.values(errors).some(Boolean)) return;
 
+    employeeSelectionLockedRef.current = true;
     setPendingEmployeeId(chosenId);
 
     try {
@@ -576,11 +581,13 @@ export default function Termini() {
       } else {
         alert("Dështoi regjistrimi i shpejtë. Ju lutemi kontrolloni të dhënat.");
         setPendingEmployeeId(null);
+        employeeSelectionLockedRef.current = false;
       }
     } catch (err) {
       console.error("Gabim gjatë fast-login:", err);
       alert("Ndodhi një gabim gjatë lidhjes me serverin.");
       setPendingEmployeeId(null);
+      employeeSelectionLockedRef.current = false;
     } finally {
       setLoading(false);
     }
@@ -814,28 +821,33 @@ export default function Termini() {
 
       const userInfo = await userRes.json();
       sessionStorage.setItem("userDetails", JSON.stringify(userInfo));
+setShowOtp(false);
+setOtpCode("");
 
-      setShowOtp(false);
-      setOtpCode("");
+// Automatically set the selected employee after OTP succeeds
+const targetEmpId = pendingEmployeeId || formData.employeeId;
 
-      // Automatically set the selected employee after OTP succeeds
-      const targetEmpId = pendingEmployeeId || formData.employeeId;
-      if (targetEmpId) {
-        setFormData((prev) => ({ ...prev, employeeId: targetEmpId }));
-        const matchedStaff = employeesList.find(
-          (emp) =>
-            Number(emp.ID) === targetEmpId || Number(emp.id) === targetEmpId
-        );
-        setSelectedEmployeeData(matchedStaff || null);
+if (targetEmpId) {
+  setFormData((prev) => ({ ...prev, employeeId: targetEmpId }));
 
-        try {
-          await fetchEmployeeDetails(targetEmpId);
-        } catch (err) {
-          console.error("Employee WebSocket failed:", err);
-        }
+  const matchedStaff = employeesList.find(
+    (emp) =>
+      Number(emp.ID) === targetEmpId || Number(emp.id) === targetEmpId
+  );
 
-        setPendingEmployeeId(null);
-      }
+  setSelectedEmployeeData(matchedStaff || null);
+
+  try {
+    await fetchEmployeeDetails(targetEmpId);
+  } catch (err) {
+    console.error("Employee WebSocket failed:", err);
+  }
+
+  setPendingEmployeeId(null);
+}
+
+// Unlock employee selection only after the process finishes
+employeeSelectionLockedRef.current = false;
     } catch (err) {
       console.error(err);
       alert("Gabim gjatë verifikimit të OTP-së.");
@@ -980,13 +992,19 @@ export default function Termini() {
                 {employeesList.map((emp) => {
                   const isEmpSelected = formData.employeeId === emp.ID;
                   return (
-                    <div
-                      key={emp.ID}
-                      className={`staff-tile-card ${isEmpSelected ? "selected" : ""}`}
-                      onClick={() =>
-                        handleEmployeeChange({ target: { value: emp.ID } })
-                      }
-                    >
+                   <div
+    key={emp.ID}
+    className={`staff-tile-card ${isEmpSelected ? "selected" : ""} ${
+        employeeSelectionLockedRef.current || showOtp || loading
+            ? "employee-disabled"
+            : ""
+    }`}
+    onClick={() => {
+        if (employeeSelectionLockedRef.current || showOtp || loading) return;
+
+        handleEmployeeChange({ target: { value: emp.ID } });
+    }}
+>
                       <div className="staff-avatar">
                         {emp.emri?.charAt(0)}
                         {emp.mbiemri?.charAt(0)}
@@ -1407,10 +1425,12 @@ export default function Termini() {
               <button
                 type="button"
                 className="otp-cancel-btn"
-                onClick={() => {
-                  setShowOtp(false);
-                  setOtpCode("");
-                }}
+               onClick={() => {
+  setShowOtp(false);
+  setOtpCode("");
+  setPendingEmployeeId(null);
+  employeeSelectionLockedRef.current = false;
+}}
               >
                 ANULO
               </button>
