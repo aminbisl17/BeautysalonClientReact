@@ -85,6 +85,7 @@ function Home({ setView }) {
     try {
       setLoading(true);
       const data = await fetchServices();
+      console.log(services);
       setServices(data);
 
     } catch (err) {
