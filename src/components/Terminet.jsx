@@ -149,7 +149,7 @@ export default function Termini() {
     mbiemri: false,
     numri_telefonit: false,
   });
-const submittingRef = useRef(false);
+  const submittingRef = useRef(false);
   // Availability returned by REST snapshot / WebSocket
   const [employeeAvailability, setEmployeeAvailability] = useState(null);
   // Array of { start, end } busy ranges
@@ -237,7 +237,6 @@ const submittingRef = useRef(false);
         `/topic/availability/${employeeId}`,
         (message) => {
           try {
-          
             applyAvailability(JSON.parse(message.body));
           } catch (err) {
             console.error("Error processing availability:", err);
@@ -304,16 +303,16 @@ const submittingRef = useRef(false);
       alert("Shërbimet e zgjedhura nuk futen në orarin e punës në këtë orë.");
       return false;
     }
-   
+
     if (
-  overlapsBusy(
-    formData.data,
-    formData.ora,
-    total,
-    unavailableDates,
-    detail
-  )
-) {
+      overlapsBusy(
+        formData.data,
+        formData.ora,
+        total,
+        unavailableDates,
+        detail
+      )
+    ) {
       alert(
         "Shërbimet e zgjedhura përplasen me një termin tjetër. Zgjidhni një orë tjetër ose më pak shërbime."
       );
@@ -450,9 +449,8 @@ const submittingRef = useRef(false);
   // Invalidate the chosen date/time if a live update made it unavailable.
   // Uses the real total duration of the selected services (at least one slot).
   useEffect(() => {
-   
-      if (submittingRef.current) return;
-  if (!employeeAvailability || !formData.data) return;
+    if (submittingRef.current) return;
+    if (!employeeAvailability || !formData.data) return;
 
     const date = formData.data;
     const time = (formData.ora || "").slice(0, 5); // "HH:MM"
@@ -465,20 +463,19 @@ const submittingRef = useRef(false);
       message = "Data e zgjedhur nuk është më e disponueshme.";
       clearDate = true;
     } else if (time) {
-     
-     const dur = Math.max(SLOT_MIN, totalMinutes);
+      const dur = Math.max(SLOT_MIN, totalMinutes);
 
-const doesNotFit = !fitsInDay(detail, time, dur);
+      const doesNotFit = !fitsInDay(detail, time, dur);
 
-const taken = overlapsBusy(
-  date,
-  time,
-  dur,
-  unavailableDates,
-  detail
-);
+      const taken = overlapsBusy(
+        date,
+        time,
+        dur,
+        unavailableDates,
+        detail
+      );
 
-if (doesNotFit || taken) {
+      if (doesNotFit || taken) {
         message = "Ora e zgjedhur nuk është më e lirë. Zgjidhni një orë tjetër.";
       }
     }
@@ -718,46 +715,46 @@ if (doesNotFit || taken) {
       const userPhone = normalizePhone(
         user?.numriTelefonit || user?.numri_telefonit
       );
-if (isLoggedIn && formData.numri_telefonit === userPhone) {
-  const booking = buildBookingPayload(user.id || formData.clientId);
-  const token = sessionStorage.getItem("accessToken");
+      if (isLoggedIn && formData.numri_telefonit === userPhone) {
+        const booking = buildBookingPayload(user.id || formData.clientId);
+        const token = sessionStorage.getItem("accessToken");
 
-  submittingRef.current = true;
-  try {
-    const res = await fetch(process.env.REACT_APP_TERMINET_CREATE, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify(booking),
-    });
+        submittingRef.current = true;
+        try {
+          const res = await fetch(process.env.REACT_APP_TERMINET_CREATE, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+            body: JSON.stringify(booking),
+          });
 
-    const data = await res.text();
-    if (!res.ok) {
-      alert(data || "Dështoi krijimi i terminit.");
-      return;
-    }
+          const data = await res.text();
+          if (!res.ok) {
+            alert(data || "Dështoi krijimi i terminit.");
+            return;
+          }
 
-    // clear first, so nothing re-validates the old selection
-    setFormData((prev) => ({
-      ...prev,
-      pershkrimi: "",
-      data: "",
-      ora: "",
-      dataCaktimit: "",
-      detajetTermineve: [],
-    }));
-    setServices([]);
-    setFiltered([]);
-    setSearch("");
+          // clear first, so nothing re-validates the old selection
+          setFormData((prev) => ({
+            ...prev,
+            pershkrimi: "",
+            data: "",
+            ora: "",
+            dataCaktimit: "",
+            detajetTermineve: [],
+          }));
+          setServices([]);
+          setFiltered([]);
+          setSearch("");
 
-    alert("Termini u krijua me sukses!");
-  } finally {
-    submittingRef.current = false;
-  }
-  return;
-}
+          alert("Termini u krijua me sukses!");
+        } finally {
+          submittingRef.current = false;
+        }
+        return;
+      }
 
       const registerRes = await fetch(
         process.env.REACT_APP_CLIENT_FAST_LOGIN_REGISTER,
@@ -1105,14 +1102,14 @@ if (isLoggedIn && formData.numri_telefonit === userPhone) {
                             onClick={() => handleServiceCardClick(s)}
                           >
                             <div className="service-image-container">
-                            <img
-  src={getServiceImage(s.imagePath)}
-  alt={s.emri_sherbimit || "Sherbimi"}
-  onError={(e) => {
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = FALLBACK_IMG;
-  }}
-/>
+                              <img
+                                src={getServiceImage(s.imagePath)}
+                                alt={s.emri_sherbimit || "Sherbimi"}
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = FALLBACK_IMG;
+                                }}
+                              />
                               {isSelected && (
                                 <div className="selected-indicator">
                                   <span>✓ ZGJEDHUR</span>
@@ -1305,9 +1302,9 @@ if (isLoggedIn && formData.numri_telefonit === userPhone) {
             </div>
 
             <div className="custom-modal-body">
-              {selectedService.imageURL && (
+              {selectedService.imagePath && (
                 <img
-                  src={selectedService.imageURL}
+                  src={selectedService.imagePath}
                   className="custom-modal-hero-img"
                   alt={selectedService.emri_sherbimit}
                 />
