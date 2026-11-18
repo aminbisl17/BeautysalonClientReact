@@ -1103,7 +1103,7 @@ export default function Termini() {
                           >
                             <div className="service-image-container">
                               <img
-                                src={getServiceImage(s.imagePath)}
+                                src={getServiceImage(s.imagePath || s.imageURL)}
                                 alt={s.emri_sherbimit || "Sherbimi"}
                                 onError={(e) => {
                                   e.currentTarget.onerror = null;
@@ -1302,11 +1302,17 @@ export default function Termini() {
             </div>
 
             <div className="custom-modal-body">
-              {selectedService.imagePath && (
+              {(selectedService.imagePath || selectedService.imageURL) && (
                 <img
-                  src={selectedService.imagePath}
+                  src={getServiceImage(
+                    selectedService.imagePath || selectedService.imageURL
+                  )}
                   className="custom-modal-hero-img"
                   alt={selectedService.emri_sherbimit}
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = FALLBACK_IMG;
+                  }}
                 />
               )}
 
