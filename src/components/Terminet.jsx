@@ -422,6 +422,7 @@ const submittingRef = useRef(false);
     const dateServices = getServicesForPeriod(
       findPeriod(employeeAvailability, date)
     );
+    console.log(dateServices);
     setServices(dateServices);
 
     // Drop selected services that are no longer offered on that date
